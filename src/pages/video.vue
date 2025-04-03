@@ -15,10 +15,12 @@ const title = route.query?.title?.toString()
 
 // 年份
 const year = route.query?.year?.toString()
+// 来源
+const source = route.query?.source?.toString()
 </script>
 
 <template>
   <div>
-    <VideoDetailView :mediaid="mediaid" :type="type" :title="title" :year="year" />
+    <VideoDetailView :mediaid="mediaid" :source="source" :type="type" :title="title" :year="year" />
   </div>
 </template>

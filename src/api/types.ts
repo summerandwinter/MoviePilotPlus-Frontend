@@ -1,4 +1,4 @@
-import { ex } from "@fullcalendar/core/internal-common"
+import { ex } from '@fullcalendar/core/internal-common'
 
 // 订阅
 export interface Subscribe {
@@ -1292,61 +1292,6 @@ export interface Workflow {
   last_time?: string
 }
 
-/**
- * 视频信息
- */
-export interface VideoInfo {
-  /** 来源：tencent youku iqiyi bilibili */
-  source?: string | null
-  /** 类型 电影、电视剧 */
-  type?: string | null
-  /** 视频ID eg: mzc002007n0xa7w */
-  vid?: string
-  /** 媒体标题 eg: 扫黑·决不放弃 */
-  title: string
-  /** 子标题 eg: 肖央 余皑磊 范丞丞 */
-  sub_title?: string | null
-  /** 第二标题 eg: 肖央范丞丞师徒携手扫黑 */
-  second_title?: string | null
-  /** 次要标题 eg: 警匪打黑 */
-  third_title?: string | null
-  /** 年份 */
-  year?: string | null
-  /** TMDB ID */
-  tmdb_id?: string | null
-  /** IMDB ID */
-  imdb_id?: string | null
-  /** TVDB ID */
-  tvdb_id?: string | null
-  /** 豆瓣ID */
-  douban_id?: string | null
-  /** Bangumi ID */
-  bangumi_id?: string | null
-  /** 语种 eg: 普通话 */
-  language?: string[] | null
-  /** 主演 eg: [肖央 余皑磊 范丞丞 李诚儒 耿乐] */
-  leading_actor?: string[] | null
-  /** 发行地区 eg: 内地 */
-  gen_area_name?: string | null
-  /** 视频音轨 eg: [普通话] */
-  video_language_name?: string[] | null
-  /** 发行时间 eg: 2024-06-30 09:35:05 */
-  epsode_pubtime?: string | null // 注意：疑似拼写错误应为 episode_pubtime
-  /** 地区 eg: 内地 */
-  areaName?: string | null
-  /** 图片 海报 eg: https://vcover-hz-pic.puui.qpic.cn/... */
-  new_pic_hz?: string | null
-  /** 图片 封面 eg: https://vcover-vt-pic.puui.qpic.cn/... */
-  new_pic_vt?: string | null
-  /** 系列名称 eg: 警匪打黑 */
-  series_name?: string | null
-  /** 发布日期 eg: 2024-06-08 */
-  publish_date?: string | null
-  /** 导演 */
-  directors?: string[] | null
-  /** 简介 */
-  overview?: string | null
-}
 // 腾讯视频分类
 export interface TencentCategoryInfo {
   level: string
@@ -1356,7 +1301,156 @@ export interface TencentCategoryInfo {
   index_name: string
 }
 
-export interface CategoryItem  {
+export interface CategoryItem {
   key: string
   value: string
-};
+}
+
+// 视频集信息
+export interface VideoEpisode {
+  title: string
+  play_title: string
+  web_play_url: string
+  image_url: string
+  cover_new_pic_hz: string
+  full_play_sub_title: string
+  duration: string
+  date: string
+  businessInfo: string
+  vid_encrypt: string
+  defn: string
+  vid: string
+  cid: string
+  selected: boolean
+}
+
+// 豆瓣视频信息
+export interface DoubanVideoInfo {
+  title: string
+  card_subtitle: string
+  cover_url: string
+  year: string
+  id: string
+  rating: number | null
+  type: string
+  type_name: string
+}
+
+// 视频清晰度信息
+export interface VideoDefinition {
+  name: string
+  id: number
+  cname: string
+  br: number
+  fs: number
+  sname: string
+  resolution: string
+  vfps: number
+  width: number
+  height: number
+  formatdefn: string
+  bandwidth: number
+  audiobbandwidth: number
+}
+
+// 视频信息
+export interface VideoInfo {
+  // 来源
+  source: string
+  // 类型
+  type: string
+  // 视频ID
+  vid: string | null
+  // 视频系列ID
+  cid: string
+  // 标题
+  title: string
+  // 副标题
+  sub_title: string | null
+  // 第二标题
+  second_title: string | null
+  // 第三标题
+  third_title: string | null
+  // 年份
+  year: string | null
+  // TMDB ID
+  tmdb_id: string | null
+  // IMDB ID
+  imdb_id: string | null
+  // TVDB ID
+  tvdb_id: string | null
+  // 豆瓣ID
+  douban_id: string | null
+  // Bangumi ID
+  bangumi_id: string | null
+  // 语种
+  language: string[] | null
+  // 主演
+  leading_actor: string[] | null
+  // 发行地区
+  gen_area_name: string | null
+  // 视频音轨
+  video_language_name: string[] | null
+  // 发行时间
+  epsode_pubtime: string | null
+  // 地区
+  areaName: string | null
+  // 海报图片
+  new_pic_hz: string | null
+  // 封面图片
+  new_pic_vt: string | null
+  // 系列名称
+  series_name: string | null
+  // 发布日期
+  publish_date: string | null
+  // 导演
+  directors: string[] | null
+  // 简介
+  overview: string | null
+  // 所有集数
+  episode_all: string
+  // 集数列表
+  episode_list: VideoEpisode[]
+  // 豆瓣列表
+  douban_list: DoubanVideoInfo[]
+  // 清晰度列表
+  definition_list: VideoDefinition[]
+  // 豆瓣信息
+  douban_info: DoubanVideoInfo
+}
+// 采集创建参数
+export interface CollectCreate {
+  // 收藏ID
+  cid: string
+  // 清晰度
+  defn: string
+  // 豆瓣ID
+  douban_id: string
+  // 中文标题
+  cn_title: string
+  // 年份
+  year: string
+  // 媒体类型
+  type: string
+  // 来源站点
+  site: string
+  // 视频源
+  source: string
+  // 剧集列表
+  episode_list: Array<{
+    // 剧集ID
+    cid: string
+    // 视频ID
+    vid: string
+    // 集数
+    episode: string
+  }>
+  // 站点列表
+  site_list: number[]
+  // TMDB ID
+  tmdb_id?: number
+  // 收藏时间
+  create_time?: string
+  // 用户ID
+  user_id?: string
+}
