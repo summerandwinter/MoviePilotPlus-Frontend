@@ -165,10 +165,10 @@ function getYear(airDate: string) {
           <!-- 本地存在标识 -->
           <ExistIcon v-if="isExists && !hover.isHovering" />
           <!-- 评分角标 -->
-          <VChip v-if="isImageLoaded && props.media?.vote_average && !(isExists && !hover.isHovering)"
+          <VChip v-if="isImageLoaded && !(isExists && !hover.isHovering)"
             variant="elevated" size="small" :class="getChipColor('rating')"
             class="absolute right-2 top-2 bg-opacity-80 shadow-md text-white font-bold">
-            {{ formatRating(props.media?.vote_average) }}
+            9.6
           </VChip>
           <!--来源图标-->
           <VAvatar size="24" density="compact" class="absolute bottom-1 right-1" tile

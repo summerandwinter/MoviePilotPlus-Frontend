@@ -195,6 +195,13 @@ const router = createRouter({
           },
         },
         {
+          path: '/test',
+          component: () => import('../pages/test.vue'),
+          meta: {
+            requiresAuth: false,
+          },
+        },
+        {
           path: '/task',
           component: () => import('../pages/task.vue'),
           meta: {

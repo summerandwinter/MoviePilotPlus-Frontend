@@ -1584,16 +1584,37 @@ export interface CollectCreate {
 export interface DownloadTask {
   // 任务ID
   id: number
-  // 收藏ID
+  // 采集任务ID
   collect_id: number
+  name: string
+  type: string
+  defn: string
   // 海报
   poster: string
-  total_size: number
-  downloaded_size: number
-  percent: number
-  speed: number
+  cn_title: string
+  en_title: string
+  year: string
+  season: number
+  episode: string
+  site: string
+  source: string
+  resolution: string
+  dimension: string
+  duration: number
+  video_codec: string
+  bit_depth: string
+  hdr_format: string
+  audio_codec: string
+  audio_language: string
+  subtitle_language: string
+  copyright: string
+  team: string
+  video_format: string
+  pri: number
+  is_active: boolean
   // 视频ID
   vid: string
+  cid: string
   // m3u8文件路径
   m3u8_path: string
   // 下载路径
@@ -1606,14 +1627,22 @@ export interface DownloadTask {
   command: string
   // 媒体信息
   mediainfo: string
+  mediainfo_collected: boolean
   // 最后错误信息
   last_error: string | null
+  total_size: number
+  downloaded_size: number
+  percent: number
+  speed: number
+  output_info: string
+  left_time: number
   // 状态
   status: string
   // 是否已下载
   is_downloaded: boolean
   // 是否已重命名
   is_renamed: boolean
+  is_moved: boolean
   // 创建时间
   created_at: string
 }
