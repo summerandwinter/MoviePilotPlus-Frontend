@@ -1,5 +1,5 @@
 {
-  "name": "moviepilot",
+  "name": "moviepilotplus",
   "version": "2.3.3",
   "private": true,
   "bin": "dist/service.js",

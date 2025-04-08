@@ -186,6 +186,10 @@ html.v-overlay-scroll-blocked body {
   padding-block-end: 1rem;
 }
 
+.grid-task-card {
+  grid-template-columns: repeat(auto-fill, minmax(36rem, 1fr));
+  padding-block-end: 1rem;
+}
 .grid-plugin-card {
   grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   padding-block-end: 1rem;

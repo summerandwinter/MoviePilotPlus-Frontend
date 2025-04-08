@@ -21,6 +21,8 @@ const mediaProps = defineProps({
   title: String,
   year: String,
   type: String,
+  auto_download: Boolean,
+  auto_publish: Boolean,
 })
 
 // 从 provide 中获取全局设置
@@ -56,7 +58,10 @@ const addForm = ref<CollectCreate>({
     year: "",
     type: "",
     site: "",
+    auto_download: true,
+    auto_publish: true,
     source: "WEB-DL",
+    tags: [],
     episode_list: [],
     site_list: []
 })
@@ -106,7 +111,8 @@ async function addCollect() {
         addForm.value.episode_list.push({
           cid: episode.cid,
           vid: episode.vid,
-          episode: episode.title
+          episode: episode.title,
+          poster: episode.image_url
         })
       }
     })
@@ -316,7 +322,24 @@ onBeforeMount(() => {
           </div>
           <h2 v-if="mediaDetail.overview">简介</h2>
           <p>{{ mediaDetail.overview }}</p>
-          
+          <div class="mt-6">
+            <v-row>
+              <v-col cols="2">
+                <v-switch
+                  v-model="addForm.auto_download"
+                  :label="`自动下载`"
+                  hide-details>
+                </v-switch>
+              </v-col>
+              <v-col cols="2">
+                <v-switch
+                  v-model="addForm.auto_publish"
+                  :label="`自动发布`"
+                  hide-details>
+                </v-switch>
+              </v-col>
+            </v-row>
+          </div>
           <div class="mt-6">
             <VChipGroup column v-model="addForm.defn">
               <template v-for="definition in mediaDetail.definition_list" :key="definition.name">
@@ -347,7 +370,6 @@ onBeforeMount(() => {
               </template>
             </VChipGroup>
           </div>
-          
         </div>
         <div v-if="mediaDetail.douban_info" class="media-overview-right">
           <div class="media-facts">

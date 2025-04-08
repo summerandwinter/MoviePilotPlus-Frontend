@@ -1,4 +1,4 @@
-import { ex } from '@fullcalendar/core/internal-common'
+import { de, ex } from '@fullcalendar/core/internal-common'
 
 // 订阅
 export interface Subscribe {
@@ -1419,6 +1419,127 @@ export interface VideoInfo {
   douban_info: DoubanVideoInfo
 }
 // 采集创建参数
+export interface Collect {
+  // 英文标题
+  en_title: string
+  // 分辨率
+  resolution: string
+  // 地区
+  area: string | null
+  // 参数
+  params: any | null
+  // IMDB ID
+  imdb_id: string | null
+  // 是否重命名
+  is_renamed: boolean
+  // 自动下载
+  auto_download: boolean
+  // 名称
+  name: string
+  cover: string | null
+  poster: string | null
+  // 年份
+  year: string | null
+  // 分辨率尺寸
+  dimension: string
+  // 制作组
+  team: string
+  // 标签
+  tags: string
+  // 截图
+  screenshots: string
+  // 是否收集媒体信息
+  mediainfo_collected: boolean
+  // 自动发布
+  auto_publish: boolean
+  // 类型
+  type: string
+  // 季号
+  season: number | null
+  // 视频编码
+  video_codec: string
+  // 版权
+  copyright: string
+  // 创建时间
+  created_at: string
+  // 总集数
+  episodes_all: number | null
+  // 是否收集图片
+  image_collected: boolean
+  // 所有集数
+  episode_all: string
+  // 位深
+  bit_depth: string
+  // 视频格式
+  video_format: string | null
+  // 更新时间
+  updated_at: string
+  // 总集数
+  episodes_total: number
+  // 是否收集描述
+  desc_collected: boolean
+  // 内容ID
+  cid: string
+  // 清晰度
+  defn: string
+  // 集数
+  episodes: string
+  // HDR格式
+  hdr_format: string
+  // 优先级
+  pri: number
+  // 是否激活
+  is_active: boolean
+  // 已下载集数
+  episodes_downloaded: number
+  // 是否创建种子
+  torrent_created: boolean
+  // 标题
+  title: string
+  // 版本
+  version: string | null
+  // 音频编码
+  audio_codec: string
+  // 输出目录
+  output_dir: string
+  // 描述
+  description: string
+  // 最后错误
+  last_error: string
+  // 是否上传种子
+  torrent_uploaded: boolean
+  // ID
+  id: number
+  // 副标题
+  sub_title: string
+  // 站点
+  site: string | null
+  // 字幕语言
+  subtitle_language: string | null
+  // 种子路径
+  torrent_path: string | null
+  // 媒体信息
+  mediainfo: string
+  // 状态
+  status: string
+  // 是否已下载
+  torrent_downloaded: boolean
+  // 中文标题
+  cn_title: string
+  // 来源
+  source: string
+  // 音频语言
+  audio_language: string | null
+  // NFO路径
+  nfo_path: string | null
+  // 豆瓣ID
+  douban_id: string
+  // 是否已下载
+  is_downloaded: boolean
+  // 是否做种
+  torrent_seeded: boolean
+}
+
 export interface CollectCreate {
   // 收藏ID
   cid: string
@@ -1436,6 +1557,9 @@ export interface CollectCreate {
   site: string
   // 视频源
   source: string
+  auto_download: boolean
+  auto_publish: boolean
+  tags: string[]
   // 剧集列表
   episode_list: Array<{
     // 剧集ID
@@ -1444,6 +1568,8 @@ export interface CollectCreate {
     vid: string
     // 集数
     episode: string
+    // 封面图片
+    poster: string
   }>
   // 站点列表
   site_list: number[]
@@ -1453,4 +1579,51 @@ export interface CollectCreate {
   create_time?: string
   // 用户ID
   user_id?: string
+}
+
+export interface DownloadTask {
+  // 任务ID
+  id: number
+  // 收藏ID
+  collect_id: number
+  // 海报
+  poster: string
+  total_size: number
+  downloaded_size: number
+  percent: number
+  speed: number
+  // 视频ID
+  vid: string
+  // m3u8文件路径
+  m3u8_path: string
+  // 下载路径
+  download_path: string
+  // 输出路径
+  output_path: string
+  // 下载进度
+  progress: number
+  // 下载命令
+  command: string
+  // 媒体信息
+  mediainfo: string
+  // 最后错误信息
+  last_error: string | null
+  // 状态
+  status: string
+  // 是否已下载
+  is_downloaded: boolean
+  // 是否已重命名
+  is_renamed: boolean
+  // 创建时间
+  created_at: string
+}
+
+export interface Progress {
+  // 任务ID
+  task_id: number
+
+  total_size: number
+  downloaded_size: number
+  percent: number
+  speed: number
 }
