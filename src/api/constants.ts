@@ -78,3 +78,17 @@ export const transferTypeOptions = [
   { title: '硬链接', value: 'link' },
   { title: '软链接', value: 'softlink' },
 ]
+
+export const downloadStatus = {
+  'Init': '初始化',
+  'DownloadCreated': '创建完成',
+  'DownloadPending': '等待下载',
+  'Downloading': '正在下载',
+  'DownloadError': '下载出错',
+  'DownloadDone': '下载完成',
+  'DownloadStop': '下载停止',
+  'InfoCollected': '信息采集',
+  'Renamed': '重命名',
+  'Moved': '已转移',
+  'Finished': '完成',
+}

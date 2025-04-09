@@ -2,7 +2,8 @@
 import api from '@/api'
 import type { DownloadTask, Progress } from '@/api/types'
 import { formatFileSize } from '@/@core/utils/formatters'
-
+import { downloadStatus} from '@/api/constants'
+import tencentImage from '@images/logos/tencent-white.png'
 // 输入参数
 const props = defineProps({
   info: {
@@ -29,6 +30,10 @@ function getPercentage() {
   }
   return 0
 }
+// 来源角标字典
+const siteIconDict: { [key: string]: any } = {
+  Tencent: tencentImage
+}
 
 // 速度
 function getSpeedText() {
@@ -40,15 +45,64 @@ function getSpeedText() {
   }
   return `${formatFileSize(props.info?.downloaded_size || 0)} / ${formatFileSize(props.info?.total_size || 0)}  ↓ ${formatFileSize(props.info?.speed)}/s`
 }
+// 角标颜色
+function getChipColor() {
+  const status = getSatus()
+  if (status === downloadStatus.DownloadError) {
+    return 'border-red-500 bg-red-600'
+  } else if (status === downloadStatus.Downloading) {
+    return 'bg-green-500 border-green-600'
+  } else {
+    return 'border-purple-600 bg-purple-600'
+  }
+}
+function getSatus() {
+  if (props.progress?.length) {
+    for (const progress of props.progress) {
+      if (Number(progress.task_id) === props.info?.id) {
+        return downloadStatus[progress.state as keyof typeof downloadStatus]
+      }
+    }
+  }
+  return downloadStatus[props.info.status as keyof typeof downloadStatus]
+}
 
+function showToggleBtn() {
+  const status = getSatus()
+  if (status === downloadStatus.DownloadCreated) {
+    return true
+  } else if (getSatus() === downloadStatus.DownloadPending) {
+    return true
+  } else if (getSatus() === downloadStatus.DownloadPending) {
+    return true
+  } else if (getSatus() === downloadStatus.Downloading) {
+    return true
+  } else if (getSatus() === downloadStatus.DownloadError) {
+    return true
+  } else if (getSatus() === downloadStatus.DownloadStop) {
+    return true
+  } else {
+    return false
+  }
+}
+
+function downloadBtnIcon() {
+  const showBtn = showToggleBtn()
+  const status = getSatus()
+  if (showBtn) {
+    return status === downloadStatus.Downloading ? 'mdi-pause' : 'mdi-play'
+  } else {
+    return ''
+  }
+}
 // 下载状态
-const isDownloading = ref(props.info?.status === 'downloading')
+const isDownloading = ref(props.info?.status === downloadStatus.Downloading)
 
 // 监听props.info?.state的变化
 watch(
   () => props.info?.status,
   newValue => {
-    isDownloading.value = newValue === 'downloading'
+    isDownloading.value = newValue === downloadStatus.Downloading
   },
 )
 
@@ -88,36 +142,71 @@ async function deleteDownload() {
 </script>
 
 <template>
-  <VCard v-if="cardState" :key="props.info?.id" class="glass-card">
-    <template #image>
-      <VImg :src="props.info?.poster" aspect-ratio="2/3" cover class="brightness-50 card-bg" @load="imageLoadHandler" />
+  <VHover>
+    <template #default="hover">
+      <VCard v-if="cardState" :key="props.info?.id" class="glass-card" v-bind="hover.props">
+        <VChip
+              variant="elevated"
+              size="small"
+              :class="getChipColor()"
+              class="absolute right-2 top-2 bg-opacity-50 shadow-md text-white font-bold"
+            >
+              {{ getSatus() }}
+            </VChip>
+            <VAvatar 
+                size="24"
+                density="compact"
+                class="absolute top-1 left-4"
+                tile
+                v-show="hover.isHovering"
+              >
+                <VImg cover :src="siteIconDict[props.info.site]" class="shadow-lg" />
+              </VAvatar>
+        <template #image>
+          <VImg :src="props.info?.poster" aspect-ratio="2/3" cover class="brightness-50 card-bg" @load="imageLoadHandler" />
+        </template>
+        <VCardItem class="card-content pt-7">
+          <VCardTitle class="break-words whitespace-normal" :class="getTextClass()">
+          {{ props.info?.name }}
+        </VCardTitle>
+
+        <!-- <VCardSubtitle class="break-words whitespace-normal" :class="getTextClass()">
+          {{ props.info?.name }}
+        </VCardSubtitle> -->
+        <template v-if="isDownloading">
+          <VCardItem  class="text-subtitle-2 pt-3 pb-1 pl-0 pr-0" :class="getTextClass()">
+            {{ getSpeedText() }}
+            <VProgressLinear :model-value="getPercentage()" />
+          </VCardItem>
+        </template>
+        <template v-else>
+          <VCardItem  class="text-subtitle-2 pt-4 pb-1 pl-0 pr-0" :class="getTextClass()">
+            <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold" v-if="props.info.type">{{props.info.type}}</VChip>
+            <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold" v-if="props.info.video_codec">{{props.info.video_codec}}</VChip>
+            <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold" v-if="props.info.hdr_format">{{props.info.hdr_format}}</VChip>
+            <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold" v-if="props.info.audio_codec">{{props.info.audio_codec}}</VChip>
+            <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold" v-if="props.info.bit_depth">{{props.info.bit_depth}}bits</VChip>
+            
+          </VCardItem>
+        </template>
+        
+
+        <!-- <VCardItem v-if="getPercentage() > 0" class="text-subtitle-2 pt-0 pb-0 pl-0 pr-0" :class="getTextClass()">
+          <VProgressLinear :model-value="getPercentage()" />
+        </VCardItem> -->
+        <!-- <VCardText v-if="getPercentage() > 0" class="pt-3 pb-1 pl-0 pr-0" :class="getTextClass()">
+          <VProgressLinear :model-value="getPercentage()" />
+        </VCardText> -->
+
+        <VCardActions class="justify-space-between  pt-2 pb-0 pl-0 pr-0">
+          <VBtn :readonly="!showToggleBtn()" :icon="downloadBtnIcon()" @click="toggleDownload" />
+          <VBtn color="error" icon="mdi-trash-can-outline" @click="deleteDownload" />
+        </VCardActions>
+        </VCardItem>
+        
+      </VCard>
     </template>
-    <VCardItem class="card-content">
-      <VCardTitle class="break-words whitespace-normal" :class="getTextClass()">
-      {{ props.info?.name }}
-    </VCardTitle>
-
-    <!-- <VCardSubtitle class="break-words whitespace-normal" :class="getTextClass()">
-      {{ props.info?.name }}
-    </VCardSubtitle> -->
-
-    <VCardItem v-if="getPercentage() > 0" class="text-subtitle-2 pt-3 pb-1 pl-0 pr-0" :class="getTextClass()">
-      {{ getSpeedText() }}
-    </VCardItem>
-    <VCardItem v-if="getPercentage() > 0" class="text-subtitle-2 pt-3 pb-3 pl-0 pr-0" :class="getTextClass()">
-      <VProgressLinear :model-value="getPercentage()" />
-    </VCardItem>
-    <!-- <VCardText v-if="getPercentage() > 0" class="pt-3 pb-1 pl-0 pr-0" :class="getTextClass()">
-      <VProgressLinear :model-value="getPercentage()" />
-    </VCardText> -->
-
-    <VCardActions class="justify-space-between  pt-2 pb-0 pl-0 pr-0">
-      <VBtn :icon="`${isDownloading ? 'mdi-pause' : 'mdi-play'}`" @click="toggleDownload" />
-      <VBtn color="error" icon="mdi-trash-can-outline" @click="deleteDownload" />
-    </VCardActions>
-    </VCardItem>
-    
-  </VCard>
+  </VHover>
 </template>
 <style scoped>
   /* 卡片整体样式 */

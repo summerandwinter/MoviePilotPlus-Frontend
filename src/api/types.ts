@@ -1655,4 +1655,5 @@ export interface Progress {
   downloaded_size: number
   percent: number
   speed: number
+  state: string
 }
