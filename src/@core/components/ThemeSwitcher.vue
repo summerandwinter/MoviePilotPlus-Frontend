@@ -12,6 +12,7 @@ const display = useDisplay()
 
 const props = defineProps<{
   themes: ThemeSwitcherTheme[]
+  class: string
 }>()
 
 const { name: themeName, global: globalTheme } = useTheme()

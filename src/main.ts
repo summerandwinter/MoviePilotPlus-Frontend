@@ -3,7 +3,8 @@ import './ace-config'
 import '@/@core/utils/compatibility'
 import '@/@iconify/icons-bundle'
 import '@/plugins/webfontloader'
-
+// 解决非被动事件监听警告，提升滚动性能  
+import "default-passive-events"
 // 2. 核心插件和 UI 框架
 import { createApp } from 'vue'
 import vuetify from '@/plugins/vuetify'

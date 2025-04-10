@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { cloneDeepWith } from 'lodash-es'
-import type { Collect, Progress } from '@/api/types'
+import type { DownloadTask, Progress } from '@/api/types'
 import TaskCard from '@/components/cards/TaskCard.vue'
 
 // 定义输入参数
 const props = defineProps({
   // 数据列表
-  items: Array as PropType<Collect[]>,
+  items: Array as PropType<DownloadTask[]>,
 })
 
 // 过滤表单
@@ -59,29 +59,11 @@ const filterOptionsNotEmpty = computed(() => {
 })
 
 // 完整的数据列表
-let dataList: Collect[]
+let dataList: DownloadTask[]
 // 显示用的数据列表
-const displayDataList = ref<Array<Collect>>([])
+const displayDataList = ref<Array<DownloadTask>>([])
 
 const progress = ref<Array<Progress>>([])
-
-// 分组后的数据列表
-const groupedDataList = ref<Map<string, Context[]>>()
-
-// 初始化过滤选项
-function initOptions(data: Context) {
-  const { torrent_info, meta_info } = data
-  const optionValue = (options: Array<string>, value: string | undefined) => {
-    value && !options.includes(value) && options.push(value)
-  }
-  optionValue(filterOptions.site, torrent_info?.site_name)
-  optionValue(filterOptions.season, meta_info?.season_episode)
-  optionValue(filterOptions.releaseGroup, meta_info?.resource_team)
-  optionValue(filterOptions.videoCode, meta_info?.video_encode)
-  optionValue(filterOptions.freeState, torrent_info?.volume_factor)
-  optionValue(filterOptions.edition, meta_info?.edition)
-  optionValue(filterOptions.resolution, meta_info?.resource_pix)
-}
 
 // 对季过滤选项进行排序
 const sortSeasonFilterOptions = computed(() => {
@@ -286,7 +268,6 @@ function loadMore({ done }: { done: any }) {
         :key="`${item.id}`"
         :info="item"
         :progress="progress"
-        :more="item.more"
       />
     </div>
   </VInfiniteScroll>

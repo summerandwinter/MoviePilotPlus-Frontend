@@ -8,8 +8,13 @@ cleanupOutdatedCaches()
 // self.__WB_MANIFEST is default injection point
 precacheAndRoute(self.__WB_MANIFEST)
 
-// to allow work offline
-registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { denylist: [/^(\/[\w-]+)*\/api/] }))
+// 生产环境处理路由
+if (process.env.NODE_ENV === 'production') {
+  registerRoute(new NavigationRoute(
+    createHandlerBoundToURL('index.html'),
+    { denylist: [/^(\/[\w-]+)*\/api/] }
+  ))
+}
 
 // 通知选项
 const options = {

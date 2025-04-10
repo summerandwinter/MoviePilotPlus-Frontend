@@ -95,6 +95,11 @@ function downloadBtnIcon() {
     return ''
   }
 }
+
+function downloading() {
+  const status = getSatus()
+  return status === downloadStatus.Downloading
+}
 // 下载状态
 const isDownloading = ref(props.info?.status === downloadStatus.Downloading)
 
