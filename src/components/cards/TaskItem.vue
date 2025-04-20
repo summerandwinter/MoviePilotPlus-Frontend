@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
-import { formatFileSize } from '@/@core/utils/formatters'
-import api from '@/api'
+import router from '@/router'
 import type { Collect } from '@/api/types'
-import AddDownloadDialog from '../dialog/AddDownloadDialog.vue'
+
 
 // 输入参数
 const props = defineProps({
@@ -19,49 +18,17 @@ const task = ref(props.task)
 // 站点图标
 const siteIcon = ref('')
 
-// 存储是否已经下载过的记录
-const downloaded = ref<string[]>([])
+function goDetail() {
 
-// 添加下载对话框
-const addDownloadDialog = ref(false)
+    // 跳转到媒体详情页
+    router.push({
+      path: '/cdetail',
+      query: {
+        id: props.task?.id
+      },
+    })
 
-// 查询站点图标
-async function getSiteIcon() {
-  try {
-    siteIcon.value = task.value?.cover
-  } catch (error) {
-    console.error(error)
-  }
 }
-
-// 询问并添加下载
-async function handleAddDownload() {
-  // 打开下载对话框
-  addDownloadDialog.value = true
-}
-
-// 添加下载成功
-function addDownloadSuccess(url: string) {
-  addDownloadDialog.value = false
-  // 添加下载成功
-  downloaded.value.push(url)
-}
-
-// 添加下载失败
-function addDownloadError(error: string) {
-  addDownloadDialog.value = false
-}
-
-// 打开种子详情页面
-function openTorrentDetail() {
-  window.open(task.value?.page_url, '_blank')
-}
-
-// 下载种子文件
-async function downloadTorrentFile() {
-  window.open(task.value?.enclosure, '_blank')
-}
-
 // 促销Chip类
 function getVolumeFactorClass(downloadVolume: number, uploadVolume: number) {
   if (downloadVolume === 0) return 'text-white bg-lime-500'
@@ -70,9 +37,7 @@ function getVolumeFactorClass(downloadVolume: number, uploadVolume: number) {
   else return 'text-white bg-gray-500'
 }
 
-// 装载时查询站点图标
 onMounted(() => {
-  getSiteIcon()
 })
 </script>
 
@@ -80,12 +45,16 @@ onMounted(() => {
   <div>
     
     <VListItem
-      @click="handleAddDownload"
-      :variant="downloaded.includes(task?.enclosure || '') ? 'outlined' : 'flat'"
+    @click.stop="goDetail()"  class="mb-2"
+      variant="flat"
     >
-    <template #image>
-      <VImg :src="siteIcon" aspect-ratio="2/3" cover class="brightness-50" />
-    </template>
+    <VChip
+              variant="outlined"
+              size="small"
+              class="bg-green-600 border-green-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold"
+            >
+              {{task?.status}}
+            </VChip>
 
       <template v-if="!showMoreTorrents" #prepend>
         <VListItemMedia class="pr-2"><VImg :src="siteIcon" :width="60" 
@@ -115,7 +84,7 @@ onMounted(() => {
             <VIcon icon="mdi-dots-vertical" />
             <VMenu activator="parent" close-on-content-click>
               <VList>
-                <VListItem variant="plain" @click="openTorrentDetail()">
+                <VListItem variant="plain">
                   <template #prepend>
                     <VIcon icon="mdi-information" />
                   </template>
@@ -123,7 +92,7 @@ onMounted(() => {
                 </VListItem>
                 <VListItem
                   variant="plain"
-                  @click="downloadTorrentFile()"
+                
                 >
                   <template #prepend>
                     <VIcon icon="mdi-download" />
@@ -136,14 +105,5 @@ onMounted(() => {
         </div>
       </template>
     </VListItem>
-    <AddDownloadDialog
-      v-if="addDownloadDialog"
-      v-model="addDownloadDialog"
-      :title="`${task?.title || task?.name} ${task?.episodes_downloaded}/${task?.episodes_total}`"
-      :task="task"
-      @done="addDownloadSuccess"
-      @error="addDownloadError"
-      @close="addDownloadDialog = false"
-    />
   </div>
 </template>

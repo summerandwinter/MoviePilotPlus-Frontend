@@ -15,6 +15,8 @@ const props = defineProps({
     type: Array as PropType<Progress[]>,
     default: () => []
   },
+  width: String,
+  height: String,
 })
 
 // 是否显示卡片
@@ -144,12 +146,15 @@ async function deleteDownload() {
     console.error(error)
   }
 }
+const taskCardRef = ref<HTMLElement | null>(null)
 </script>
 
 <template>
   <VHover>
+    
     <template #default="hover">
-      <VCard v-if="cardState" :key="props.info?.id" class="glass-card" v-bind="hover.props">
+      <div ref="taskCardRef">
+      <VCard v-if="cardState" :key="props.info?.id" class="glass-card" v-bind="hover.props" :height="props.height" :width="props.width"> 
         <VChip
               variant="elevated"
               size="small"
@@ -210,7 +215,9 @@ async function deleteDownload() {
         </VCardItem>
         
       </VCard>
+    </div>
     </template>
+  
   </VHover>
 </template>
 <style scoped>

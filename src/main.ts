@@ -49,6 +49,9 @@ import 'vue3-perfect-scrollbar/style.css'
 import '@vue-js-cron/vuetify/dist/vuetify.css'
 import '@styles/styles.scss'
 
+// 注册 tiptap 组件
+import useRichText from '@/plugins/useRichText'
+
 // 创建Vue实例
 const app = createApp(App)
 
@@ -93,6 +96,7 @@ initializeApp().then(() => {
   // 5. 注册其他插件
   app
     .use(PerfectScrollbarPlugin)
+    app.use(useRichText)
     .use(ToastPlugin, {
       position: 'bottom-right',
     })

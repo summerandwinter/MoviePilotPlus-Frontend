@@ -12,7 +12,10 @@ import { useUserStore } from '@/stores'
 
 // 输入参数
 const props = defineProps({
-  episode: Object as PropType<VideoEpisode>,
+  episode: {
+    type: Object as PropType<VideoEpisode>,
+    required: true
+  },
   width: String,
   height: String,
 })
@@ -68,25 +71,9 @@ function getChipColor(type: string) {
 
 function selectEsipode() {
   if (!props.episode) return
-  props.episode.selected = !props.episode.selected
+  props.episode.selected = !props.episode?.selected
 }
 
-// 打开详情页
-function goMediaDetail(isHovering = false) {
-  if (isHovering) {
-    // 跳转到媒体详情页
-    router.push({
-      path: '/video',
-      query: {
-        source: props.episode?.source,
-        mediaid: props.episode?.cid,
-        title: props.episode?.title,
-        year: props.episode?.year,
-        type: props.episode?.type,
-      },
-    })
-  }
-}
 
 
 onMounted(() => {
@@ -134,16 +121,24 @@ function getYear(airDate: string) {
       'transition transform-cpu duration-300 scale-105 shadow-lg': hover.isHovering,
       'ring-1': isImageLoaded,  }"
       @click.stop="selectEsipode">
+          
           <VImg  :src="getImgUrl" class="align-end" cover
             @load="isImageLoaded = true" @error="imageLoadError = true">
             
-            <VCardTitle class="text-white" v-text="props.episode.play_title || props.episode?.title"></VCardTitle>
+            <VCardTitle class="text-white" v-text="props.episode?.play_title || props.episode?.title || ''"></VCardTitle>
           </VImg>
           
-  
           
+          <VChip
+              v-if="props.episode?.pay_type === '7' || props.episode?.pay_type === '6' || props.episode?.pay_type === '6' "
+              variant="elevated"
+              size="small"
+              class="border-red-500 bg-red-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold"
+            >
+              {{ props.episode?.pay_type === '7' ? '付费': 'VIP' }}
+          </VChip>
           <!--来源图标-->
-          <VIcon v-if="props.episode.selected" icon="mdi-check"  color="success" class="absolute top-1 right-1"
+          <VIcon v-if="props.episode?.selected" icon="mdi-check"  color="success" class="absolute top-1 right-1"
           />
         </VCard>
       </div>

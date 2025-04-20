@@ -195,6 +195,13 @@ const router = createRouter({
           },
         },
         {
+          path: '/cdetail',
+          component: () => import('../pages/cdetail.vue'),
+          meta: {
+            requiresAuth: true,
+          },
+        },
+        {
           path: '/test',
           component: () => import('../pages/test.vue'),
           meta: {

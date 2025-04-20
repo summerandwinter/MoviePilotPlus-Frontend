@@ -1309,6 +1309,8 @@ export interface CategoryItem {
 // 视频集信息
 export interface VideoEpisode {
   title: string
+  // 7 单片付费 8 免费 6 vip免费
+  pay_type: string
   play_title: string
   web_play_url: string
   image_url: string
@@ -1327,6 +1329,7 @@ export interface VideoEpisode {
 // 豆瓣视频信息
 export interface DoubanVideoInfo {
   title: string
+  original_title: string
   card_subtitle: string
   cover_url: string
   year: string
@@ -1540,6 +1543,20 @@ export interface Collect {
   torrent_seeded: boolean
 }
 
+export interface CollectProgress {
+  // ID
+  id: number
+  type: string
+  name: string
+  subject_id: number
+  success: boolean
+  params: string | null
+  error_msg: string | null
+  created_at: string
+  
+  
+}
+
 export interface CollectCreate {
   // 收藏ID
   cid: string
@@ -1572,7 +1589,7 @@ export interface CollectCreate {
     poster: string
   }>
   // 站点列表
-  site_list: number[]
+  site_list: string[]
   // TMDB ID
   tmdb_id?: number
   // 收藏时间
@@ -1656,4 +1673,25 @@ export interface Progress {
   percent: number
   speed: number
   state: string
+}
+
+export interface SiteSeed {
+  
+  id: number
+  collect_id: number
+  site_id: number
+  site_name: string
+  torrent_path: string
+  created_at: string
+  updated_at: string
+  last_error: string
+  status: string
+  torrent_id: string
+  torrent_hash: string
+  downloader: string
+  layout: string
+  torrent_uploaded: boolean
+  torrent_downloaded: boolean
+  torrent_seeded: boolean 
+  
 }

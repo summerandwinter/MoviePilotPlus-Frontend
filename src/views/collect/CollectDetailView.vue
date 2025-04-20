@@ -3,26 +3,24 @@ import { useToast } from 'vue-toast-notification'
 import PersonCardSlideView from './PersonCardSlideView.vue'
 import MediaCardSlideView from './MediaCardSlideView.vue'
 import api from '@/api'
-import type { VideoInfo, CollectCreate, NotExistMediaInfo, Site, Subscribe, TmdbEpisode } from '@/api/types'
+import type { Collect, CollectCreate, DownloadTask, SiteSeed, Subscribe, TmdbEpisode } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
-import EpisodeCard from '@/components/cards/EpisodeCard.vue'
+import TaskCard from '@/components/cards/TaskCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { formatSeason } from '@/@core/utils/formatters'
 import router from '@/router'
-import SubscribeEditDialog from '@/components/dialog/SubscribeEditDialog.vue'
+import VideoMediaInfoDialog from '@/components/dialog/VideoMediaInfoDialog.vue'
+import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
+import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
+
+
 import { isNullOrEmptyObject } from '@/@core/utils'
 import { useUserStore } from '@/stores'
 
 // 输入参数
-const mediaProps = defineProps({
-  source: String,
-  mediaid: String,
-  title: String,
-  year: String,
-  type: String,
-  auto_download: Boolean,
-  auto_publish: Boolean,
+const collectProps = defineProps({
+  id: String
 })
 
 // 从 provide 中获取全局设置
@@ -35,10 +33,15 @@ const userStore = useUserStore()
 const $toast = useToast()
 
 // 媒体详情
-const mediaDetail = ref<VideoInfo>({} as VideoInfo)
-// 站点列表
-const siteList = ref<Site[]>([])
+const collectDetail = ref<Collect>({} as Collect)
 
+const taskList = ref<DownloadTask[]>([])
+// 站点列表
+const siteList = ref<SiteSeed[]>([])
+
+const showMediaInfo = ref(false)
+const showDescInfo = ref(false)
+const showProgressInfo = ref(false)
 // 本地是否存在，存在则包括Item信息
 const existsItemId = ref('1')
 
@@ -51,71 +54,59 @@ const isRefreshed = ref(false)
 
 // 采集任务添加表单
 const addForm = ref<CollectCreate>({
-    cid: "",
-    defn: "",
-    douban_id: "",
-    cn_title: "",
-    year: "",
-    type: "",
-    site: "",
-    auto_download: true,
-    auto_publish: true,
-    source: "WEB-DL",
-    tags: [],
-    episode_list: [],
-    site_list: []
+  cid: "",
+  defn: "",
+  douban_id: "",
+  cn_title: "",
+  year: "",
+  type: "",
+  site: "",
+  auto_download: true,
+  auto_publish: true,
+  source: "WEB-DL",
+  tags: [],
+  episode_list: [],
+  site_list: []
 })
 
 // 调用API查询详情
-async function getMediaDetail() {
-  if (mediaProps.mediaid && mediaProps.type) {
-    mediaDetail.value = await api.get(`${mediaProps.source?.toLowerCase()}/detail`, {
-      params: {
-        cid: mediaProps.mediaid
-      },
-    })
-    // 默认选中所有剧集
-    // mediaDetail.value.episode_list?.forEach(episode => {
-    //   episode.selected = true
-    // })
-    // 设置默认选中第一个清晰度
-    if (mediaDetail.value.definition_list?.length > 0) {
-      addForm.value.defn = mediaDetail.value.definition_list[0].name
-    }
-    // addForm 赋值
-    addForm.value.cid = mediaProps.mediaid
-    addForm.value.douban_id = mediaDetail.value.douban_id ?? ''
-    addForm.value.cn_title = mediaDetail.value.title ?? ''
-    addForm.value.year = mediaDetail.value.year ?? ''
-    addForm.value.type = mediaProps.type ?? ''
-    addForm.value.site = mediaProps.source ?? ''
-    
+async function getDetail() {
+  if (collectProps.id) {
+    collectDetail.value = await api.get(`collect/${collectProps.id}`)
+    taskList.value = await api.get(`collect/task/${collectProps.id}`)
+    console.log('taskList', taskList.value)
+
+    addForm.value.douban_id = collectDetail.value.douban_id ?? ''
+    addForm.value.cn_title = collectDetail.value.title ?? ''
+    addForm.value.year = collectDetail.value.year ?? ''
+
+
     isRefreshed.value = true
   }
 }
 
 async function getSites() {
   try {
-    siteList.value = await api.get('site/')
+    siteList.value = await api.get(`collect/seed/${collectProps.id}`)
   } catch (error) {
     console.error(error)
   }
+}
+function showMediaInfoDialog(){
+  showMediaInfo.value = true
+}
+function showDescInfoDialog(){
+  showDescInfo.value = true
+}
+function showProgressInfoDialog(){
+  console.log('showProgressInfoDialog')
+  showProgressInfo.value = true
 }
 
 // 调用API添加采集任务
 async function addCollect() {
   try {
-    // 处理选中的剧集
-    mediaDetail.value.episode_list?.forEach(episode => {
-      if (episode.selected) {
-        addForm.value.episode_list.push({
-          cid: episode.cid,
-          vid: episode.vid,
-          episode: episode.title,
-          poster: episode.image_url
-        })
-      }
-    })
+
     // 提交前检查参数
     console.log(addForm.value)
     if (!validateForm()) return
@@ -130,7 +121,7 @@ async function addCollect() {
     }
 
     // 提示
-    showCollectAddToast(result.success, mediaDetail.value?.title ?? '', result.message)
+    showCollectAddToast(result.success, collectDetail.value?.title ?? '', result.message)
   } catch (error) {
     console.error(error)
   }
@@ -140,20 +131,18 @@ async function addCollect() {
 function validateForm() {
   // 清空旧数据
   const errors = []
-  
+
   if (!addForm.value.cid) {
     errors.push('媒体ID不能为空！')
   }
   if (!addForm.value.defn) {
     errors.push('请选择清晰度！')
   }
-  if (!mediaDetail.value.episode_list?.some(e => e.selected)) {
-    errors.push('请至少选择一集！')
-  }
+
   if (addForm.value.site_list.length === 0) {
     errors.push('请至少选择一个站点！')
   }
-  
+
   if (errors.length > 0) {
     errors.forEach(msg => $toast.error(msg))
     return false
@@ -178,7 +167,7 @@ function getW500Image(url = '') {
 
 // 计算Poster地址
 const getPosterUrl: Ref<string> = computed(() => {
-  const url = mediaDetail.value.new_pic_vt ?? ''
+  const url = collectDetail.value.cover ?? ''
   // 使用图片缓存
   if (globalSettings.GLOBAL_IMAGE_CACHE)
     return `${import.meta.env.VITE_API_BASE_URL}system/cache/image?url=${encodeURIComponent(url)}`
@@ -190,7 +179,7 @@ const getPosterUrl: Ref<string> = computed(() => {
 
 // 计算backdrop地址
 const getBackdropUrl: Ref<string> = computed(() => {
-  const url = mediaDetail.value.new_pic_hz ?? ''
+  const url = collectDetail.value.poster ?? ''
   // 使用图片缓存
   if (globalSettings.GLOBAL_IMAGE_CACHE)
     return `${import.meta.env.VITE_API_BASE_URL}system/cache/image?url=${encodeURIComponent(url)}`
@@ -229,7 +218,7 @@ async function handlePlay() {
 }
 
 onBeforeMount(() => {
-  getMediaDetail()
+  getDetail()
   getSites()
 })
 </script>
@@ -246,11 +235,7 @@ onBeforeMount(() => {
     <div class="media-page">
       <div class="media-header">
         <div class="media-poster">
-          <VImg
-            :src="getW500Image(getPosterUrl)"
-            cover
-            class="object-cover aspect-w-2 aspect-h-3 ring-1 ring-gray-500"
-          >
+          <VImg :src="getW500Image(getPosterUrl)" cover class="object-cover aspect-w-2 aspect-h-3 ring-1 ring-gray-500">
             <template #placeholder>
               <div class="w-full h-full">
                 <VSkeletonLoader class="object-cover aspect-w-2 aspect-h-3" />
@@ -261,47 +246,25 @@ onBeforeMount(() => {
         <div class="media-title">
           <div v-if="existsItemId" class="media-status">
             <span
-              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden"
-            >
+              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>已入库</span></div>
             </span>
           </div>
           <h1 class="d-flex flex-column flex-lg-row align-baseline justify-center justify-lg-start">
             <div class="align-self-center align-self-lg-end">
-              {{ mediaDetail.title }}
-            </div>
-            <div v-if="mediaDetail.year" class="text-lg align-self-center align-self-lg-end">
-              （{{ mediaDetail.year }}）
+              {{ collectDetail.name }}
             </div>
           </h1>
-          <span class="media-attributes">
-            <span v-if="mediaDetail.areaName"
-              >{{ mediaDetail.areaName }}</span
-            >
-            <span v-if="mediaDetail.douban_info && mediaDetail.douban_info.card_subtitle" class="mx-1">
-              |
-            </span>
-            <span v-if="mediaDetail.douban_info && mediaDetail.douban_info.card_subtitle">{{ mediaDetail.douban_info.card_subtitle }}</span>
-          </span>
+
         </div>
         <div class="media-actions">
-          <VBtn         
-            variant="tonal"
-            color="info"
-            class="mb-2"
-            @click="addCollect"
-          >
+          <VBtn variant="tonal" color="info" class="mb-2" @click="addCollect">
             <template #prepend>
               <VIcon icon="mdi-plus" />
             </template>
             {{ '添加' }}
           </VBtn>
-          <VBtn
-        
-            class="ms-2 mb-2"
-            :color="getSubscribeColor"
-            variant="tonal"
-          >
+          <VBtn class="ms-2 mb-2" :color="getSubscribeColor" variant="tonal" @click="showProgressInfoDialog()">
             <template #prepend>
               <VIcon :icon="getSubscribeIcon" />
             </template>
@@ -317,128 +280,108 @@ onBeforeMount(() => {
       </div>
       <div class="media-overview">
         <div class="media-overview-left">
-          <div  class="tagline">
+          <div class="tagline">
             tagline
           </div>
-          <h2 v-if="mediaDetail.overview">简介</h2>
-          <p>{{ mediaDetail.overview }}</p>
+          <div class="mt-6">
+            <v-stepper bg-color="rgba(255, 255, 255, 0.1)" :disabled="false"> 
+              <v-stepper-header>
+                <v-stepper-item  title="媒体下载" value="1" :color="collectDetail.is_downloaded ? 'success' : ''"
+                  :complete="collectDetail.is_downloaded"></v-stepper-item>
+                <v-divider></v-divider>
+                <v-stepper-item title="媒体信息采集" value="2" :color="collectDetail.mediainfo_collected ? 'success' : ''"
+                  :complete="collectDetail.mediainfo_collected" 
+                  :editable="collectDetail.mediainfo_collected" 
+                  @click.stop="showMediaInfoDialog"></v-stepper-item>
+                <v-divider></v-divider>
+                <v-stepper-item title="截图" value="3" :color="collectDetail.image_collected ? 'success' : ''"
+                  :complete="collectDetail.image_collected"
+                  :editable="collectDetail.image_collected" ></v-stepper-item>
+                <v-divider></v-divider>
+                <v-stepper-item title="简介采集" value="4" :color="collectDetail.desc_collected ? 'success' : ''"
+                  :complete="collectDetail.desc_collected"
+                  :editable="collectDetail.desc_collected"
+                  @click.stop="showDescInfoDialog"></v-stepper-item>
+                <v-divider></v-divider>
+                <v-stepper-item title="重命名" value="5"
+                  :color="collectDetail.is_renamed ? 'success' : ''"
+                  :complete="collectDetail.is_renamed"
+                  :editable="collectDetail.is_renamed"></v-stepper-item>
+                <v-divider></v-divider>
+                <v-stepper-item title="制作种子" value="6" :color="collectDetail.torrent_created ? 'success' : ''"
+                  :complete="collectDetail.torrent_created"
+                  :editable="collectDetail.torrent_created"></v-stepper-item>
+              </v-stepper-header>
+            </v-stepper>
+          </div>
           <div class="mt-6">
             <v-row>
               <v-col cols="2">
-                <v-switch
-                  v-model="addForm.auto_download"
-                  :label="`自动下载`"
-                  hide-details>
+                <v-switch v-model="addForm.auto_download" :label="`自动下载`" hide-details>
                 </v-switch>
               </v-col>
               <v-col cols="2">
-                <v-switch
-                  v-model="addForm.auto_publish"
-                  :label="`自动发布`"
-                  hide-details>
+                <v-switch v-model="addForm.auto_publish" :label="`自动发布`" hide-details>
                 </v-switch>
               </v-col>
             </v-row>
           </div>
+
           <div class="mt-6">
-            <VChipGroup column v-model="addForm.defn">
-              <template v-for="definition in mediaDetail.definition_list" :key="definition.name">
-                <VChip
-                  v-if="definition.sname"
-                  :color="addForm.defn === definition.name ? 'primary' : ''"
-                  filter
-                  variant="outlined"
-                  :value="definition.name"
-                >
-                  {{ definition.sname }}
-                </VChip>
-              </template>
+            <VChipGroup class="p-3" column>
+              <VChip v-for="(item, index) in siteList" :key="index">
+                <template #append>
+                  <VBadge color="primary" :content="item.status" inline size="small" />
+                </template>
+                {{ item.site_name }}
+              </VChip>
             </VChipGroup>
-          </div>
-          <div class="mt-6">
-            <VChipGroup column v-model="addForm.site_list" multiple>
-              <template v-for="site in siteList" :key="site.id">
-                <VChip
-                 
-                  :color="addForm.site_list.includes(site.name) ? 'primary' : ''"
-                  filter
-                  variant="outlined"
-                  :value="site.id"
-                >
-                  {{ site.name }}
-                </VChip>
-              </template>
-            </VChipGroup>
+
           </div>
         </div>
-        <div v-if="mediaDetail.douban_info" class="media-overview-right">
-          <div class="media-facts">
-            <div v-if="mediaDetail.douban_info.rating" class="media-ratings">
-              <VRating v-model="mediaDetail.douban_info.rating" density="compact" length="10" class="ma-2" readonly />
-            </div>
-            <div v-if="mediaDetail.douban_info.id" class="media-fact">
-              <span>ID</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.id }}</span>
-            </div>
-            <div v-if="mediaDetail.douban_info.original_title" class="media-fact">
-              <span>原始标题</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.original_title }}</span>
-            </div>
-            
-            <div v-if="mediaDetail.douban_info.year" class="media-fact">
-              <span>上映日期</span>
-              <span class="media-fact-value">
-                <span class="flex items-center justify-end">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                    class="h-4 w-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
-                    />
-                  </svg>
-                  <span class="ml-1.5">{{ mediaDetail.douban_info.year  }}</span>
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-         
+
+
       </div>
-      <div v-if="mediaDetail.episode_list">
+      <div v-if="taskList && taskList.length > 0">
         <SlideView>
           <template #content>
-            <template v-for="data in mediaDetail.episode_list" :key="data.vid">
-              <EpisodeCard :episode="data" height="9rem" width="16rem" />
+            <template v-for="data in taskList" :key="data.id">
+              <TaskCard :info="data" height="11rem" width="20rem" />
             </template>
           </template>
         </SlideView>
       </div>
-      
+
     </div>
+    <VideoMediaInfoDialog
+      v-if="showMediaInfo"
+       v-model="showMediaInfo"
+      :collect="collectDetail"
+      @close="showMediaInfo = false"
+    />
+    <VideoDescInfoDialog
+      v-if="showDescInfo"
+       v-model="showDescInfo"
+      :collect="collectDetail"
+      @close="showDescInfo = false"
+    />
+    <ProgressInfoDialog
+      v-if="showProgressInfo"
+       v-model="showProgressInfo"
+      :collect="collectDetail"
+      @close="showProgressInfo = false"
+    />
   </div>
-  <NoDataFound
-    v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
-    error-code="500"
-    error-title="出错啦！"
-    error-description="未识别到媒体信息。"
-  />
+  <NoDataFound v-if="!collectDetail.id && isRefreshed" error-code="500" error-title="出错啦！"
+    error-description="未识别到媒体信息。" />
+    
 </template>
 
 <style lang="scss">
 .vue-media-back {
-  background-image: linear-gradient(
-      180deg,
+  background-image: linear-gradient(180deg,
       rgba(var(--v-theme-background), 0) 50%,
-      rgba(var(--v-theme-background), 1) 100%
-    ),
+      rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(90deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(270deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%);
   box-shadow: 0 0 0 2px rgb(var(--v-theme-background));
@@ -462,7 +405,7 @@ onBeforeMount(() => {
   padding-block-start: 1rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-header {
     flex-direction: row;
     align-items: flex-end;
@@ -475,7 +418,7 @@ onBeforeMount(() => {
   padding-block: 2rem 1rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview {
     flex-direction: row;
   }
@@ -491,14 +434,14 @@ onBeforeMount(() => {
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-poster {
     inline-size: 13rem;
     margin-inline-end: 1rem;
   }
 }
 
-@media (width >= 768px) {
+@media (width >=768px) {
   .media-poster {
     border-radius: 0.5rem;
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -517,7 +460,7 @@ onBeforeMount(() => {
   text-align: center;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-title {
     margin-block-start: 0;
     margin-inline-end: 1rem;
@@ -525,14 +468,14 @@ onBeforeMount(() => {
   }
 }
 
-.media-title > h1 {
+.media-title>h1 {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 2rem;
 }
 
-@media (width >= 1280px) {
-  .media-title > h1 {
+@media (width >=1280px) {
+  .media-title>h1 {
     font-size: 2.25rem;
     line-height: 2.5rem;
   }
@@ -545,13 +488,13 @@ ul.media-crew {
   margin-block-start: 1.5rem;
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   ul.media-crew {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-ul.media-crew > li {
+ul.media-crew>li {
   display: flex;
   flex-direction: column;
   font-weight: 700;
@@ -574,7 +517,7 @@ a.crew-name {
   margin-block-start: 0.25rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-attributes {
     justify-content: flex-start;
     font-size: 1rem;
@@ -583,7 +526,7 @@ a.crew-name {
   }
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-attributes {
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -600,13 +543,13 @@ a.crew-name {
   margin-block-start: 1rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-actions {
     margin-block-start: 0;
   }
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-actions {
     flex-wrap: nowrap;
     justify-content: flex-end;
@@ -617,7 +560,7 @@ a.crew-name {
   flex: 1 1 0%;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview-left {
     margin-inline-end: 2rem;
   }
@@ -628,7 +571,7 @@ a.crew-name {
   margin-block-start: 2rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview-right {
     inline-size: 20rem;
     margin-block-start: 0;
@@ -678,7 +621,7 @@ a.crew-name {
   line-height: 1.75rem;
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-overview h2 {
     font-size: 1.5rem;
     line-height: 2rem;
@@ -692,7 +635,7 @@ a.crew-name {
   margin-block-end: 1rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .tagline {
     font-size: 1.5rem;
     line-height: 2rem;
