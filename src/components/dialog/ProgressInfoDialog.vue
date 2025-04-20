@@ -30,7 +30,7 @@ onMounted(() => {
       <!-- Toolbar -->
       <div>
         <VToolbar color="primary">
-          <VToolbarTitle>{{ `流程节点信息 - ${props.collect?.name}` }}</VToolbarTitle>
+          <VToolbarTitle>{{ `进度信息 - ${props.collect?.name}` }}</VToolbarTitle>
           <VSpacer />
           <VToolbarItems>
             <VBtn icon variant="plain" @click="emit('close')" class="me-3">

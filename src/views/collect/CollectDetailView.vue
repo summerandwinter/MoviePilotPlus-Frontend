@@ -8,6 +8,7 @@ import NoDataFound from '@/components/NoDataFound.vue'
 import TaskCard from '@/components/cards/TaskCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
+import { seedStatus} from '@/api/constants'
 import { formatSeason } from '@/@core/utils/formatters'
 import router from '@/router'
 import VideoMediaInfoDialog from '@/components/dialog/VideoMediaInfoDialog.vue'
@@ -186,35 +187,8 @@ const getBackdropUrl: Ref<string> = computed(() => {
   return url
 })
 
-
-// 计算订阅图标
-const getSubscribeIcon = computed(() => {
-  if (isSubscribed.value) return 'mdi-heart'
-  else return 'mdi-heart-outline'
-})
-
-// 计算订阅按钮颜色
-const getSubscribeColor = computed(() => {
-  if (isSubscribed.value) return 'error'
-  else return 'warning'
-})
-
-// 跳转播放页面
-async function handlePlay() {
-  // 获取播放链接地址
-  try {
-    const result: { [key: string]: any } = await api.get(`mediaserver/play/${existsItemId.value}`)
-    if (result?.success) {
-      // 打开链接地址
-      setTimeout(() => {
-        window.open(result.data.url, '_blank')
-      }, 100)
-    } else {
-      $toast.error(`获取播放链接失败：${result.message}！`)
-    }
-  } catch (error) {
-    console.error(error)
-  }
+function getSeedStatus(status: string) {
+  return seedStatus[status as keyof typeof seedStatus]
 }
 
 onBeforeMount(() => {
@@ -258,23 +232,12 @@ onBeforeMount(() => {
 
         </div>
         <div class="media-actions">
-          <VBtn variant="tonal" color="info" class="mb-2" @click="addCollect">
+          
+          <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click="showProgressInfoDialog()">
             <template #prepend>
-              <VIcon icon="mdi-plus" />
+              <VIcon icon="mdi-timetable" />
             </template>
-            {{ '添加' }}
-          </VBtn>
-          <VBtn class="ms-2 mb-2" :color="getSubscribeColor" variant="tonal" @click="showProgressInfoDialog()">
-            <template #prepend>
-              <VIcon :icon="getSubscribeIcon" />
-            </template>
-            {{ '订阅' }}
-          </VBtn>
-          <VBtn v-if="existsItemId" class="ms-2 mb-2" variant="tonal" @click="handlePlay()">
-            <template #prepend>
-              <VIcon icon="mdi-play" />
-            </template>
-            在线播放
+            进度
           </VBtn>
         </div>
       </div>
@@ -331,7 +294,7 @@ onBeforeMount(() => {
             <VChipGroup class="p-3" column>
               <VChip v-for="(item, index) in siteList" :key="index">
                 <template #append>
-                  <VBadge color="primary" :content="item.status" inline size="small" />
+                  <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
                 </template>
                 {{ item.site_name }}
               </VChip>
