@@ -11,6 +11,8 @@ import AccountSettingSystem from '@/views/setting/AccountSettingSystem.vue'
 import AccountSettingScheduler from '@/views/setting/AccountSettingScheduler.vue'
 import AccountSettingDirectory from '@/views/setting/AccountSettingDirectory.vue'
 import AccountSettingRule from '@/views/setting/AccountSettingRule.vue'
+import AccountSettingVideo from '@/views/setting/AccountSettingVideo.vue'
+
 import { SettingTabs } from '@/router/menu'
 
 const route = useRoute()
@@ -48,7 +50,14 @@ function jumpTab(tab: string) {
           </div>
         </transition>
       </VWindowItem>
-
+       <!-- 视频网站 -->
+       <VWindowItem value="video">
+        <transition name="fade-slide" appear>
+          <div>
+            <AccountSettingVideo />
+          </div>
+        </transition>
+      </VWindowItem>
       <!-- 目录 -->
       <VWindowItem value="directory">
         <transition name="fade-slide" appear>

@@ -143,6 +143,12 @@ export const SettingTabs = [
     description: '基础设置、下载器（Qbittorrent、Transmission）、媒体服务器（Emby、Jellyfin、Plex）',
   },
   {
+    title: '视频网站',
+    icon: 'mdi-video',
+    tab: 'video',
+    description: '下载目录、媒体库目录、整理、刮削',
+  },
+  {
     title: '存储 & 目录',
     icon: 'mdi-folder',
     tab: 'directory',
