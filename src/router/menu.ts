@@ -118,7 +118,7 @@ export const SystemNavMenus = [
   },
   {
     title: '采集器',
-    icon: 'mdi-star-outline',
+    icon: 'mdi-video',
     to: '/collect',
     header: '采集',
     admin: false,
@@ -126,7 +126,7 @@ export const SystemNavMenus = [
   },
   {
     title: '任务',
-    icon: 'mdi-apple-safari',
+    icon: 'mdi-arrow-down-bold-hexagon-outline',
     to: '/task',
     header: '采集',
     admin: false,

@@ -8,12 +8,13 @@ import NoDataFound from '@/components/NoDataFound.vue'
 import TaskCard from '@/components/cards/TaskCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
-import { seedStatus} from '@/api/constants'
+import { seedStatus } from '@/api/constants'
 import { formatSeason } from '@/@core/utils/formatters'
 import router from '@/router'
 import VideoMediaInfoDialog from '@/components/dialog/VideoMediaInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
+import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 
 
 import { isNullOrEmptyObject } from '@/@core/utils'
@@ -38,11 +39,12 @@ const collectDetail = ref<Collect>({} as Collect)
 
 const taskList = ref<DownloadTask[]>([])
 // 站点列表
-const siteList = ref<SiteSeed[]>([])
+const siteSeedList = ref<SiteSeed[]>([])
 
 const showMediaInfo = ref(false)
 const showDescInfo = ref(false)
 const showProgressInfo = ref(false)
+const showAddSiteSedd = ref(false)
 // 本地是否存在，存在则包括Item信息
 const existsItemId = ref('1')
 
@@ -86,22 +88,26 @@ async function getDetail() {
   }
 }
 
-async function getSites() {
+async function getSiteSeedList() {
   try {
-    siteList.value = await api.get(`collect/seed/${collectProps.id}`)
+    siteSeedList.value = await api.get(`collect/seed/${collectProps.id}`)
   } catch (error) {
     console.error(error)
   }
 }
-function showMediaInfoDialog(){
+function showMediaInfoDialog() {
   showMediaInfo.value = true
 }
-function showDescInfoDialog(){
+function showDescInfoDialog() {
   showDescInfo.value = true
 }
-function showProgressInfoDialog(){
+function showProgressInfoDialog() {
   console.log('showProgressInfoDialog')
   showProgressInfo.value = true
+}
+function showAddSiteSeddoDialog() {
+  console.log('AddSiteSeedDialog')
+  showAddSiteSedd.value = true
 }
 
 // 调用API添加采集任务
@@ -208,7 +214,7 @@ function getSeedStatus(status: string) {
 
 onBeforeMount(() => {
   getDetail()
-  getSites()
+  getSiteSeedList()
 })
 </script>
 
@@ -247,7 +253,7 @@ onBeforeMount(() => {
 
         </div>
         <div class="media-actions">
-          
+
           <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click="showProgressInfoDialog()">
             <template #prepend>
               <VIcon icon="mdi-timetable" />
@@ -262,33 +268,27 @@ onBeforeMount(() => {
             tagline
           </div>
           <div class="mt-6">
-            <v-stepper bg-color="rgba(255, 255, 255, 0.1)" :disabled="false"> 
+            <v-stepper bg-color="rgba(255, 255, 255, 0.1)" :disabled="false">
               <v-stepper-header>
-                <v-stepper-item  title="媒体下载" value="1" :color="collectDetail.is_downloaded ? 'success' : ''"
+                <v-stepper-item title="媒体下载" value="1" :color="collectDetail.is_downloaded ? 'success' : ''"
                   :complete="collectDetail.is_downloaded"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="媒体信息采集" value="2" :color="collectDetail.mediainfo_collected ? 'success' : ''"
-                  :complete="collectDetail.mediainfo_collected" 
-                  :editable="collectDetail.mediainfo_collected" 
+                  :complete="collectDetail.mediainfo_collected" :editable="collectDetail.mediainfo_collected"
                   @click.stop="showMediaInfoDialog"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="截图" value="3" :color="collectDetail.image_collected ? 'success' : ''"
-                  :complete="collectDetail.image_collected"
-                  :editable="collectDetail.image_collected" ></v-stepper-item>
+                  :complete="collectDetail.image_collected" :editable="collectDetail.image_collected"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="简介采集" value="4" :color="collectDetail.desc_collected ? 'success' : ''"
-                  :complete="collectDetail.desc_collected"
-                  :editable="collectDetail.desc_collected"
+                  :complete="collectDetail.desc_collected" :editable="collectDetail.desc_collected"
                   @click.stop="showDescInfoDialog"></v-stepper-item>
                 <v-divider></v-divider>
-                <v-stepper-item title="重命名" value="5"
-                  :color="collectDetail.is_renamed ? 'success' : ''"
-                  :complete="collectDetail.is_renamed"
-                  :editable="collectDetail.is_renamed"></v-stepper-item>
+                <v-stepper-item title="重命名" value="5" :color="collectDetail.is_renamed ? 'success' : ''"
+                  :complete="collectDetail.is_renamed" :editable="collectDetail.is_renamed"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="制作种子" value="6" :color="collectDetail.torrent_created ? 'success' : ''"
-                  :complete="collectDetail.torrent_created"
-                  :editable="collectDetail.torrent_created"></v-stepper-item>
+                  :complete="collectDetail.torrent_created" :editable="collectDetail.torrent_created"></v-stepper-item>
               </v-stepper-header>
             </v-stepper>
           </div>
@@ -307,30 +307,36 @@ onBeforeMount(() => {
 
           <div class="mt-6">
             <VChipGroup class="p-3" column>
-              <VChip v-for="(item, index) in siteList" :key="index">
+              <VChip v-for="(item, index) in siteSeedList" :key="index">
                 <template #append>
                   <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
                 </template>
                 {{ item.site_name }}
                 <VMenu :activator="'parent'" :close-on-content-click="true" :location="'right'">
-            <VList>
-              <VListItem @click="publish(item.id)" base-color="info">
-                <template #prepend>
-                  <VIcon icon="mdi-cloud-upload" size="small" />
-                </template>
-                <VListItemTitle>发布到{{ item.site_name }}</VListItemTitle>
-              </VListItem>
-              <VListItem @click="deleteSeed(item.id)">
-                <template #prepend>
-                  <VIcon icon="mdi-delete-outline" size="small" color="error" />
-                </template>
-                <VListItemTitle class="text-error">删除任务</VListItemTitle>
-              </VListItem>
-            </VList>
-          </VMenu>
+                  <VList>
+                    <VListItem @click="publish(item.id)" base-color="info">
+                      <template #prepend>
+                        <VIcon icon="mdi-cloud-upload" size="small" />
+                      </template>
+                      <VListItemTitle>发布到{{ item.site_name }}</VListItemTitle>
+                    </VListItem>
+                    <VListItem @click="deleteSeed(item.id)">
+                      <template #prepend>
+                        <VIcon icon="mdi-delete-outline" size="small" color="error" />
+                      </template>
+                      <VListItemTitle class="text-error">删除任务</VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
               </VChip>
+              <VBtn class="ms-2 mb-2" color="success" variant="tonal" @click="showAddSiteSeddoDialog()">
+            <template #prepend>
+              <VIcon icon="mdi-plus" />
+            </template>
+            添加站点
+          </VBtn>
             </VChipGroup>
-
+            
           </div>
         </div>
 
@@ -347,28 +353,18 @@ onBeforeMount(() => {
       </div>
 
     </div>
-    <VideoMediaInfoDialog
-      v-if="showMediaInfo"
-       v-model="showMediaInfo"
-      :collect="collectDetail"
-      @close="showMediaInfo = false"
-    />
-    <VideoDescInfoDialog
-      v-if="showDescInfo"
-       v-model="showDescInfo"
-      :collect="collectDetail"
-      @close="showDescInfo = false"
-    />
-    <ProgressInfoDialog
-      v-if="showProgressInfo"
-       v-model="showProgressInfo"
-      :collect="collectDetail"
-      @close="showProgressInfo = false"
-    />
+    <VideoMediaInfoDialog v-if="showMediaInfo" v-model="showMediaInfo" :collect="collectDetail"
+      @close="showMediaInfo = false" />
+    <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="collectDetail"
+      @close="showDescInfo = false" />
+    <ProgressInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" :collect="collectDetail"
+      @close="showProgressInfo = false" />
+    <AddSiteSeedDialog v-if="showAddSiteSedd" v-model="showAddSiteSedd" :collect="collectDetail" :siteSeedList="siteSeedList"
+      @close="showAddSiteSedd = false" />
   </div>
   <NoDataFound v-if="!collectDetail.id && isRefreshed" error-code="500" error-title="出错啦！"
     error-description="未识别到媒体信息。" />
-    
+
 </template>
 
 <style lang="scss">
