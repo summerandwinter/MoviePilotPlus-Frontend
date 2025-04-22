@@ -105,24 +105,39 @@ function showProgressInfoDialog(){
 }
 
 // 调用API添加采集任务
-async function addCollect() {
+async function publish(id: number) {
   try {
-
-    // 提交前检查参数
-    console.log(addForm.value)
-    if (!validateForm()) return
-    // 调用接口添加采集任务
     startNProgress()
     // 请求API
-    const result: { [key: string]: any } = await api.post('collect/', addForm.value)
+    const result: { [key: string]: any } = await api.get('collect/torrent_publish/' + id)
     // 添加采集任务状态
     if (result.success) {
       // 成功
-      isSubscribed.value = true
-    }
+      $toast.success(`发布成功！`)
 
-    // 提示
-    showCollectAddToast(result.success, collectDetail.value?.title ?? '', result.message)
+    } else {
+      $toast.error(`发布失败`)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+  doneNProgress()
+}
+
+async function deleteSeed(id: number) {
+  try {
+    startNProgress()
+    // 请求API
+    // const result: { [key: string]: any } = await api.get('torrent_seed/' + id)
+    // // 添加采集任务状态
+    // if (result.success) {
+    //   // 成功
+    //   $toast.success(`发布成功！`)
+
+    // } else {
+    //   $toast.error(`发布失败`)
+    // }
+    $toast.success(`删除成功！`)
   } catch (error) {
     console.error(error)
   }
@@ -297,6 +312,22 @@ onBeforeMount(() => {
                   <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
                 </template>
                 {{ item.site_name }}
+                <VMenu :activator="'parent'" :close-on-content-click="true" :location="'right'">
+            <VList>
+              <VListItem @click="publish(item.id)" base-color="info">
+                <template #prepend>
+                  <VIcon icon="mdi-cloud-upload" size="small" />
+                </template>
+                <VListItemTitle>发布到{{ item.site_name }}</VListItemTitle>
+              </VListItem>
+              <VListItem @click="deleteSeed(item.id)">
+                <template #prepend>
+                  <VIcon icon="mdi-delete-outline" size="small" color="error" />
+                </template>
+                <VListItemTitle class="text-error">删除任务</VListItemTitle>
+              </VListItem>
+            </VList>
+          </VMenu>
               </VChip>
             </VChipGroup>
 
