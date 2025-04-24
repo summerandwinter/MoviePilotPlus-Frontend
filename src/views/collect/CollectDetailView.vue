@@ -15,6 +15,7 @@ import VideoMediaInfoDialog from '@/components/dialog/VideoMediaInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
+import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 
 
 import { isNullOrEmptyObject } from '@/@core/utils'
@@ -40,10 +41,11 @@ const collectDetail = ref<Collect>({} as Collect)
 const taskList = ref<DownloadTask[]>([])
 // 站点列表
 const siteSeedList = ref<SiteSeed[]>([])
-
+const seedInfo = ref<SiteSeed>({} as SiteSeed)
 const showMediaInfo = ref(false)
 const showDescInfo = ref(false)
 const showProgressInfo = ref(false)
+const showSiteSeedInfo = ref(false)
 const showAddSiteSedd = ref(false)
 // 本地是否存在，存在则包括Item信息
 const existsItemId = ref('1')
@@ -105,6 +107,13 @@ function showProgressInfoDialog() {
   console.log('showProgressInfoDialog')
   showProgressInfo.value = true
 }
+
+function showSiteSeedInfoDialog(seed: SiteSeed) {
+  console.log('showSiteSeedInfo', seed)
+  seedInfo.value = seed
+  showSiteSeedInfo.value = true
+}
+
 function showAddSiteSeddoDialog() {
   console.log('AddSiteSeedDialog')
   showAddSiteSedd.value = true
@@ -211,7 +220,17 @@ const getBackdropUrl: Ref<string> = computed(() => {
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
 }
+// 添加做种任务成功
+function addSiteSeedSuccess(url: string) {
+  showAddSiteSedd.value = false
+  // 重新加载做种列表
+  getSiteSeedList()
+}
 
+// 添加做种任务失败
+function addSiteSeedError(error: string) {
+  showAddSiteSedd.value = false
+}
 onBeforeMount(() => {
   getDetail()
   getSiteSeedList()
@@ -307,29 +326,13 @@ onBeforeMount(() => {
 
           <div class="mt-6">
             <VChipGroup class="p-3" column>
-              <VChip v-for="(item, index) in siteSeedList" :key="index">
+              <VChip v-for="(item, index) in siteSeedList" :key="index" @click.stop="showSiteSeedInfoDialog(item)">
                 <template #append>
                   <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
                 </template>
                 {{ item.site_name }}
-                <VMenu :activator="'parent'" :close-on-content-click="true" :location="'right'">
-                  <VList>
-                    <VListItem @click="publish(item.id)" base-color="info">
-                      <template #prepend>
-                        <VIcon icon="mdi-cloud-upload" size="small" />
-                      </template>
-                      <VListItemTitle>发布到{{ item.site_name }}</VListItemTitle>
-                    </VListItem>
-                    <VListItem @click="deleteSeed(item.id)">
-                      <template #prepend>
-                        <VIcon icon="mdi-delete-outline" size="small" color="error" />
-                      </template>
-                      <VListItemTitle class="text-error">删除任务</VListItemTitle>
-                    </VListItem>
-                  </VList>
-                </VMenu>
               </VChip>
-              <VBtn class="ms-2 mb-2" color="success" variant="tonal" @click="showAddSiteSeddoDialog()">
+              <VBtn class="ms-2" color="primary" variant="tonal" @click="showAddSiteSeddoDialog()">
             <template #prepend>
               <VIcon icon="mdi-plus" />
             </template>
@@ -359,7 +362,11 @@ onBeforeMount(() => {
       @close="showDescInfo = false" />
     <ProgressInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" :collect="collectDetail"
       @close="showProgressInfo = false" />
+    <SiteSeedInfoDialog v-if="showSiteSeedInfo" v-model="showSiteSeedInfo" :seed="seedInfo"
+      @close="showSiteSeedInfo = false" />
     <AddSiteSeedDialog v-if="showAddSiteSedd" v-model="showAddSiteSedd" :collect="collectDetail" :siteSeedList="siteSeedList"
+      @done="addSiteSeedSuccess"
+      @error="addSiteSeedError"
       @close="showAddSiteSedd = false" />
   </div>
   <NoDataFound v-if="!collectDetail.id && isRefreshed" error-code="500" error-title="出错啦！"
