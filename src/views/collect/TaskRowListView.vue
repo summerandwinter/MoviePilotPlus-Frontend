@@ -202,71 +202,20 @@ const listStyle = computed(() => {
 const sortField = ref('default')
 
 // 数据列表
-const dataList = ref<Array<Context>>([])
+const dataList = ref<Array<Collect>>([])
 
-// 初始化过滤选项
-function initOptions(data: Context) {
-  const { torrent_info, meta_info } = data
-  const optionValue = (options: Array<string>, value: string | undefined) => {
-    value && !options.includes(value) && options.push(value)
-  }
-
-  optionValue(filterOptions.site, torrent_info?.site_name)
-  optionValue(filterOptions.season, meta_info?.season_episode)
-  optionValue(filterOptions.releaseGroup, meta_info?.resource_team)
-  optionValue(filterOptions.videoCode, meta_info?.video_encode)
-  optionValue(filterOptions.freeState, torrent_info?.volume_factor)
-  optionValue(filterOptions.edition, meta_info?.edition)
-  optionValue(filterOptions.resolution, meta_info?.resource_pix)
-}
-
-// 监听数据列表，进行排序
-watchEffect(() => {
-  const list = dataList.value
-  if (sortField.value === 'default') {
-    dataList.value = list.sort((a, b) => b.torrent_info.pri_order - a.torrent_info.pri_order)
-  } else if (sortField.value === 'site') {
-    dataList.value = list.sort((a, b) => (a.torrent_info.site_name || '').localeCompare(b.torrent_info.site_name || ''))
-  } else if (sortField.value === 'size') {
-    dataList.value = list.sort((a, b) => b.torrent_info.size - a.torrent_info.size)
-  } else if (sortField.value === 'seeder') {
-    dataList.value = list.sort((a, b) => b.torrent_info.seeders - a.torrent_info.seeders)
-  }
-})
 
 // 计算过滤后的列表
 watchEffect(() => {
   // 清空列表
   dataList.value = []
-  // 匹配过滤函数
-  const match = (filter: Array<string>, value: string | undefined) =>
-    filter.length === 0 || (value && filter.includes(value))
-
   props.items?.forEach(data => {
-    const { meta_info, torrent_info } = data
-    // if (
-    //   // 站点过滤
-    //   match(filterForm.site, torrent_info.site_name) &&
-    //   // 促销状态过滤
-    //   match(filterForm.freeState, torrent_info.volume_factor) &&
-    //   // 季过滤
-    //   match(filterForm.season, meta_info.season_episode) &&
-    //   // 制作组过滤
-    //   match(filterForm.releaseGroup, meta_info.resource_team) &&
-    //   // 视频编码过滤
-    //   match(filterForm.videoCode, meta_info.video_encode) &&
-    //   // 分辨率过滤
-    //   match(filterForm.resolution, meta_info.resource_pix) &&
-    //   // 质量过滤
-    //   match(filterForm.edition, meta_info.edition)
-    // )
     dataList.value.push(data)
   })
 })
 
 // 初始化过滤选项
 onMounted(() => {
-  props.items?.forEach(initOptions)
 })
 </script>
 
