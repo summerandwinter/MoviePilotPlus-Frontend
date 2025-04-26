@@ -16,6 +16,7 @@ import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
+import CollectOperationDialog from '@/components/dialog/CollectOperationDialog.vue'
 
 
 import { isNullOrEmptyObject } from '@/@core/utils'
@@ -47,6 +48,8 @@ const showDescInfo = ref(false)
 const showProgressInfo = ref(false)
 const showSiteSeedInfo = ref(false)
 const showAddSiteSedd = ref(false)
+const showCollectOperation = ref(false)
+const operationType = ref('')
 // 本地是否存在，存在则包括Item信息
 const existsItemId = ref('1')
 
@@ -97,11 +100,22 @@ async function getSiteSeedList() {
     console.error(error)
   }
 }
-function showMediaInfoDialog() {
-  showMediaInfo.value = true
+function showMediaInfoDialog(operation: string) {
+  if (collectDetail.value.mediainfo_collected) {
+    showMediaInfo.value = true
+  } else {
+    operationType.value = operation
+    showCollectOperation.value = true
+  }
 }
-function showDescInfoDialog() {
-  showDescInfo.value = true
+function showDescInfoDialog(operation: string) {
+  if (collectDetail.value.desc_collected) {
+    showDescInfo.value = true
+  } else {
+    operationType.value = operation
+    showCollectOperation.value = true
+  }
+  
 }
 function showProgressInfoDialog() {
   console.log('showProgressInfoDialog')
@@ -109,7 +123,6 @@ function showProgressInfoDialog() {
 }
 
 function showSiteSeedInfoDialog(seed: SiteSeed) {
-  console.log('showSiteSeedInfo', seed)
   seedInfo.value = seed
   showSiteSeedInfo.value = true
 }
@@ -117,6 +130,12 @@ function showSiteSeedInfoDialog(seed: SiteSeed) {
 function showAddSiteSeddoDialog() {
   console.log('AddSiteSeedDialog')
   showAddSiteSedd.value = true
+}
+
+function showCollectOperationDialog(operation: string) {
+  console.log('showCollectOperationDialog')
+  operationType.value = operation
+  showCollectOperation.value = true
 }
 
 // 调用API添加采集任务
@@ -287,27 +306,34 @@ onBeforeMount(() => {
             tagline
           </div>
           <div class="mt-6">
-            <v-stepper bg-color="rgba(255, 255, 255, 0.1)" :disabled="false">
+            <v-stepper bg-color="rgba(255, 255, 255, 0.1)" complete-icon="mdi-check-circle" edit-icon="mdi-checkbox-blank-circle">
               <v-stepper-header>
                 <v-stepper-item title="媒体下载" value="1" :color="collectDetail.is_downloaded ? 'success' : ''"
-                  :complete="collectDetail.is_downloaded"></v-stepper-item>
+                  :complete="collectDetail.is_downloaded"
+                  :disabled="collectDetail.is_downloaded"
+                  @click.stop="showCollectOperationDialog('start_download')">
+                </v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="媒体信息采集" value="2" :color="collectDetail.mediainfo_collected ? 'success' : ''"
-                  :complete="collectDetail.mediainfo_collected" :editable="collectDetail.mediainfo_collected"
-                  @click.stop="showMediaInfoDialog"></v-stepper-item>
+                  :complete="collectDetail.mediainfo_collected" editable
+                  @click.stop="showMediaInfoDialog('metadata')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="截图" value="3" :color="collectDetail.image_collected ? 'success' : ''"
-                  :complete="collectDetail.image_collected" :editable="collectDetail.image_collected"></v-stepper-item>
+                  :complete="collectDetail.image_collected" editable :disabled="collectDetail.image_collected"
+                  @click.stop="showCollectOperationDialog('screenshot')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="简介采集" value="4" :color="collectDetail.desc_collected ? 'success' : ''"
-                  :complete="collectDetail.desc_collected" :editable="collectDetail.desc_collected"
-                  @click.stop="showDescInfoDialog"></v-stepper-item>
+                  :complete="collectDetail.desc_collected" editable
+                  @click.stop="showDescInfoDialog('collect_desc')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="重命名" value="5" :color="collectDetail.is_renamed ? 'success' : ''"
-                  :complete="collectDetail.is_renamed" :editable="collectDetail.is_renamed"></v-stepper-item>
+                  :complete="collectDetail.is_renamed" editable
+                  :disabled="collectDetail.is_renamed"
+                  @click.stop="showCollectOperationDialog('collect_move')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="制作种子" value="6" :color="collectDetail.torrent_created ? 'success' : ''"
-                  :complete="collectDetail.torrent_created" :editable="collectDetail.torrent_created"></v-stepper-item>
+                  :complete="collectDetail.torrent_created" :editable="!collectDetail.torrent_created"
+                  @click.stop="showCollectOperationDialog('torrent_create')"></v-stepper-item>
               </v-stepper-header>
             </v-stepper>
           </div>
@@ -331,8 +357,24 @@ onBeforeMount(() => {
                   <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
                 </template>
                 {{ item.site_name }}
+                <!-- <VMenu :activator="'parent'" :close-on-content-click="true" :location="'right'">
+                  <VList>
+                    <VListItem @click="publish(item.id)" base-color="info">
+                      <template #prepend>
+                        <VIcon icon="mdi-cloud-upload" size="small" />
+                      </template>
+                      <VListItemTitle>发布到{{ item.site_name }}</VListItemTitle>
+                    </VListItem>
+                    <VListItem @click="deleteSeed(item.id)">
+                      <template #prepend>
+                        <VIcon icon="mdi-delete-outline" size="small" color="error" />
+                      </template>
+                      <VListItemTitle class="text-error">删除任务</VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu> -->
               </VChip>
-              <VBtn class="ms-2" color="primary" variant="tonal" @click="showAddSiteSeddoDialog()">
+              <VBtn class="ms-2 mb-2" color="success" variant="tonal" @click="showAddSiteSeddoDialog()">
             <template #prepend>
               <VIcon icon="mdi-plus" />
             </template>
@@ -368,6 +410,9 @@ onBeforeMount(() => {
       @done="addSiteSeedSuccess"
       @error="addSiteSeedError"
       @close="showAddSiteSedd = false" />
+    <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect="collectDetail" :operation="operationType"
+      @close="showCollectOperation = false" />
+      
   </div>
   <NoDataFound v-if="!collectDetail.id && isRefreshed" error-code="500" error-title="出错啦！"
     error-description="未识别到媒体信息。" />
