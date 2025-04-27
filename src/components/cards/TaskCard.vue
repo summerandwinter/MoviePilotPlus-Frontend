@@ -4,6 +4,7 @@ import type { DownloadTask, Progress } from '@/api/types'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { downloadStatus} from '@/api/constants'
 import tencentImage from '@images/logos/tencent-white.png'
+import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
 // 输入参数
 const props = defineProps({
   info: {
@@ -21,6 +22,7 @@ const props = defineProps({
 
 // 是否显示卡片
 const cardState = ref(true)
+const showProgressInfo = ref(false)
 
 // 进度条
 function getPercentage() {
@@ -36,7 +38,9 @@ function getPercentage() {
 const siteIconDict: { [key: string]: any } = {
   Tencent: tencentImage
 }
-
+function showProgressInfoDialog() {
+  showProgressInfo.value = true
+}
 // 速度
 function getSpeedText() {
   if (props.progress?.length) {
@@ -154,7 +158,8 @@ const taskCardRef = ref<HTMLElement | null>(null)
     
     <template #default="hover">
       <div ref="taskCardRef">
-      <VCard v-if="cardState" :key="props.info?.id" class="glass-card" v-bind="hover.props" :height="props.height" :width="props.width"> 
+      <VCard v-if="cardState" :key="props.info?.id" class="glass-card" v-bind="hover.props" 
+      :height="props.height" :width="props.width" @click.stop="showProgressInfoDialog"> 
         <VChip
               variant="elevated"
               size="small"
@@ -215,6 +220,8 @@ const taskCardRef = ref<HTMLElement | null>(null)
         </VCardItem>
         
       </VCard>
+      <ProgressInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" type="task" :id="props.info.id" :name="props.info.name"
+      @close="showProgressInfo = false" />
     </div>
     </template>
   

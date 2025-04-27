@@ -5,14 +5,13 @@ import { CollectProgress, Collect } from '@/api/types'
 const progress = ref<Array<CollectProgress>>([])
 // 输入参数
 const props = defineProps({
-  collect: {
-    type: Object as () => Collect,
-    default: () => ({})
-  }
+  id: Number,
+  type: String,
+  name: String
 })
 async function getProgressInfo() {
   try {
-    progress.value = await api.get(`collect/progress/collect/${props?.collect.id}`)
+    progress.value = await api.get(`collect/progress/${props.type}/${props.id}`)
   } catch (error) {
     console.error(error)
   }
@@ -30,7 +29,7 @@ onMounted(() => {
       <!-- Toolbar -->
       <div>
         <VToolbar color="primary">
-          <VToolbarTitle>{{ `进度信息 - ${props.collect?.name}` }}</VToolbarTitle>
+          <VToolbarTitle>{{ `进度信息 - ${props.name}` }}</VToolbarTitle>
           <VSpacer />
           <VToolbarItems>
             <VBtn icon variant="plain" @click="emit('close')" class="me-3">

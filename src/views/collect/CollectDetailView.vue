@@ -402,8 +402,7 @@ onBeforeMount(() => {
       @close="showMediaInfo = false" />
     <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="collectDetail"
       @close="showDescInfo = false" />
-    <ProgressInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" :collect="collectDetail"
-      @close="showProgressInfo = false" />
+    <ProgressInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" type="collect" :id="collectDetail.id" :name="collectDetail.name" @close="showProgressInfo = false" />
     <SiteSeedInfoDialog v-if="showSiteSeedInfo" v-model="showSiteSeedInfo" :seed="seedInfo"
       @close="showSiteSeedInfo = false" />
     <AddSiteSeedDialog v-if="showAddSiteSedd" v-model="showAddSiteSedd" :collect="collectDetail" :siteSeedList="siteSeedList"
@@ -411,7 +410,7 @@ onBeforeMount(() => {
       @error="addSiteSeedError"
       @close="showAddSiteSedd = false" />
     <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect="collectDetail" :operation="operationType"
-      @close="showCollectOperation = false" />
+     @close="showCollectOperation = false" />
       
   </div>
   <NoDataFound v-if="!collectDetail.id && isRefreshed" error-code="500" error-title="出错啦！"
