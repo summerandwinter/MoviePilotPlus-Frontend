@@ -4,6 +4,7 @@ import api from '@/api'
 import { CollectProgress, SiteSeed } from '@/api/types'
 import { useToast } from 'vue-toast-notification'
 const progress = ref<Array<CollectProgress>>([])
+const siteSeed = ref<SiteSeed>()
 // 输入参数
 const props = defineProps({
   seed: {
@@ -15,6 +16,7 @@ const props = defineProps({
 const $toast = useToast()
 // 加载中
 const loading = ref(false)
+
 async function getProgressInfo() {
   try {
     progress.value = await api.get(`collect/progress/seed/${props?.seed.id}`)
@@ -22,20 +24,66 @@ async function getProgressInfo() {
     console.error(error)
   }
 }
+async function getSeedInfo() {
+  try {
+    siteSeed.value = await api.get(`collect/seed/detail//${props?.seed.id}`)
+  } catch (error) {
+    console.error(error)
+  }
+}
 
+function getBtnIcon() {
+  if (!siteSeed.value?.torrent_uploaded) {
+    return 'mdi-progress-upload'
+  } else if (!siteSeed.value?.torrent_downloaded) {
+    return 'mdi-arrow-down'
+  } else if (!siteSeed.value?.torrent_seeded) {
+    return 'mdi-arrow-up'
+  } else {
+    return 'mdi-progress-upload'
+  }
+}
+
+function getActionName() {
+  if (!siteSeed.value?.torrent_uploaded) {
+    return '上传'
+  } else if (!siteSeed.value?.torrent_downloaded) {
+    return '下载'
+  } else if (!siteSeed.value?.torrent_seeded) {
+    return '发布'
+  } else {
+    return '发布'
+  }
+}
+function getAction() {
+  if (!siteSeed.value?.torrent_uploaded) {
+    return 'torrent_publish'
+  } else if (!siteSeed.value?.torrent_downloaded) {
+    return 'torrent_download'
+  } else if (!siteSeed.value?.torrent_seeded) {
+    return 'torrent_seed'
+  } else {
+    return 'torrent_publish'
+  }
+}
+function hideHandleBtn() {
+  return siteSeed.value?.torrent_uploaded && siteSeed.value?.torrent_downloaded && siteSeed.value?.torrent_seeded
+}
 // 调用API添加采集任务
-async function publish(id: number) {
+async function handleSubmit(id: number) {
   loading.value = true
   try {
     // 请求API
-    const result: { [key: string]: any } = await api.get('collect/torrent_publish/' + props?.seed.id)
+    const action = getAction()
+    
+    const result: { [key: string]: any } = await api.get('collect/' + action + '/' + props?.seed.id)
     // 添加采集任务状态
     if (result.success) {
       // 成功
-      $toast.success(`发布事件提交成功！`)
+      $toast.success(getActionName() + '事件提交成功！')
 
     } else {
-      $toast.error(`发布事件提交失败`)
+      $toast.error(getActionName() + '事件提交失败')
     }
   } catch (error) {
     console.error(error)
@@ -67,6 +115,7 @@ const emit = defineEmits(['close'])
 
 onMounted(() => {
   getProgressInfo()
+  getSeedInfo()
 })
 </script>
 <template>
@@ -111,18 +160,19 @@ onMounted(() => {
       <VCardItem class="text-center mt-10">
         <VBtn
           variant="elevated"
-          @click="publish"
+          v-if="!hideHandleBtn()"
+          @click="handleSubmit"
           :disabled="loading"
           color="success"
-          prepend-icon="mdi-progress-upload"
+          :prepend-icon="getBtnIcon()"
           class="px-5"
           size="small"
         >
-          发布
+          {{getActionName()}}
         </VBtn>
         <VBtn
           variant="elevated"
-          @click="publish"
+          @click="deleteSeed"
           :disabled="loading"
           color="error"
           prepend-icon="mdi-delete"

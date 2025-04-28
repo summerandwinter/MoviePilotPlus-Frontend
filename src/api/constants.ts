@@ -109,8 +109,8 @@ export const collectStatus = {
 }
 
 export const seedStatus = {
-  'Init': '初始化',
+  'Init': '待上传',
   'TorrentUploaded': '已上传',
   'TorrentDownloaded': '已下载',
-  'TorrentPublished': '已发布',
+  'TorrentPublished': '做种',
 }
