@@ -357,22 +357,6 @@ onBeforeMount(() => {
                   <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
                 </template>
                 {{ item.site_name }}
-                <!-- <VMenu :activator="'parent'" :close-on-content-click="true" :location="'right'">
-                  <VList>
-                    <VListItem @click="publish(item.id)" base-color="info">
-                      <template #prepend>
-                        <VIcon icon="mdi-cloud-upload" size="small" />
-                      </template>
-                      <VListItemTitle>发布到{{ item.site_name }}</VListItemTitle>
-                    </VListItem>
-                    <VListItem @click="deleteSeed(item.id)">
-                      <template #prepend>
-                        <VIcon icon="mdi-delete-outline" size="small" color="error" />
-                      </template>
-                      <VListItemTitle class="text-error">删除任务</VListItemTitle>
-                    </VListItem>
-                  </VList>
-                </VMenu> -->
               </VChip>
               <VBtn class="ms-2 mb-2" color="success" variant="tonal" @click="showAddSiteSeddoDialog()">
             <template #prepend>

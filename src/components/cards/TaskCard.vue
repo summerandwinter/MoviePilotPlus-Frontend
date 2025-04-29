@@ -214,8 +214,8 @@ const taskCardRef = ref<HTMLElement | null>(null)
         </VCardText> -->
 
         <VCardActions class="justify-space-between  pt-2 pb-0 pl-0 pr-0">
-          <VBtn :readonly="!showToggleBtn()" :icon="downloadBtnIcon()" @click="toggleDownload" />
-          <VBtn color="error" icon="mdi-trash-can-outline" @click="deleteDownload" />
+          <VBtn :readonly="!showToggleBtn()" :icon="downloadBtnIcon()" @click.stop="toggleDownload" />
+          <VBtn color="error" icon="mdi-trash-can-outline" @click.stop="deleteDownload" />
         </VCardActions>
         </VCardItem>
         

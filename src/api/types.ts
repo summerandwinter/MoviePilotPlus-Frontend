@@ -1596,6 +1596,8 @@ export interface CollectCreate {
   create_time?: string
   // 用户ID
   user_id?: string
+  copyright?: string
+  team?: string,
 }
 
 export interface DownloadTask {

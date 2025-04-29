@@ -114,3 +114,23 @@ export const seedStatus = {
   'TorrentDownloaded': '已下载',
   'TorrentPublished': '做种',
 }
+
+export const teamOptions = [
+  { team: 'ZimaWeb', copyright: 'Zima' },
+  { team: 'AilMWeb', copyright: 'Panda' },
+]
+
+export const tagOptions = {
+  'Official': '官方',
+  'Mandarin': '国语',
+  'Cantonese': '粤语',
+  'ChineseSubtitles': '中字',
+  'DolbyVision': '杜比视界',
+  'HDRVivid': 'HDRVivid',
+  'HDR10+': 'HDR10+',
+  'Completed': '完结',
+  'Original': '原创',
+  'HighBitrateHighFrameRate': '高比特率高帧率',
+  'ThreeD': '3D',
+  'Collection': '合集'
+}

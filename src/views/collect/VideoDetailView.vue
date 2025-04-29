@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useToast } from 'vue-toast-notification'
-import PersonCardSlideView from './PersonCardSlideView.vue'
-import MediaCardSlideView from './MediaCardSlideView.vue'
+
 import api from '@/api'
+import { tagOptions, teamOptions } from '@/api/constants'
 import type { VideoInfo, CollectCreate, NotExistMediaInfo, Site, Subscribe, TmdbEpisode } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
@@ -24,7 +24,8 @@ const mediaProps = defineProps({
   auto_download: Boolean,
   auto_publish: Boolean,
 })
-
+// 提供给子组件的属性
+provide('rankingPropsKey', reactive({ ...mediaProps }))
 // 从 provide 中获取全局设置
 const globalSettings: any = inject('globalSettings')
 
@@ -58,6 +59,8 @@ const addForm = ref<CollectCreate>({
     year: "",
     type: "",
     site: "",
+    copyright: "zima",
+    team: "ZimaWeb",
     auto_download: true,
     auto_publish: true,
     source: "WEB-DL",
@@ -116,8 +119,18 @@ async function addCollect() {
         })
       }
     })
+    // 处理版权和制作组信息
+    if (addForm.value.team) {
+      teamOptions.forEach(option => {
+        if (option.team === addForm.value.team) {
+          addForm.value.copyright = option.copyright
+          return
+        }
+      })
+    }
     // 提交前检查参数
     console.log(addForm.value)
+    
     if (!validateForm()) return
     // 调用接口添加采集任务
     startNProgress()
@@ -126,6 +139,7 @@ async function addCollect() {
     // 添加采集任务状态
     if (result.success) {
       // 成功
+      router.push({path: '/task'})
       isSubscribed.value = true
     }
 
@@ -322,6 +336,49 @@ onBeforeMount(() => {
           </div>
           <h2 v-if="mediaDetail.overview">简介</h2>
           <p>{{ mediaDetail.overview }}</p>
+        </div>
+        <div v-if="mediaDetail.douban_info" class="media-overview-right">
+          <div class="media-facts">
+            <div v-if="mediaDetail.douban_info.rating" class="media-ratings">
+              <VRating v-model="mediaDetail.douban_info.rating" density="compact" length="10" class="ma-2" readonly />
+            </div>
+            <div v-if="mediaDetail.douban_info.id" class="media-fact">
+              <span>ID</span>
+              <span class="media-fact-value">{{ mediaDetail.douban_info.id }}</span>
+            </div>
+            <div v-if="mediaDetail.douban_info.original_title" class="media-fact">
+              <span>原始标题</span>
+              <span class="media-fact-value">{{ mediaDetail.douban_info.original_title }}</span>
+            </div>
+            
+            <div v-if="mediaDetail.douban_info.year" class="media-fact border-b-0">
+              <span>上映日期</span>
+              <span class="media-fact-value">
+                <span class="flex items-center justify-end">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                    class="h-4 w-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
+                    />
+                  </svg>
+                  <span class="ml-1.5">{{ mediaDetail.douban_info.year  }}</span>
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      <div class="media-overview-bottom">
           <div class="mt-6">
             <v-row>
               <v-col cols="2">
@@ -355,11 +412,39 @@ onBeforeMount(() => {
               </template>
             </VChipGroup>
           </div>
+          
+          <div class="mt-6">
+            <VChipGroup column v-model="addForm.team">
+              <template v-for="(teamOption, index) in teamOptions" :key="index">
+                <VChip
+                  :color="addForm.team === teamOption.team ? 'primary' : ''"
+                  filter
+                  variant="outlined"
+                  :value="teamOption.team"
+                >
+                  {{ teamOption.team }}
+                </VChip>
+              </template>
+            </VChipGroup>
+          </div>
+          <div class="mt-6">
+            <VChipGroup column v-model="addForm.tags" multiple>
+              <template v-for="(value, key) in tagOptions" :key="key">
+                <VChip
+                  :color="addForm.tags.includes(key) ? 'primary' : ''"
+                  filter
+                  variant="outlined"
+                  :value="key"
+                >
+                  {{ value }}
+                </VChip>
+              </template>
+            </VChipGroup>
+          </div>
           <div class="mt-6">
             <VChipGroup column v-model="addForm.site_list" multiple>
-              <template v-for="site in siteList" :key="site.id">
+              <template v-for="(site, index) in siteList" :key="index">
                 <VChip
-                 
                   :color="addForm.site_list.includes(site.name) ? 'primary' : ''"
                   filter
                   variant="outlined"
@@ -371,47 +456,6 @@ onBeforeMount(() => {
             </VChipGroup>
           </div>
         </div>
-        <div v-if="mediaDetail.douban_info" class="media-overview-right">
-          <div class="media-facts">
-            <div v-if="mediaDetail.douban_info.rating" class="media-ratings">
-              <VRating v-model="mediaDetail.douban_info.rating" density="compact" length="10" class="ma-2" readonly />
-            </div>
-            <div v-if="mediaDetail.douban_info.id" class="media-fact">
-              <span>ID</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.id }}</span>
-            </div>
-            <div v-if="mediaDetail.douban_info.original_title" class="media-fact">
-              <span>原始标题</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.original_title }}</span>
-            </div>
-            
-            <div v-if="mediaDetail.douban_info.year" class="media-fact">
-              <span>上映日期</span>
-              <span class="media-fact-value">
-                <span class="flex items-center justify-end">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                    class="h-4 w-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
-                    />
-                  </svg>
-                  <span class="ml-1.5">{{ mediaDetail.douban_info.year  }}</span>
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-         
-      </div>
       <div v-if="mediaDetail.episode_list">
         <SlideView>
           <template #content>
