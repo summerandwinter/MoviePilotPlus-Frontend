@@ -341,11 +341,15 @@ onBeforeMount(() => {
           <div class="mt-6">
             <v-row>
               <v-col cols="2">
-                <v-switch v-model="addForm.auto_download" :label="`自动下载`" hide-details>
+                <v-switch v-model="addForm.auto_download" label="自动下载" hide-details disabled>
                 </v-switch>
               </v-col>
               <v-col cols="2">
-                <v-switch v-model="addForm.auto_publish" :label="`自动发布`" hide-details>
+                <v-switch v-model="addForm.auto_publish" label="自动发布" hide-details disabled>
+                </v-switch>
+              </v-col>
+              <v-col cols="2">
+                <v-switch v-model="addForm.anon_publish" label="匿名发布" hide-details disabled>
                 </v-switch>
               </v-col>
             </v-row>
