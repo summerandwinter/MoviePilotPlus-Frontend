@@ -71,6 +71,7 @@ const addForm = ref<CollectCreate>({
   site: "",
   auto_download: true,
   auto_publish: true,
+  anon_publish: true,
   source: "WEB-DL",
   tags: [],
   episode_list: [],
@@ -311,20 +312,20 @@ onBeforeMount(() => {
                 <v-stepper-item title="媒体下载" value="1" :color="collectDetail.is_downloaded ? 'success' : ''"
                   :complete="collectDetail.is_downloaded"
                   :disabled="collectDetail.is_downloaded"
-                  @click.stop="showCollectOperationDialog('start_download')">
+                  @click.stop="showCollectOperationDialog('start_download_by_collect')">
                 </v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="媒体信息采集" value="2" :color="collectDetail.mediainfo_collected ? 'success' : ''"
                   :complete="collectDetail.mediainfo_collected" editable
-                  @click.stop="showMediaInfoDialog('metadata')"></v-stepper-item>
+                  @click.stop="showMediaInfoDialog('metadata_by_collect')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="截图" value="3" :color="collectDetail.image_collected ? 'success' : ''"
                   :complete="collectDetail.image_collected" editable :disabled="collectDetail.image_collected"
-                  @click.stop="showCollectOperationDialog('screenshot')"></v-stepper-item>
+                  @click.stop="showCollectOperationDialog('screenshot_by_collect')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="简介采集" value="4" :color="collectDetail.desc_collected ? 'success' : ''"
                   :complete="collectDetail.desc_collected" editable
-                  @click.stop="showDescInfoDialog('collect_desc')"></v-stepper-item>
+                  @click.stop="showDescInfoDialog('collect_desc_by_collect')"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="重命名" value="5" :color="collectDetail.is_renamed ? 'success' : ''"
                   :complete="collectDetail.is_renamed" editable

@@ -19,13 +19,13 @@ const emit = defineEmits(['close'])
 
 function getIcon() {
   switch (props.operation) {
-    case 'start_download':
+    case 'start_download_by_collect':
       return 'mdi-arrow-down-bold-circle'
-    case 'metadata':
+    case 'metadata_by_collect':
       return 'mdi-camcorder-box'
-    case 'screenshot':
+    case 'screenshot_by_collect':
       return 'mdi-camera'
-    case 'collect_desc':
+    case 'collect_desc_by_collect':
       return 'mdi-format-text'
     case 'collect_move':
       return 'mdi-rename-box'
@@ -37,13 +37,13 @@ function getIcon() {
 }
 function getTitle() {
   switch (props.operation) {
-    case 'start_download':
+    case 'start_download_by_collect':
       return '下载媒体文件'
-    case 'metadata':
+    case 'metadata_by_collect':
       return '采集视频元数据'
-    case 'screenshot':
+    case 'screenshot_by_collect':
       return '采集视频截图'
-    case 'collect_desc':
+    case 'collect_desc_by_collect':
       return '采集简介信息'
     case 'collect_move':
       return '重命名媒体文件'
@@ -55,13 +55,13 @@ function getTitle() {
 }
 function getText() {
   switch (props.operation) {
-    case 'start_download':
+    case 'start_download_by_collect':
       return '推送下载媒体文件事件，稍后可以在下载任务中查看下载进度'
-    case 'metadata':
+    case 'metadata_by_collect':
       return '推送采集视频元数据事件，稍后可以在详情中查看采集结果'
-    case 'screenshot':
+    case 'screenshot_by_collect':
       return '推送采集视频截图事件，稍后可以在详情中查看采集结果'
-    case 'collect_desc':
+    case 'collect_desc_by_collect':
       return '推送采集简介信息事件，稍后可以在详情中查看采集结果'
     case 'collect_move':
       return '推送重命名媒体文件事件，稍后可以在详情中查看采集结果'
