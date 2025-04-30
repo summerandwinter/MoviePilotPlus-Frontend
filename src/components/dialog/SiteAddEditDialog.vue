@@ -28,6 +28,7 @@ const siteForm = ref<Site>({
   url: '',
   rss: '',
   cookie: '',
+  passkey: '',
   ua: '',
   pri: 0,
   is_active: true,
@@ -262,6 +263,14 @@ onMounted(async () => {
                     v-model="siteForm.ua"
                     label="站点User-Agent"
                     hint="获取Cookie的浏览器对应的User-Agent"
+                    persistent-hint
+                  />
+                </VCol>
+                <VCol cols="12">
+                  <VTextField
+                    v-model="siteForm.passkey"
+                    label="站点passkey"
+                    hint="获取站点passkey"
                     persistent-hint
                   />
                 </VCol>

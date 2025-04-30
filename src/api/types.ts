@@ -429,6 +429,8 @@ export interface Site {
   apikey?: string
   // Token
   token?: string
+  //passkey
+  passkey?: string
   // User-Agent
   ua?: string
   // 是否使用代理
