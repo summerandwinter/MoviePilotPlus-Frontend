@@ -1576,6 +1576,7 @@ export interface CollectCreate {
   source: string
   auto_download: boolean
   auto_publish: boolean
+  anon_publish: boolean
   tags: string[]
   // 剧集列表
   episode_list: Array<{

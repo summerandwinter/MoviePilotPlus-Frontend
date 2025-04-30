@@ -23,6 +23,7 @@ const mediaProps = defineProps({
   type: String,
   auto_download: Boolean,
   auto_publish: Boolean,
+  anon_publish: Boolean,
 })
 // 提供给子组件的属性
 provide('rankingPropsKey', reactive({ ...mediaProps }))
@@ -63,6 +64,7 @@ const addForm = ref<CollectCreate>({
     team: "ZimaWeb",
     auto_download: true,
     auto_publish: true,
+    anon_publish: true,
     source: "WEB-DL",
     tags: [],
     episode_list: [],
@@ -392,6 +394,13 @@ onBeforeMount(() => {
                 <v-switch
                   v-model="addForm.auto_publish"
                   :label="`自动发布`"
+                  hide-details>
+                </v-switch>
+              </v-col>
+              <v-col cols="2">
+                <v-switch
+                  v-model="addForm.anon_publish"
+                  :label="`匿名发布`"
                   hide-details>
                 </v-switch>
               </v-col>
