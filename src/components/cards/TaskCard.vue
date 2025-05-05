@@ -181,8 +181,12 @@ const taskCardRef = ref<HTMLElement | null>(null)
           <VImg :src="props.info?.poster" aspect-ratio="2/3" cover class="brightness-50 card-bg" @load="imageLoadHandler" />
         </template>
         <VCardItem class="card-content pt-7">
-          <VCardTitle class="break-words whitespace-normal" :class="getTextClass()">
+          <VCardTitle class="truncate" :class="getTextClass()">
           {{ props.info?.name }}
+          <VTooltip
+            activator="parent"
+            location="bottom"
+          >{{ props.info?.name }}</VTooltip>
         </VCardTitle>
 
         <!-- <VCardSubtitle class="break-words whitespace-normal" :class="getTextClass()">
