@@ -101,21 +101,11 @@ function downloadBtnIcon() {
     return ''
   }
 }
-
+// 下载状态
 function downloading() {
   const status = getSatus()
   return status === downloadStatus.Downloading
 }
-// 下载状态
-const isDownloading = ref(props.info?.status === downloadStatus.Downloading)
-
-// 监听props.info?.state的变化
-watch(
-  () => props.info?.status,
-  newValue => {
-    isDownloading.value = newValue === downloadStatus.Downloading
-  },
-)
 
 // 图片是否加载完成
 const imageLoaded = ref(false)
@@ -132,10 +122,16 @@ function getTextClass() {
 
 // 下载状态控制
 async function toggleDownload() {
-  const operation = isDownloading.value ? 'stop' : 'start'
+  const operation = downloading() ? 'stop' : 'start'
   try {
     const result: { [key: string]: any } = await api.get(`task/${operation}/${props.info?.id}`)
-    if (result.success) isDownloading.value = !isDownloading.value
+    if (result.success) {
+      if (operation === 'stop') {
+        props.info.status = downloadStatus.DownloadStop
+      } else {
+        props.info.status = downloadStatus.Downloading
+      }
+    }
   } catch (error) {
     console.error(error)
   }
@@ -192,7 +188,7 @@ const taskCardRef = ref<HTMLElement | null>(null)
         <!-- <VCardSubtitle class="break-words whitespace-normal" :class="getTextClass()">
           {{ props.info?.name }}
         </VCardSubtitle> -->
-        <template v-if="isDownloading">
+        <template v-if="downloading()">
           <VCardItem  class="text-subtitle-2 pt-3 pb-1 pl-0 pr-0" :class="getTextClass()">
             {{ getSpeedText() }}
             <VProgressLinear :model-value="getPercentage()" />
