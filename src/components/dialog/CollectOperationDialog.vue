@@ -73,7 +73,10 @@ function getText() {
 }
 async function handleSubmit() {
   let result: { [key: string]: any }
-   result = await api.get(`collect/${props?.operation}/${props?.collect.id}`)
+   result = await api.get(`collect/${props?.operation}/${props?.collect.id}`, {
+      params: {
+        next_step: 'true',
+      }})
    const title = getTitle()
  if (result && result.success) {
       // 添加下载成功
