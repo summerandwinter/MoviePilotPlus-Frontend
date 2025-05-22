@@ -132,5 +132,8 @@ export const tagOptions = {
   'Original': '原创',
   'HighBitrateHighFrameRate': '高比特率高帧率',
   'ThreeD': '3D',
-  'Collection': '合集'
+  'Collection': '合集',
+  'SHD':'4K',
+  'UHD': '8K',
+  'HLG': 'HLG'
 }
