@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { defineProps, PropType, ref } from 'vue'
 import { useToast } from 'vue-toast-notification'
-import { formatRating } from '@/@core/utils/formatters'
+import api from '@/api'
 import { VideoInfo } from '@/api/types'
-import router from '@/router'
+import router, { registerAbortController } from '@/router'
 import noImage from '@images/no-image.jpeg'
 import tmdbImage from '@images/logos/tmdb.png'
 import doubanImage from '@images/logos/douban-black.png'
@@ -19,6 +19,9 @@ const props = defineProps({
 
 // 从 provide 中获取全局设置
 const globalSettings: any = inject('globalSettings')
+
+// 创建Intersection Observer实例
+const observer = ref<IntersectionObserver | null>(null)
 
 // 用户 Store
 const userStore = useUserStore()
@@ -40,14 +43,6 @@ const tmdbFlag = ref(true)
 const isExists = ref(false)
 
 
-
-// 来源角标字典
-const sourceIconDict: { [key: string]: any } = {
-  themoviedb: tmdbImage,
-  douban: doubanImage,
-  bangumi: bangumiImage,
-}
-
 // 绑定MediaCard元素
 const videoCardRef = ref<HTMLElement | null>(null)
 
@@ -66,12 +61,6 @@ function getMediaId() {
 }
 
 
-// 角标颜色
-function getChipColor(type: string) {
-  if (type === '电影') return 'border-blue-500 bg-blue-600'
-  else if (type === '电视剧') return ' bg-indigo-500 border-indigo-600'
-  else return 'border-purple-600 bg-purple-600'
-}
 
 // 打开详情页
 function goMediaDetail(isHovering = false) {
@@ -89,13 +78,57 @@ function goMediaDetail(isHovering = false) {
     })
   }
 }
+// 查询当前媒体是否已入库
+async function handleCheckExists() {
+  try {
+    const abortController = new AbortController()
+    registerAbortController(abortController)
+    const { signal } = abortController
+    const result: { [key: string]: any } = await api.get('task/exist_cid/' + props.media?.cid, {
+      params: {},
+      signal,
+    })
 
-
+    if (result.success) isExists.value = true
+  } catch (error) {
+    console.error(error)
+  }
+}
+// 懒加载检查
+function handleCheckLazy() {
+  console.log('handleCheckLazy', props.media?.cid)
+  // if (props.media?.cid) {
+  //   return
+  // }
+  handleCheckExists()
+}
+// 在元素进入视窗时触发懒加载函数
+function setupIntersectionObserver() {
+  if (videoCardRef.value) {
+    observer.value = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // 只要 VideoCard 进入视窗，就调用懒加载的操作
+            handleCheckLazy()
+            // 加载后销毁观察者实例
+            observer.value?.disconnect()
+            observer.value = null
+          }
+        })
+      },
+      { threshold: 0.1 },
+    )
+    observer.value.observe(videoCardRef.value)
+  }
+}
 onMounted(() => {
-
+  setupIntersectionObserver()
 })
 
 onBeforeUnmount(() => {
+  observer.value?.disconnect()
+  observer.value = null
 })
 
 // 计算图片地址
@@ -158,23 +191,19 @@ function getYear(airDate: string) {
             <div v-if="props.media?.vid" class="mb-3" @click.stop=""></div>
           </VCardText>
           <!-- 类型角标 -->
-          <VChip v-show="isImageLoaded" variant="elevated" size="small" :class="getChipColor(props.media?.type || '')"
-            class="absolute left-2 top-2 bg-opacity-80 shadow-md text-white font-bold">
-            {{ props.media?.type }}
+          <VChip v-show="isImageLoaded && props.media?.pay_type && !hover.isHovering" variant="elevated" size="small" 
+            class="absolute left-2 top-2 bg-opacity-80 shadow-md text-white font-bold border-red-600 bg-red-600">
+            {{ props.media?.pay_type }}
           </VChip>
           <!-- 本地存在标识 -->
           <ExistIcon v-if="isExists && !hover.isHovering" />
           <!-- 评分角标 -->
-          <VChip v-if="isImageLoaded && !(isExists && !hover.isHovering)"
-            variant="elevated" size="small" :class="getChipColor('rating')"
-            class="absolute right-2 top-2 bg-opacity-80 shadow-md text-white font-bold">
-            9.6
+          <VChip v-if="isImageLoaded && !hover.isHovering && props.media?.rating"
+            variant="elevated" size="small"
+            class="absolute right-2 bottom-2 bg-opacity-80 shadow-md text-white font-bold border-purple-600 bg-purple-600">
+            {{ props.media?.rating }}
           </VChip>
-          <!--来源图标-->
-          <VAvatar size="24" density="compact" class="absolute bottom-1 right-1" tile
-            v-if="!hover.isHovering && isImageLoaded && props.media?.source && !imageLoadError">
-            <VImg cover :src="sourceIconDict[props.media?.source]" class="shadow-lg" />
-          </VAvatar>
+          
         </VCard>
       </div>
     </template>

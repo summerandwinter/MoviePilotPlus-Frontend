@@ -1378,6 +1378,10 @@ export interface VideoInfo {
   third_title: string | null
   // 年份
   year: string | null
+  // 付费类型
+  pay_type: string | null
+  // 评分
+  rating: string | null
   // TMDB ID
   tmdb_id: string | null
   // IMDB ID

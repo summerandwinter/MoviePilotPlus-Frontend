@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
 import router from '@/router'
-import type { Collect } from '@/api/types'
+import type { Collect, SiteSeed } from '@/api/types'
+import api from '@/api'
+import { seedStatus } from '@/api/constants'
 
 // 从 provide 中获取全局设置
 const globalSettings: any = inject('globalSettings')
@@ -15,7 +17,7 @@ const showMoreTorrents = ref(false)
 
 // 任务信息
 const task = ref(props.task)
-
+const siteSeedList = ref<SiteSeed[]>([])
 // 计算Poster地址
 const getCoverUrl: Ref<string> = computed(() => {
   const url = props.task?.cover ?? ''
@@ -39,15 +41,19 @@ function goDetail() {
   })
 
 }
-// 促销Chip类
-function getVolumeFactorClass(downloadVolume: number, uploadVolume: number) {
-  if (downloadVolume === 0) return 'text-white bg-lime-500'
-  else if (downloadVolume < 1) return 'text-white bg-green-500'
-  else if (uploadVolume !== 1) return 'text-white bg-sky-500'
-  else return 'text-white bg-gray-500'
+function getSeedStatus(status: string) {
+  return seedStatus[status as keyof typeof seedStatus]
+}
+async function getSiteSeedList() {
+  try {
+    siteSeedList.value = await api.get(`collect/seed/${props.task?.id}`)
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 onMounted(() => {
+  getSiteSeedList()
 })
 </script>
 
@@ -72,14 +78,31 @@ onMounted(() => {
         <span class="text-orange-700 ms-2 text-sm">↓{{ task?.episodes_total }}</span>
       </VListItemTitle>
       <VListItemSubtitle> 【{{ task?.type }}】{{ task?.sub_title }} </VListItemSubtitle>
-      <div class="pt-2">
-
-        <VChip v-if="task?.team" variant="elevated" size="small" class="me-1 mb-1 text-white bg-red-500">
+      <div class="pt-2" >
+        <!-- <VChipGroup class="p-3" column>
+              <VChip v-for="(item, index) in siteSeedList" :key="index">
+                <template #append>
+                  <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="x-small" />
+                </template>
+               
+                {{ item.site_name }}
+              </VChip>
+            </VChipGroup> -->
+            <div class="p-3">
+              <template v-for="(item, index) in siteSeedList" >
+              <VBadge color="primary" class="mr-5" :content="getSeedStatus(item.status)" size="x-small">
+              <VChip >
+                {{ item.site_name }}
+              </VChip>
+            </VBadge>
+          </template>
+          </div>
+        <!-- <VChip v-if="task?.team" variant="elevated" size="small" class="me-1 mb-1 text-white bg-red-500">
           {{ task?.team }}
         </VChip>
         <VChip v-if="task?.copyright" variant="elevated" size="small" class="me-1 mb-1 text-white bg-red-500">
           {{ task?.copyright }}
-        </VChip>
+        </VChip> -->
 
       </div>
       <template #append>

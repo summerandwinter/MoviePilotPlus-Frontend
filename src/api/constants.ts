@@ -109,10 +109,10 @@ export const collectStatus = {
 }
 
 export const seedStatus = {
-  'Init': '待上传',
-  'TorrentUploaded': '已上传',
-  'TorrentDownloaded': '已下载',
-  'TorrentPublished': '做种',
+  'Init': '待',
+  'TorrentUploaded': '传',
+  'TorrentDownloaded': '下',
+  'TorrentPublished': '做',
 }
 
 export const teamOptions = [
