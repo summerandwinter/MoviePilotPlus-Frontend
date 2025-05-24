@@ -10,6 +10,8 @@ const mediaid = route.query?.mediaid?.toString()
 // 类型
 const type = route.query?.type?.toString()
 
+const cate = route.query?.cate?.toString()
+
 // 标题
 const title = route.query?.title?.toString()
 
@@ -21,6 +23,6 @@ const source = route.query?.source?.toString()
 
 <template>
   <div>
-    <VideoDetailView :mediaid="mediaid" :source="source" :type="type" :title="title" :year="year" />
+    <VideoDetailView :mediaid="mediaid" :source="source" :type="type" :cate="cate" :title="title" :year="year" />
   </div>
 </template>

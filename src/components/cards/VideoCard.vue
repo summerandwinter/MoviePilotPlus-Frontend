@@ -13,6 +13,7 @@ import { useUserStore } from '@/stores'
 // 输入参数
 const props = defineProps({
   media: Object as PropType<VideoInfo>,
+  cate: String,
   width: String,
   height: String,
 })
@@ -74,6 +75,7 @@ function goMediaDetail(isHovering = false) {
         title: props.media?.title,
         year: props.media?.year,
         type: props.media?.type,
+        cate: props.cate,
       },
     })
   }

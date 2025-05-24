@@ -21,6 +21,7 @@ const mediaProps = defineProps({
   title: String,
   year: String,
   type: String,
+  cate: String,
   auto_download: Boolean,
   auto_publish: Boolean,
   anon_publish: Boolean,
@@ -59,6 +60,7 @@ const addForm = ref<CollectCreate>({
     cn_title: "",
     year: "",
     type: "",
+    cate: "",
     site: "",
     copyright: "zima",
     team: "ZimaWeb",
@@ -93,6 +95,7 @@ async function getMediaDetail() {
     addForm.value.cn_title = mediaDetail.value.title ?? ''
     addForm.value.year = mediaDetail.value.year ?? ''
     addForm.value.type = mediaProps.type ?? ''
+    addForm.value.cate = mediaProps.cate ?? ''
     addForm.value.site = mediaProps.source ?? ''
     
     isRefreshed.value = true
@@ -111,12 +114,13 @@ async function getSites() {
 async function addCollect() {
   try {
     // 处理选中的剧集
+    addForm.value.episode_list = []
     mediaDetail.value.episode_list?.forEach(episode => {
       if (episode.selected) {
         addForm.value.episode_list.push({
           cid: episode.cid,
           vid: episode.vid,
-          episode: episode.title,
+          episode: episode.episode,
           poster: episode.image_url
         })
       }

@@ -17,6 +17,7 @@ const cates = ref<Record<string, TencentCategoryInfo[]>>({})
 // 过滤参数
 const defaultType = '100113'
 const defaultSort = '75'
+const cate =ref('TV')
 
 const filterParams = reactive({
   'type': defaultType,
@@ -47,13 +48,13 @@ const filterParams = reactive({
 
 // 分类字典
 const cateDictArray: CategoryItem[] = [
-  { "key": "100113", "value": "电视剧" },
-  { "key": "100173", "value": "电影" },
-  { "key": "100105", "value": "纪录片" },
-  { "key": "100109", "value": "综艺" },
-  { "key": "100119", "value": "动漫" },
-  { "key": "100150", "value": "少儿" },
-  { "key": "110755", "value": "短剧" }
+  { "key": "100113", "value": "电视剧", "cate": "TV" },
+  { "key": "100173", "value": "电影", "cate": "Movie"  },
+  { "key": "100105", "value": "纪录片", "cate": "Documentary"  },
+  { "key": "100109", "value": "综艺", "cate": "Show"  },
+  { "key": "100119", "value": "动漫", "cate": "Comic"  },
+  { "key": "100150", "value": "少儿", "cate": "TV"  },
+  { "key": "110755", "value": "短剧", "cate": "Short"  }
 ]
 // 分类信息
 async function queryCate(type: string) {
@@ -63,6 +64,12 @@ async function queryCate(type: string) {
         type: type
       }
     })
+    cateDictArray.forEach(item => {
+      if (item.key == type) {
+        cate.value = item.cate
+      }
+    })
+    
     const groupedData: Record<string, TencentCategoryInfo[]> = {};
     data.forEach((item: TencentCategoryInfo) => {
       const filter_key = item.filter_key;
@@ -125,7 +132,7 @@ watch(filterParams, () => {
 
 
     <div>
-      <MediaCardListView :key="currentKey" :apipath="`tencent/page_data`" :params="filterParams" />
+      <MediaCardListView :key="currentKey" :apipath="`tencent/page_data`" :params="filterParams" :cate="cate"/>
     </div>
   </div>
 </template>

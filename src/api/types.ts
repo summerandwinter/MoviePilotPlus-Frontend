@@ -1306,6 +1306,7 @@ export interface TencentCategoryInfo {
 export interface CategoryItem {
   key: string
   value: string
+  cate: string
 }
 
 // 视频集信息
@@ -1325,6 +1326,7 @@ export interface VideoEpisode {
   defn: string
   vid: string
   cid: string
+  episode: number
   selected: boolean
 }
 
@@ -1576,6 +1578,7 @@ export interface CollectCreate {
   year: string
   // 媒体类型
   type: string
+  cate: string
   // 来源站点
   site: string
   // 视频源
@@ -1591,7 +1594,7 @@ export interface CollectCreate {
     // 视频ID
     vid: string
     // 集数
-    episode: string
+    episode: number
     // 封面图片
     poster: string
   }>
