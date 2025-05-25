@@ -45,6 +45,17 @@ const siteList = ref<Site[]>([])
 // 本地是否存在，存在则包括Item信息
 const existsItemId = ref('1')
 
+// 选中的剧集数量
+const selectedCount = computed(() => {
+  let count = 0
+  mediaDetail.value.episode_list?.forEach(episode => {
+    if (episode.selected) {
+      count++
+    }
+  })
+  return count
+})
+
 // 是否已订阅
 const isSubscribed = ref(false)
 
@@ -54,23 +65,26 @@ const isRefreshed = ref(false)
 
 // 采集任务添加表单
 const addForm = ref<CollectCreate>({
-    cid: "",
-    defn: "",
-    douban_id: "",
-    cn_title: "",
-    year: "",
-    type: "",
-    cate: "",
-    site: "",
-    copyright: "zima",
-    team: "ZimaWeb",
-    auto_download: true,
-    auto_publish: true,
-    anon_publish: true,
-    source: "WEB-DL",
-    tags: [],
-    episode_list: [],
-    site_list: []
+  cid: "",
+  defn: "",
+  douban_id: "",
+  cn_title: "",
+  year: "",
+  type: "",
+  cate: "",
+  site: "",
+  cover: "",
+  poster: "",
+  episode_all: 1,
+  copyright: "zima",
+  team: "ZimaWeb",
+  auto_download: true,
+  auto_publish: true,
+  anon_publish: true,
+  source: "WEB-DL",
+  tags: [],
+  episode_list: [],
+  site_list: []
 })
 
 // 调用API查询详情
@@ -82,9 +96,9 @@ async function getMediaDetail() {
       },
     })
     // 默认选中所有剧集
-    // mediaDetail.value.episode_list?.forEach(episode => {
-    //   episode.selected = true
-    // })
+    mediaDetail.value.episode_list?.forEach(episode => {
+      episode.selected = true
+    })
     // 设置默认选中第一个清晰度
     if (mediaDetail.value.definition_list?.length > 0) {
       addForm.value.defn = mediaDetail.value.definition_list[0].name
@@ -97,7 +111,9 @@ async function getMediaDetail() {
     addForm.value.type = mediaProps.type ?? ''
     addForm.value.cate = mediaProps.cate ?? ''
     addForm.value.site = mediaProps.source ?? ''
-    
+    addForm.value.cover = mediaDetail.value.new_pic_vt?? ''
+    addForm.value.poster = mediaDetail.value.new_pic_vt?? ''
+    addForm.value.episode_all = mediaDetail.value.episode_all ? Number(mediaDetail.value.episode_all) : 1
     isRefreshed.value = true
   }
 }
@@ -125,6 +141,10 @@ async function addCollect() {
         })
       }
     })
+    // 处理总集数
+    // 原代码中 int 可能是想将值转换为整数，在 JavaScript 中可以使用 Number 或 parseInt 方法
+    console.log('addForm.value.episode_all: ', addForm.value.episode_all)
+    //addForm.value.episode_all = parseInt(mediaDetail.value?.episode_all) ?? 1
     // 处理版权和制作组信息
     if (addForm.value.team) {
       teamOptions.forEach(option => {
@@ -136,7 +156,7 @@ async function addCollect() {
     }
     // 提交前检查参数
     console.log(addForm.value)
-    
+
     if (!validateForm()) return
     // 调用接口添加采集任务
     startNProgress()
@@ -145,7 +165,7 @@ async function addCollect() {
     // 添加采集任务状态
     if (result.success) {
       // 成功
-      router.push({path: '/task'})
+      router.push({ path: '/task' })
       isSubscribed.value = true
     }
 
@@ -160,7 +180,7 @@ async function addCollect() {
 function validateForm() {
   // 清空旧数据
   const errors = []
-  
+
   if (!addForm.value.cid) {
     errors.push('媒体ID不能为空！')
   }
@@ -173,7 +193,19 @@ function validateForm() {
   if (addForm.value.site_list.length === 0) {
     errors.push('请至少选择一个站点！')
   }
-  
+
+  if (!addForm.value.douban_id) {
+    errors.push('豆瓣信息不能为空！')
+  }
+
+  if (!addForm.value.episode_all) {
+    errors.push('总集数不能为空！')
+  }
+
+  if (addForm.value.episode_all < mediaDetail.value.episode_list?.length) {
+    errors.push('总集数不不能小于选中的集数！')
+  }
+
   if (errors.length > 0) {
     errors.forEach(msg => $toast.error(msg))
     return false
@@ -266,11 +298,7 @@ onBeforeMount(() => {
     <div class="media-page">
       <div class="media-header">
         <div class="media-poster">
-          <VImg
-            :src="getW500Image(getPosterUrl)"
-            cover
-            class="object-cover aspect-w-2 aspect-h-3 ring-1 ring-gray-500"
-          >
+          <VImg :src="getW500Image(getPosterUrl)" cover class="object-cover aspect-w-2 aspect-h-3 ring-1 ring-gray-500">
             <template #placeholder>
               <div class="w-full h-full">
                 <VSkeletonLoader class="object-cover aspect-w-2 aspect-h-3" />
@@ -281,9 +309,8 @@ onBeforeMount(() => {
         <div class="media-title">
           <div v-if="existsItemId" class="media-status">
             <span
-              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden"
-            >
-              <div class="relative z-20 flex items-center false"><span>已入库</span></div>
+              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
+              <div class="relative z-20 flex items-center false"><span>已采集</span></div>
             </span>
           </div>
           <h1 class="d-flex flex-column flex-lg-row align-baseline justify-center justify-lg-start">
@@ -295,33 +322,22 @@ onBeforeMount(() => {
             </div>
           </h1>
           <span class="media-attributes">
-            <span v-if="mediaDetail.areaName"
-              >{{ mediaDetail.areaName }}</span
-            >
+            <span v-if="mediaDetail.areaName">{{ mediaDetail.areaName }}</span>
             <span v-if="mediaDetail.douban_info && mediaDetail.douban_info.card_subtitle" class="mx-1">
               |
             </span>
-            <span v-if="mediaDetail.douban_info && mediaDetail.douban_info.card_subtitle">{{ mediaDetail.douban_info.card_subtitle }}</span>
+            <span v-if="mediaDetail.douban_info && mediaDetail.douban_info.card_subtitle">{{
+              mediaDetail.douban_info.card_subtitle }}</span>
           </span>
         </div>
         <div class="media-actions">
-          <VBtn         
-            variant="tonal"
-            color="info"
-            class="mb-2"
-            @click="addCollect"
-          >
+          <VBtn variant="tonal" color="info" class="mb-2" @click="addCollect">
             <template #prepend>
               <VIcon icon="mdi-plus" />
             </template>
             {{ '添加' }}
           </VBtn>
-          <VBtn
-        
-            class="ms-2 mb-2"
-            :color="getSubscribeColor"
-            variant="tonal"
-          >
+          <VBtn class="ms-2 mb-2" :color="getSubscribeColor" variant="tonal">
             <template #prepend>
               <VIcon :icon="getSubscribeIcon" />
             </template>
@@ -337,8 +353,16 @@ onBeforeMount(() => {
       </div>
       <div class="media-overview">
         <div class="media-overview-left">
-          <div  class="tagline">
-            tagline
+          <div class="tagline">
+            <v-row>
+              <v-col cols="2">
+                <v-text-field label="已选" readonly :model-value="selectedCount" variant="plain"></v-text-field>
+              </v-col>
+              <v-col cols="8">
+                <v-text-field label="总剧集" placeholder="未获取到，请手动输入" variant="plain"
+                v-model="addForm.episode_all"></v-text-field>
+              </v-col>
+            </v-row>
           </div>
           <h2 v-if="mediaDetail.overview">简介</h2>
           <p>{{ mediaDetail.overview }}</p>
@@ -356,119 +380,82 @@ onBeforeMount(() => {
               <span>原始标题</span>
               <span class="media-fact-value">{{ mediaDetail.douban_info.original_title }}</span>
             </div>
-            
+
             <div v-if="mediaDetail.douban_info.year" class="media-fact border-b-0">
               <span>上映日期</span>
               <span class="media-fact-value">
                 <span class="flex items-center justify-end">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                    class="h-4 w-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" aria-hidden="true" class="h-4 w-4">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
                   </svg>
-                  <span class="ml-1.5">{{ mediaDetail.douban_info.year  }}</span>
+                  <span class="ml-1.5">{{ mediaDetail.douban_info.year }}</span>
                 </span>
               </span>
             </div>
           </div>
         </div>
-        
+
       </div>
       <div class="media-overview-bottom">
-          <div class="mt-6">
-            <v-row>
-              <v-col cols="2">
-                <v-switch
-                  v-model="addForm.auto_download"
-                  :label="`自动下载`"
-                  hide-details>
-                </v-switch>
-              </v-col>
-              <v-col cols="2">
-                <v-switch
-                  v-model="addForm.auto_publish"
-                  :label="`自动发布`"
-                  hide-details>
-                </v-switch>
-              </v-col>
-              <v-col cols="2">
-                <v-switch
-                  v-model="addForm.anon_publish"
-                  :label="`匿名发布`"
-                  hide-details>
-                </v-switch>
-              </v-col>
-            </v-row>
-          </div>
-          <div class="mt-6">
-            <VChipGroup column v-model="addForm.defn">
-              <template v-for="definition in mediaDetail.definition_list" :key="definition.name">
-                <VChip
-                  v-if="definition.sname"
-                  :color="addForm.defn === definition.name ? 'primary' : ''"
-                  filter
-                  variant="outlined"
-                  :value="definition.name"
-                >
-                  {{ definition.sname }}
-                </VChip>
-              </template>
-            </VChipGroup>
-          </div>
-          
-          <div class="mt-6">
-            <VChipGroup column v-model="addForm.team">
-              <template v-for="(teamOption, index) in teamOptions" :key="index">
-                <VChip
-                  :color="addForm.team === teamOption.team ? 'primary' : ''"
-                  filter
-                  variant="outlined"
-                  :value="teamOption.team"
-                >
-                  {{ teamOption.team }}
-                </VChip>
-              </template>
-            </VChipGroup>
-          </div>
-          <div class="mt-6">
-            <VChipGroup column v-model="addForm.tags" multiple>
-              <template v-for="(value, key) in tagOptions" :key="key">
-                <VChip
-                  :color="addForm.tags.includes(key) ? 'primary' : ''"
-                  filter
-                  variant="outlined"
-                  :value="key"
-                >
-                  {{ value }}
-                </VChip>
-              </template>
-            </VChipGroup>
-          </div>
-          <div class="mt-6">
-            <VChipGroup column v-model="addForm.site_list" multiple>
-              <template v-for="(site, index) in siteList" :key="index">
-                <VChip
-                  :color="addForm.site_list.includes(site.name) ? 'primary' : ''"
-                  filter
-                  variant="outlined"
-                  :value="site.id"
-                >
-                  {{ site.name }}
-                </VChip>
-              </template>
-            </VChipGroup>
-          </div>
+        <div class="mt-6">
+          <v-row>
+            <v-col cols="4">
+              <v-switch v-model="addForm.auto_download" :label="`自动下载`" hide-details>
+              </v-switch>
+            </v-col>
+            <v-col cols="4">
+              <v-switch v-model="addForm.auto_publish" :label="`自动发布`" hide-details>
+              </v-switch>
+            </v-col>
+            <v-col cols="4">
+              <v-switch v-model="addForm.anon_publish" :label="`匿名发布`" hide-details>
+              </v-switch>
+            </v-col>
+          </v-row>
         </div>
+        <div class="mt-6">
+          <VChipGroup column v-model="addForm.defn">
+            <template v-for="definition in mediaDetail.definition_list" :key="definition.name">
+              <VChip v-if="definition.sname" :color="addForm.defn === definition.name ? 'primary' : ''" filter
+                variant="outlined" :value="definition.name">
+                {{ definition.sname }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
+
+        <div class="mt-6">
+          <VChipGroup column v-model="addForm.team">
+            <template v-for="(teamOption, index) in teamOptions" :key="index">
+              <VChip :color="addForm.team === teamOption.team ? 'primary' : ''" filter variant="outlined"
+                :value="teamOption.team">
+                {{ teamOption.team }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
+        <div class="mt-6">
+          <VChipGroup column v-model="addForm.tags" multiple>
+            <template v-for="(value, key) in tagOptions" :key="key">
+              <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
+                {{ value }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
+        <div class="mt-6">
+          <VChipGroup column v-model="addForm.site_list" multiple>
+            <template v-for="(site, index) in siteList" :key="index">
+              <VChip :color="addForm.site_list.includes(site.name) ? 'primary' : ''" filter variant="outlined"
+                :value="site.id">
+                {{ site.name }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
+      </div>
       <div v-if="mediaDetail.episode_list">
         <SlideView>
           <template #content>
@@ -478,24 +465,18 @@ onBeforeMount(() => {
           </template>
         </SlideView>
       </div>
-      
+
     </div>
   </div>
-  <NoDataFound
-    v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
-    error-code="500"
-    error-title="出错啦！"
-    error-description="未识别到媒体信息。"
-  />
+  <NoDataFound v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
+    error-code="500" error-title="出错啦！" error-description="未识别到媒体信息。" />
 </template>
 
 <style lang="scss">
 .vue-media-back {
-  background-image: linear-gradient(
-      180deg,
+  background-image: linear-gradient(180deg,
       rgba(var(--v-theme-background), 0) 50%,
-      rgba(var(--v-theme-background), 1) 100%
-    ),
+      rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(90deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(270deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%);
   box-shadow: 0 0 0 2px rgb(var(--v-theme-background));
@@ -519,7 +500,7 @@ onBeforeMount(() => {
   padding-block-start: 1rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-header {
     flex-direction: row;
     align-items: flex-end;
@@ -532,7 +513,7 @@ onBeforeMount(() => {
   padding-block: 2rem 1rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview {
     flex-direction: row;
   }
@@ -548,14 +529,14 @@ onBeforeMount(() => {
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-poster {
     inline-size: 13rem;
     margin-inline-end: 1rem;
   }
 }
 
-@media (width >= 768px) {
+@media (width >=768px) {
   .media-poster {
     border-radius: 0.5rem;
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -574,7 +555,7 @@ onBeforeMount(() => {
   text-align: center;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-title {
     margin-block-start: 0;
     margin-inline-end: 1rem;
@@ -582,14 +563,14 @@ onBeforeMount(() => {
   }
 }
 
-.media-title > h1 {
+.media-title>h1 {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 2rem;
 }
 
-@media (width >= 1280px) {
-  .media-title > h1 {
+@media (width >=1280px) {
+  .media-title>h1 {
     font-size: 2.25rem;
     line-height: 2.5rem;
   }
@@ -602,13 +583,13 @@ ul.media-crew {
   margin-block-start: 1.5rem;
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   ul.media-crew {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-ul.media-crew > li {
+ul.media-crew>li {
   display: flex;
   flex-direction: column;
   font-weight: 700;
@@ -631,7 +612,7 @@ a.crew-name {
   margin-block-start: 0.25rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-attributes {
     justify-content: flex-start;
     font-size: 1rem;
@@ -640,7 +621,7 @@ a.crew-name {
   }
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-attributes {
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -657,13 +638,13 @@ a.crew-name {
   margin-block-start: 1rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-actions {
     margin-block-start: 0;
   }
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-actions {
     flex-wrap: nowrap;
     justify-content: flex-end;
@@ -674,7 +655,7 @@ a.crew-name {
   flex: 1 1 0%;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview-left {
     margin-inline-end: 2rem;
   }
@@ -685,7 +666,7 @@ a.crew-name {
   margin-block-start: 2rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview-right {
     inline-size: 20rem;
     margin-block-start: 0;
@@ -735,7 +716,7 @@ a.crew-name {
   line-height: 1.75rem;
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-overview h2 {
     font-size: 1.5rem;
     line-height: 2rem;
@@ -749,7 +730,7 @@ a.crew-name {
   margin-block-end: 1rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .tagline {
     font-size: 1.5rem;
     line-height: 2rem;

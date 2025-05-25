@@ -1587,6 +1587,9 @@ export interface CollectCreate {
   auto_publish: boolean
   anon_publish: boolean
   tags: string[]
+  cover: string,
+  poster: string,
+  episode_all: number,
   // 剧集列表
   episode_list: Array<{
     // 剧集ID
