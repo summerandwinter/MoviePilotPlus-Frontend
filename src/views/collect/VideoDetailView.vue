@@ -75,7 +75,7 @@ const addForm = ref<CollectCreate>({
   site: "",
   cover: "",
   poster: "",
-  episode_all: 1,
+  episodes_all: 1,
   copyright: "zima",
   team: "ZimaWeb",
   auto_download: true,
@@ -113,7 +113,7 @@ async function getMediaDetail() {
     addForm.value.site = mediaProps.source ?? ''
     addForm.value.cover = mediaDetail.value.new_pic_vt?? ''
     addForm.value.poster = mediaDetail.value.new_pic_vt?? ''
-    addForm.value.episode_all = mediaDetail.value.episode_all ? Number(mediaDetail.value.episode_all) : 1
+    addForm.value.episodes_all = mediaDetail.value.episode_all ? Number(mediaDetail.value.episode_all) : 1
     isRefreshed.value = true
   }
 }
@@ -143,8 +143,7 @@ async function addCollect() {
     })
     // 处理总集数
     // 原代码中 int 可能是想将值转换为整数，在 JavaScript 中可以使用 Number 或 parseInt 方法
-    console.log('addForm.value.episode_all: ', addForm.value.episode_all)
-    //addForm.value.episode_all = parseInt(mediaDetail.value?.episode_all) ?? 1
+    console.log('addForm.value.episodes_all: ', addForm.value.episodes_all)
     // 处理版权和制作组信息
     if (addForm.value.team) {
       teamOptions.forEach(option => {
@@ -198,11 +197,11 @@ function validateForm() {
     errors.push('豆瓣信息不能为空！')
   }
 
-  if (!addForm.value.episode_all) {
+  if (!addForm.value.episodes_all) {
     errors.push('总集数不能为空！')
   }
 
-  if (addForm.value.episode_all < mediaDetail.value.episode_list?.length) {
+  if (addForm.value.episodes_all < mediaDetail.value.episode_list?.length) {
     errors.push('总集数不不能小于选中的集数！')
   }
 
@@ -360,7 +359,7 @@ onBeforeMount(() => {
               </v-col>
               <v-col cols="8">
                 <v-text-field label="总剧集" placeholder="未获取到，请手动输入" variant="plain"
-                v-model="addForm.episode_all"></v-text-field>
+                v-model="addForm.episodes_all"></v-text-field>
               </v-col>
             </v-row>
           </div>

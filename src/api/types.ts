@@ -1477,8 +1477,6 @@ export interface Collect {
   episodes_all: number | null
   // 是否收集图片
   image_collected: boolean
-  // 所有集数
-  episode_all: string
   // 位深
   bit_depth: string
   // 视频格式
@@ -1589,7 +1587,7 @@ export interface CollectCreate {
   tags: string[]
   cover: string,
   poster: string,
-  episode_all: number,
+  episodes_all: number,
   // 剧集列表
   episode_list: Array<{
     // 剧集ID
