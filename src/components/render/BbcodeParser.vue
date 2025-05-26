@@ -14,8 +14,11 @@ const props = defineProps({
 const styleText = `
 fieldset{
   border: 2px groove rgb(239, 239, 239);
+  max-width: 80%;
 }
-img{
+
+img {
+ max-width: 60%;
  boder: none;
  margin-top: -5px;
 }
@@ -27,7 +30,7 @@ const parsedContent = computed(() => {
     // 处理quote标签
     .replace(/\[quote\](.*?)\[\/quote\]/g, '<fieldset class="fieldset"><legend> 引用 </legend>$1</fieldset><br/>')
     // 处理图片标签
-    .replace(/\[img\](.*?)\[\/img\]/g, '<img src="$1" width="700" height="auto">')
+    .replace(/\[img\](.*?)\[\/img\]/g, '<img src="$1">')
     // 处理颜色标签
     .replace(/\[color=([\w#]+)\](.*?)\[\/color\]/g, '<span style="color: $1">$2</span>')
     // 处理字体类型

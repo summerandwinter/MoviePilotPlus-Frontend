@@ -35,8 +35,7 @@ onMounted(() => {
         <v-sheet
           class="d-flex align-center justify-center flex-wrap mx-auto px-4"
           elevation="0"
-          width="1100"
-          height="800"
+
           > 
             <BbcodeParser v-if="props.collect?.description" :content="props.collect.description" />
         </v-sheet>

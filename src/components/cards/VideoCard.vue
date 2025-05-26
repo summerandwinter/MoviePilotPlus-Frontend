@@ -66,8 +66,8 @@ function getMediaId() {
 // 打开详情页
 function goMediaDetail(isHovering = false) {
   if (isHovering) {
-    // 跳转到媒体详情页
-    router.push({
+    // 将路由对象解析为完整 URL 后在新页面打开
+    const route = router.resolve({
       path: '/video',
       query: {
         source: props.media?.source,
@@ -78,6 +78,7 @@ function goMediaDetail(isHovering = false) {
         cate: props.cate,
       },
     })
+    window.open(route.href, '_blank')
   }
 }
 // 查询当前媒体是否已入库

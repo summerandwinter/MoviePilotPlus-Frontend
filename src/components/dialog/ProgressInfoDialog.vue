@@ -45,18 +45,18 @@ onMounted(() => {
           width="1100"
           height="800"
           > 
-          <VTimeline align="start">
+          <VTimeline align="start" side="end" line-inset="2">
             <VTimelineItem
               dot-color="pink"
               size="small"
               v-for="(item, index) in progress"
             >
               <div class="d-flex">
-                <strong class="me-4">{{item.created_at}}</strong>
+                
                 <div>
                   <strong>{{item.name}}</strong>
                   <div class="text-caption">
-                    {{item.name}}
+                    {{item.created_at}}
                   </div>
                 </div>
               </div>
