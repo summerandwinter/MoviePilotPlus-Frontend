@@ -4,6 +4,7 @@ import TaskItem from '@/components/cards/TaskItem.vue'
 import FilterOption from '@/components/misc/FilterOption.vue'
 import { useDisplay } from 'vuetify'
 
+const emit = defineEmits(['remove'])
 // 设备模式
 const display = useDisplay()
 const appMode = inject('pwaMode') && display.mdAndDown.value
@@ -204,7 +205,16 @@ const sortField = ref('default')
 // 数据列表
 const dataList = ref<Array<Collect>>([])
 
-
+function remove(collect_id: number) {
+  let idx = 0
+  for (let i = 0; i < dataList.value.length; i++) {
+    if (dataList.value[i].id === collect_id) {
+      idx = i
+      break
+    }
+  }
+  dataList.value.splice(idx, 1)
+}
 // 计算过滤后的列表
 watchEffect(() => {
   // 清空列表
@@ -231,7 +241,7 @@ onMounted(() => {
         <VList v-else lines="three" class="rounded p-0 torrent-list-vscroll shadow-lg">
           <VVirtualScroll :items="dataList" :style="listStyle">
             <template #default="{ item }">
-              <TaskItem :task="item" :key="item.id" />
+              <TaskItem :task="item" :key="item.id" @remove="remove" />
             </template>
           </VVirtualScroll>
         </VList>

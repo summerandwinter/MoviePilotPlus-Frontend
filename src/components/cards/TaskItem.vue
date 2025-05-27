@@ -4,6 +4,12 @@ import router from '@/router'
 import type { Collect, SiteSeed } from '@/api/types'
 import api from '@/api'
 import { seedStatus } from '@/api/constants'
+import { useToast } from 'vue-toast-notification'
+
+const $toast = useToast()
+
+// 定义触发的自定义事件
+const emit = defineEmits(['remove'])
 
 // 从 provide 中获取全局设置
 const globalSettings: any = inject('globalSettings')
@@ -51,7 +57,22 @@ async function getSiteSeedList() {
     console.error(error)
   }
 }
-
+async function deleteCollect(collect_id: number | undefined) {
+  try {
+    if (!collect_id)
+      return
+    await api.delete(`collect/${collect_id}`, {
+      params: {
+        'delete_file': true,
+      }
+    })
+    // 通知父组件刷新
+    emit('remove', collect_id)
+    $toast.success(`删除成功`)
+  } catch (error) {
+    console.error(error)
+  }
+}
 onMounted(() => {
   getSiteSeedList()
 })
@@ -117,11 +138,13 @@ onMounted(() => {
                   </template>
                   <VListItemTitle>查看详情</VListItemTitle>
                 </VListItem>
-                <VListItem variant="plain">
+                <VListItem variant="plain"
+                @click="deleteCollect(task?.id)"
+                >
                   <template #prepend>
                     <VIcon icon="mdi-download" />
                   </template>
-                  <VListItemTitle>下载种子文件</VListItemTitle>
+                  <VListItemTitle>删除任务</VListItemTitle>
                 </VListItem>
               </VList>
             </VMenu>
