@@ -64,6 +64,7 @@ async function deleteCollect(collect_id: number | undefined) {
     await api.delete(`collect/${collect_id}`, {
       params: {
         'delete_file': true,
+        'remove_seed': false
       }
     })
     // 通知父组件刷新
