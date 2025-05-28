@@ -106,22 +106,11 @@ async function getSiteSeedList() {
     console.error(error)
   }
 }
-function showMediaInfoDialog(operation: string) {
-  if (collectDetail.value.mediainfo_collected) {
-    showMediaInfo.value = true
-  } else {
-    operationType.value = operation
-    showCollectOperation.value = true
-  }
+function showMediaInfoDialog() {
+  showMediaInfo.value = true
 }
-function showDescInfoDialog(operation: string) {
-  if (collectDetail.value.desc_collected) {
-    showDescInfo.value = true
-  } else {
-    operationType.value = operation
-    showCollectOperation.value = true
-  }
-
+function showDescInfoDialog() {
+  showDescInfo.value = true
 }
 function showProgressInfoDialog() {
   console.log('showProgressInfoDialog')
@@ -328,7 +317,19 @@ onBeforeMount(() => {
         </div>
         <div class="media-actions">
 
-          <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click="showProgressInfoDialog()">
+          <VBtn class="ms-2 mb-2" color="green" @click="showMediaInfoDialog()">
+            <template #prepend>
+              <VIcon icon="mdi-timetable" />
+            </template>
+            媒体信息
+          </VBtn>
+          <VBtn class="ms-2 mb-2" color="green"  @click="showDescInfoDialog()">
+            <template #prepend>
+              <VIcon icon="mdi-timetable" />
+            </template>
+            简介
+          </VBtn>
+          <VBtn class="ms-2 mb-2" color="green"  @click="showProgressInfoDialog()">
             <template #prepend>
               <VIcon icon="mdi-timetable" />
             </template>
@@ -347,7 +348,7 @@ onBeforeMount(() => {
                 </template>
                 下载
               </VBtn>
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showMediaInfoDialog('metadata_by_collect')">
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('metadata_by_collect')">
                 <template #prepend>
                   <VIcon :icon="getIcon('metadata_by_collect')" />
                 </template>
