@@ -5,6 +5,8 @@ import { CollectProgress, SiteSeed } from '@/api/types'
 import { useToast } from 'vue-toast-notification'
 const progress = ref<Array<CollectProgress>>([])
 const siteSeed = ref<SiteSeed>()
+// 注册事件
+const emit = defineEmits(['remove', 'close'])
 // 输入参数
 const props = defineProps({
   seed: {
@@ -95,23 +97,21 @@ async function deleteSeed() {
   try {
     loading.value = true
     // 请求API
-    // const result: { [key: string]: any } = await api.get('torrent_seed/' + id)
-    // // 添加采集任务状态
-    // if (result.success) {
-    //   // 成功
-    //   $toast.success(`发布成功！`)
-
-    // } else {
-    //   $toast.error(`发布失败`)
-    // }
-    $toast.success(`删除成功！`)
+    const result: { [key: string]: any } = await api.delete('collect/seed/' + props?.seed.id)
+    // 添加采集任务状态
+    if (result.success) {
+      // 成功
+      $toast.success(`删除成功！`)
+    } else {
+      $toast.error(`删除失败`)
+    }
+    emit('remove')
   } catch (error) {
     console.error(error)
   }
   loading.value = false
 }
-// 注册事件
-const emit = defineEmits(['close'])
+
 
 onMounted(() => {
   getProgressInfo()

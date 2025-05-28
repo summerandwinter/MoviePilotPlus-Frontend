@@ -3,7 +3,7 @@ import type { PropType } from 'vue'
 import router from '@/router'
 import type { Collect, SiteSeed } from '@/api/types'
 import api from '@/api'
-import { seedStatus } from '@/api/constants'
+import { seedStatus, collectStatus } from '@/api/constants'
 import { useToast } from 'vue-toast-notification'
 
 const $toast = useToast()
@@ -50,6 +50,10 @@ function goDetail() {
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
 }
+
+function getCollectStatus(status: string | undefined) {
+  return collectStatus[status as keyof typeof collectStatus]
+}
 async function getSiteSeedList() {
   try {
     siteSeedList.value = await api.get(`collect/seed/${props.task?.id}`)
@@ -85,7 +89,7 @@ onMounted(() => {
     <VListItem @click.stop="goDetail()" class="mb-2" variant="flat">
       <VChip variant="outlined" size="small"
         class="bg-green-600 border-green-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold">
-        {{ task?.status }}
+        {{ getCollectStatus(task?.status) }}
       </VChip>
 
       <template v-if="!showMoreTorrents" #prepend>
@@ -143,7 +147,7 @@ onMounted(() => {
                 @click="deleteCollect(task?.id)"
                 >
                   <template #prepend>
-                    <VIcon icon="mdi-download" />
+                    <VIcon icon="mdi-delete" />
                   </template>
                   <VListItemTitle>删除任务</VListItemTitle>
                 </VListItem>

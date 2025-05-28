@@ -88,9 +88,9 @@ function setViewType(type: string) {
 async function fetchData() {
   try {
     // 查询上次搜索结果
-    const result = await api.get('collect/')
-    taskList.value = await api.get('task/')
-    collectList.value = result.data?? []
+    const result_collect = await api.get('collect/')
+    taskList.value = await api.get('task/')?? []
+    collectList.value = result_collect.data?? []
     // 标记已刷新
     isRefreshed.value = true
   } catch (error) {

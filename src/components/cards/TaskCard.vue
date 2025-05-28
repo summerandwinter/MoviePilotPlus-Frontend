@@ -5,6 +5,9 @@ import { formatFileSize } from '@/@core/utils/formatters'
 import { downloadStatus} from '@/api/constants'
 import tencentImage from '@images/logos/tencent-white.png'
 import DownloadTaskInfoDialog from '@/components/dialog/DownloadTaskInfoDialog.vue'
+
+// 注册事件
+const emit = defineEmits(['remove'])
 // 输入参数
 const props = defineProps({
   info: {
@@ -20,8 +23,6 @@ const props = defineProps({
   height: String,
 })
 
-// 是否显示卡片
-const cardState = ref(true)
 const showProgressInfo = ref(false)
 
 // 进度条
@@ -141,7 +142,7 @@ async function toggleDownload() {
 async function deleteDownload() {
   try {
     await api.delete(`collect/task/${props.info?.id}`)
-    cardState.value = false
+    emit('remove', props.info?.id)
   } catch (error) {
     console.error(error)
   }
@@ -154,7 +155,7 @@ const taskCardRef = ref<HTMLElement | null>(null)
     
     <template #default="hover">
       <div ref="taskCardRef">
-      <VCard v-if="cardState" :key="props.info?.id" class="glass-card" v-bind="hover.props" 
+      <VCard :key="props.info?.id" class="glass-card" v-bind="hover.props" 
       :height="props.height" :width="props.width" @click.stop="showProgressInfoDialog"> 
         <VChip
               variant="elevated"

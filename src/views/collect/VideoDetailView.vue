@@ -201,7 +201,7 @@ function validateForm() {
     errors.push('总集数不能为空！')
   }
 
-  if (addForm.value.episodes_all < mediaDetail.value.episode_list?.length) {
+  if (addForm.value.episodes_all < selectedCount.value) {
     errors.push('总集数不不能小于选中的集数！')
   }
 

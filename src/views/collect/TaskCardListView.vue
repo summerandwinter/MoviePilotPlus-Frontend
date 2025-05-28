@@ -182,6 +182,12 @@ const sortSeasonFilterOptions = computed(() => {
   // 返回排序后的原始字符串数组
   return parsedOptions.map(option => option.original)
 })
+function remove(id: number) {
+  const index = displayDataList.value.findIndex(item => item.id === id)
+  if (index !== -1) {
+    displayDataList.value.splice(index, 1)
+  }
+}
 // 事件源
 let eventSource: EventSource | null = null
 // SSE持续接收消息
@@ -268,6 +274,7 @@ function loadMore({ done }: { done: any }) {
         :key="`${item.id}`"
         :info="item"
         :progress="progress"
+        @remove="remove"
       />
     </div>
   </VInfiniteScroll>

@@ -2,6 +2,7 @@
 
 import api from '@/api'
 import { CollectProgress, DownloadTask } from '@/api/types'
+import { getIcon } from '@iconify/vue'
 import { useToast } from 'vue-toast-notification'
 
 // 提示框
@@ -76,7 +77,7 @@ function getNextAction(action: keyof typeof actions) {
 function showActionBtn(action_key: string) {
   if (action_key){
       const action = getNextAction(action_key as keyof typeof actions)
-      if (!action) {
+      if (action) {
         return true
       } else {
         return false
@@ -87,28 +88,37 @@ function showActionBtn(action_key: string) {
 }
 function getBtnIcon(action_key: keyof typeof actions) {
   const action = getNextAction(action_key)
-  if (!action) {
-    return actions[action_key]?.icon
+  
+  if (action) {
+    return actions[action as keyof typeof actions]?.icon
+  } else {
+    return ''
   }
 }
 
 function getActionColor(action_key: keyof typeof actions) {
   const action = getNextAction(action_key)
-  if (!action) {
-    return actions[action_key]?.color
+  if (action) {
+    return actions[action as keyof typeof actions]?.color
+  } else {
+    return ''
   }
 }
 
 function getActionName(action_key: keyof typeof actions) {
   const action = getNextAction(action_key)
-  if (!action) {
-    return actions[action_key]?.name
+  if (action) {
+    return actions[action as keyof typeof actions]?.name
+  } else {
+    return ''
   }
 }
 function getAction(action_key: keyof typeof actions) {
   const action = getNextAction(action_key)
-  if (!action) {
-    return actions[action_key]?.api
+  if (action) {
+    return actions[action as keyof typeof actions]?.api
+  } else {
+    return ''
   }
 }
 async function handleSubmit(action: string) {
@@ -122,7 +132,7 @@ async function handleSubmit(action: string) {
       if (!api_url) {
         throw new Error('API URL not found')
       }
-      const result: { [key: string]: any } = await api.post(api_url?.replace('{id}', props?.id?.toString() || ''))
+      const result: { [key: string]: any } = await api.get(api_url?.replace('{id}', props?.id?.toString() || ''))
       // 添加采集任务状态
       if (result.success) {
         // 成功
@@ -176,8 +186,9 @@ onMounted(() => {
         </VToolbar>
       </div>
       <VCardText class="d-flex flex-row  justify-center ">
-        <v-sheet
-          class="d-flex align-center justify-center flex-wrap mx-auto px-4"
+        <div
+          class="d-flex align-center justify-center flex-wrap mx-auto px-4"  
+    width="100%"
           elevation="0"
           > 
           <VTimeline align="start" density="compact"
@@ -204,7 +215,7 @@ onMounted(() => {
           @click="handleSubmit(item.action)"
           :disabled="loading"
           :color="getActionColor(item.action)"
-          prepend-icon="mdi-progress-upload"
+          :prepend-icon="getBtnIcon(item.action)"
           class="px-5"
           size="small"
         >
@@ -215,87 +226,11 @@ onMounted(() => {
               </div>
             </VTimelineItem>
           </VTimeline>
-        </v-sheet>
+        </div>
       </VCardText>
-      <VCardItem class="text-center mt-10">
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
-          生成下载命令
-        </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
-          获取元数据
-        </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
-          获取元数据
-        </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
-          生成下载命令
-        </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
-          截图
-        </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
-          获取简介
-        </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="error"
-          prepend-icon="mdi-delete"
-          class="px-5 ml-5"
-          size="small"
-        >
-          重命名
-        </VBtn>
-      </VCardItem>
+      <!-- <VCardItem class="text-center mt-10">
+        
+      </VCardItem> -->
     </VCard>
   </VDialog>
 </template>
