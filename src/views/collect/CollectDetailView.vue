@@ -392,7 +392,7 @@ onBeforeMount(() => {
                 </v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="媒体信息采集" value="2" :color="collectDetail.mediainfo_collected ? 'success' : ''"
-                  ></v-stepper-item>
+                :complete="collectDetail.mediainfo_collected" ></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="截图" value="3" :color="collectDetail.image_collected ? 'success' : ''"
                   :complete="collectDetail.image_collected"></v-stepper-item>
