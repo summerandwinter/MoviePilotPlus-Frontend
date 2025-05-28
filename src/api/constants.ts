@@ -93,18 +93,16 @@ export const downloadStatus = {
   'Finished': '完成',
 }
 
-
 export const collectStatus = {
   'Init': '初始化',
-  'DownloadCreated': '创建完成',
-  'DownloadPending': '等待下载',
+  'Downloaded': '下载完成',
   'Downloading': '正在下载',
-  'DownloadError': '下载出错',
-  'DownloadDone': '下载完成',
-  'DownloadStop': '下载停止',
-  'InfoCollected': '信息采集',
+  'ScreenshotCollected': '截图采集',
+  'InfoCollected': '元数据采集',
+  'ImageCollected': '截图完成',
+  'DescCollected': '简介采集',
   'Renamed': '重命名',
-  'Moved': '已转移',
+  'TorrentCreated': '制种',
   'Finished': '完成',
 }
 
