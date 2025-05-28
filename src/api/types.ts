@@ -1554,6 +1554,7 @@ export interface CollectProgress {
   id: number
   type: string
   name: string
+  action: "prepare_download" | "collect_mediainfo" | "screenshot" | "collect_desc" | "task_rename" | "create_download_task"
   subject_id: number
   success: boolean
   params: string | null

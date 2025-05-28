@@ -4,7 +4,7 @@ import type { DownloadTask, Progress } from '@/api/types'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { downloadStatus} from '@/api/constants'
 import tencentImage from '@images/logos/tencent-white.png'
-import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
+import DownloadTaskInfoDialog from '@/components/dialog/DownloadTaskInfoDialog.vue'
 // 输入参数
 const props = defineProps({
   info: {
@@ -140,7 +140,7 @@ async function toggleDownload() {
 // 删除下截
 async function deleteDownload() {
   try {
-    await api.delete(`download/${props.info?.id}`)
+    await api.delete(`collect/task/${props.info?.id}`)
     cardState.value = false
   } catch (error) {
     console.error(error)
@@ -220,7 +220,7 @@ const taskCardRef = ref<HTMLElement | null>(null)
         </VCardItem>
         
       </VCard>
-      <ProgressInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" type="task" :id="props.info.id" :name="props.info.name"
+      <DownloadTaskInfoDialog v-if="showProgressInfo" v-model="showProgressInfo" type="task" :id="props.info.id" :name="props.info.name"
       @close="showProgressInfo = false" />
     </div>
     </template>
