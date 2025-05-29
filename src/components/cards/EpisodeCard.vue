@@ -95,7 +95,11 @@ const getImgUrl: Ref<string> = computed(() => {
     return `${import.meta.env.VITE_API_BASE_URL}system/img/0?imgurl=${encodeURIComponent(url)}`
   return url
 })
-
+// 设置集数
+function setEpisode(episode: string) {
+  if (!props.episode) return
+  props.episode.episode = parseInt(episode)
+}
 // 将yyyy-mm-dd转换为yyyy年mm月dd日
 function formatAirDate(airDate: string) {
   if (!airDate) return ''
@@ -122,13 +126,14 @@ function getYear(airDate: string) {
       'ring-1': isImageLoaded,  }"
       @click.stop="selectEsipode">
           
-          <VImg  :src="getImgUrl" class="align-end" cover
+          <VImg  :src="getImgUrl" class="align-end brightness-50" cover
             @load="isImageLoaded = true" @error="imageLoadError = true">
             
-            <VCardTitle class="text-white" v-text="props.episode?.play_title || props.episode?.title || ''"></VCardTitle>
+            
           </VImg>
           
-          
+          <!-- <VCardTitle class="text-white -mt-20 z-50" v-text="props.episode?.play_title || props.episode?.title || ''"></VCardTitle> -->
+          <VCardTitle class="text-white absolute left-0 bottom-0 bg-opacity-90 shadow-md w-100"  v-text="props.episode?.play_title || props.episode?.title || ''"></VCardTitle>
           <VChip
               v-if="props.episode?.pay_type === '7' || props.episode?.pay_type === '6' || props.episode?.pay_type === '6' "
               variant="elevated"
@@ -140,8 +145,38 @@ function getYear(airDate: string) {
           <!--来源图标-->
           <VIcon v-if="props.episode?.selected" icon="mdi-check"  color="success" class="absolute top-1 right-1"
           />
+          <v-text-field 
+            label="集" 
+            :model-value="episode.episode" 
+            variant="outlined" 
+            bg-color="white" 
+            color="white"  
+            base-color="white" 
+            text-color="white"
+            :width="60"
+            :height="30"
+            class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            @keydown.enter="setEpisode($event.target.value)"
+            @blur="setEpisode($event.target.value)"
+            @click.stop
+          ></v-text-field>
         </VCard>
       </div>
     </template>
   </VHover>
 </template>
+
+<style scoped>
+/* 现有输入框样式保持不变 */
+::v-deep .v-field__input {
+  color: white !important;       
+  text-align: center !important; 
+  font-weight: bold !important;  
+}
+
+/* 新增label居中样式 */
+::v-deep .v-label {
+  text-align: center !important; /* label文本居中 */
+  width: 100% !important;        /* 强制label容器宽度占满，确保居中生效 */
+}
+</style>

@@ -23,6 +23,6 @@ const source = route.query?.source?.toString()
 
 <template>
   <div>
-    <VideoDetailView :mediaid="mediaid" :source="source" :type="type" :cate="cate" :title="title" :year="year" />
+    <VideoDetailView :mediaid="mediaid" :source="source" :type="type" :cate="cate" :title="title" :year="year" link_to="disabled"/>
   </div>
 </template>

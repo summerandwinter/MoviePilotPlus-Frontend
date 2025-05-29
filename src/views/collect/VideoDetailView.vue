@@ -25,6 +25,7 @@ const mediaProps = defineProps({
   auto_download: Boolean,
   auto_publish: Boolean,
   anon_publish: Boolean,
+  link_to: String,
 })
 // 提供给子组件的属性
 provide('rankingPropsKey', reactive({ ...mediaProps }))
@@ -156,6 +157,7 @@ async function addCollect() {
     // 提交前检查参数
     console.log(addForm.value)
 
+
     if (!validateForm()) return
     // 调用接口添加采集任务
     startNProgress()
@@ -189,6 +191,30 @@ function validateForm() {
   if (!mediaDetail.value.episode_list?.some(e => e.selected)) {
     errors.push('请至少选择一集！')
   }
+
+  // 新增：校验选中剧集的集数必须为数字且不重复
+  const selectedEpisodes = mediaDetail.value.episode_list?.filter(ep => ep.selected) || []
+  if (selectedEpisodes.length > 0) {
+    const episodeNumbers = selectedEpisodes.map(ep => ep.episode)
+    
+    // 校验是否全为数字
+    const nonNumberEpisodes = episodeNumbers.filter(num => typeof num !== 'number' || isNaN(num))
+    if (nonNumberEpisodes.length > 0) {
+      errors.push('选中的剧集中存在非数字的集数编号！')
+    }
+
+    // 校验是否有重复
+    const uniqueNumbers = new Set(episodeNumbers)
+    if (uniqueNumbers.size !== episodeNumbers.length) {
+      errors.push('选中的剧集中存在重复的集数编号！')
+    }
+    // 新增：校验集数必须大于0
+    const invalidNumbers = episodeNumbers.filter(num => num <= 0)
+    if (invalidNumbers.length > 0) {
+      errors.push('选中的剧集中存在集数编号小于等于0的情况！')
+    }
+  }
+
   if (addForm.value.site_list.length === 0) {
     errors.push('请至少选择一个站点！')
   }
@@ -209,7 +235,7 @@ function validateForm() {
     errors.forEach(msg => $toast.error(msg))
     return false
   }
-  return true
+  return false
 }
 // 弹出添加订阅提示
 function showCollectAddToast(result: boolean, title: string, message: string) {
@@ -283,6 +309,39 @@ onBeforeMount(() => {
   getMediaDetail()
   getSites()
 })
+// 自动设置选中剧集的自增编号，未选中的清空
+function autoSetEpisodeNumbers() {
+  const allEpisodes = mediaDetail.value.episode_list || []
+  if (allEpisodes.length === 0) {
+    $toast.warning('没有可用的剧集列表！')
+    return
+  }
+
+  // 先清空所有未选中剧集的编号
+  allEpisodes.forEach(ep => {
+    if (!ep.selected) ep.episode = 0 // 或根据实际需求设置为 null/0 等空值
+  })
+
+  // 再处理选中剧集的自增编号
+  const selectedEpisodes = allEpisodes.filter(ep => ep.selected)
+  if (selectedEpisodes.length === 0) {
+    $toast.warning('请先选择需要设置编号的剧集！')
+    return
+  }
+  
+  // 按顺序设置自增编号（从1开始）
+  selectedEpisodes.forEach((ep, index) => {
+    ep.episode = index + 1
+  })
+}
+// 打开豆瓣详情页
+function openDoubanDetail(doubanId: string) {
+  if (!doubanId) {
+    $toast.warning('豆瓣ID不存在，无法打开详情页！')
+    return
+  }
+  window.open(`https://movie.douban.com/subject/${doubanId}/`, '_blank')
+}
 </script>
 
 <template>
@@ -372,25 +431,29 @@ onBeforeMount(() => {
               <VRating v-model="mediaDetail.douban_info.rating" density="compact" length="10" class="ma-2" readonly />
             </div>
             <div v-if="mediaDetail.douban_info.id" class="media-fact">
-              <span>ID</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.id }}</span>
-            </div>
-            <div v-if="mediaDetail.douban_info.original_title" class="media-fact">
-              <span>原始标题</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.original_title }}</span>
-            </div>
-
-            <div v-if="mediaDetail.douban_info.year" class="media-fact border-b-0">
-              <span>上映日期</span>
-              <span class="media-fact-value">
+              <span>豆瓣ID</span>
+              <span class="media-fact-value cursor-pointer" @click="openDoubanDetail(mediaDetail.douban_info.id)">
                 <span class="flex items-center justify-end">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" aria-hidden="true" class="h-4 w-4">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
                   </svg>
-                  <span class="ml-1.5">{{ mediaDetail.douban_info.year }}</span>
+                  <span class="ml-1.5">{{ mediaDetail.douban_info.id }}
+
+                  </span>
                 </span>
+              </span>
+            </div>
+            <div v-if="mediaDetail.douban_info.title" class="media-fact">
+              <span>豆瓣标题</span>
+              <span class="media-fact-value">{{ mediaDetail.douban_info.title }}</span>
+            </div>
+
+            <div v-if="mediaDetail.douban_info.year" class="media-fact border-b-0">
+              <span>上映日期</span>
+              <span class="media-fact-value">
+                {{ mediaDetail.douban_info.year }}
               </span>
             </div>
           </div>
@@ -455,7 +518,17 @@ onBeforeMount(() => {
           </VChipGroup>
         </div>
       </div>
-      <div v-if="mediaDetail.episode_list">
+      <div v-if="mediaDetail.episode_list" class="relative mt-6">
+        <VBtn class="absolute right-0 -top-5"
+
+          color="#5865f2"
+          size="x-small"
+          variant="flat"
+              @click="autoSetEpisodeNumbers"
+            >
+              自动设置集数
+            </VBtn>
+        
         <SlideView>
           <template #content>
             <template v-for="data in mediaDetail.episode_list" :key="data.vid">

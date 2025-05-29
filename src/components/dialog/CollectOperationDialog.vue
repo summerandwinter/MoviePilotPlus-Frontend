@@ -16,6 +16,8 @@ const props = defineProps({
 const $toast = useToast()
 // 注册事件
 const emit = defineEmits(['close'])
+const next_step = ref(false)
+const skip_if_exists = ref(false)
 
 function getIcon() {
   switch (props.operation) {
@@ -75,8 +77,8 @@ async function handleSubmit() {
   let result: { [key: string]: any }
    result = await api.get(`collect/${props?.operation}/${props?.collect.id}`, {
       params: {
-        next_step: 'true',
-        skip_if_exists: 'true',
+        next_step: next_step,
+        skip_if_exists: skip_if_exists,
       }})
    const title = getTitle()
  if (result && result.success) {
@@ -101,6 +103,19 @@ onMounted(() => {
         :prepend-icon="getIcon()"
         :text="getText()"
         :title="getTitle()">
+        <div class="mb-6 ml-5">
+          <v-row>
+            <v-col cols="6">
+              <v-switch v-model="next_step" label="继续后续任务" hide-details>
+              </v-switch>
+            </v-col>
+            <v-col cols="6">
+              <v-switch v-model="skip_if_exists" label="已存在跳过" hide-details>
+              </v-switch>
+            </v-col>
+          </v-row>
+        </div>
+        
         <template v-slot:actions>
           <v-spacer></v-spacer>
           <VBtn
