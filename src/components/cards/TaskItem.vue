@@ -49,7 +49,9 @@ function goDetail() {
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
 }
-
+function showSeedStatus(status: string) {
+  return 'TorrentPublished' === status
+}
 function getCollectStatus(status: string | undefined) {
   return collectStatus[status as keyof typeof collectStatus]
 }
@@ -103,7 +105,7 @@ onMounted(() => {
         <span class="text-orange-700 ms-2 text-sm">↓{{ task?.episodes_total }}</span>
       </VListItemTitle>
       <VListItemSubtitle> 【{{ task?.type }}】{{ task?.sub_title }} </VListItemSubtitle>
-      <div class="pt-2" >
+      <div class="pt-2">
         <!-- <VChipGroup class="p-3" column>
               <VChip v-for="(item, index) in siteSeedList" :key="index">
                 <template #append>
@@ -113,21 +115,23 @@ onMounted(() => {
                 {{ item.site_name }}
               </VChip>
             </VChipGroup> -->
-            <div class="p-3">
-              <template v-for="(item, index) in siteSeedList" >
+        <div class="p-3">
+          <template v-for="(item, index) in siteSeedList">
+            <template v-if="showSeedStatus(item.status)">
               <VBadge color="primary" class="mr-5" :content="getSeedStatus(item.status)" size="x-small">
-              <VChip >
+                <VChip>
+                  {{ item.site_name }}
+                </VChip>
+              </VBadge>
+            </template>
+            <template v-else>
+              <VChip>
                 {{ item.site_name }}
               </VChip>
-            </VBadge>
+            </template>
           </template>
-          </div>
-        <!-- <VChip v-if="task?.team" variant="elevated" size="small" class="me-1 mb-1 text-white bg-red-500">
-          {{ task?.team }}
-        </VChip>
-        <VChip v-if="task?.copyright" variant="elevated" size="small" class="me-1 mb-1 text-white bg-red-500">
-          {{ task?.copyright }}
-        </VChip> -->
+        </div>
+        
 
       </div>
       <template #append>
@@ -142,9 +146,7 @@ onMounted(() => {
                   </template>
                   <VListItemTitle>查看详情</VListItemTitle>
                 </VListItem>
-                <VListItem variant="plain"
-                @click="deleteCollect(task?.id)"
-                >
+                <VListItem variant="plain" @click="deleteCollect(task?.id)">
                   <template #prepend>
                     <VIcon icon="mdi-delete" />
                   </template>
