@@ -125,7 +125,7 @@ onMounted(() => {
               </VBadge>
             </template>
             <template v-else>
-              <VChip>
+              <VChip class="mr-1 mb-1">
                 {{ item.site_name }}
               </VChip>
             </template>
