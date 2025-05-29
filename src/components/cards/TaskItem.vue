@@ -37,15 +37,14 @@ const getCoverUrl: Ref<string> = computed(() => {
 })
 
 function goDetail() {
-
-  // 跳转到媒体详情页
-  router.push({
+  // 跳转到媒体详情页（新标签页）
+  const route = router.resolve({
     path: '/cdetail',
     query: {
       id: props.task?.id
     },
   })
-
+  window.open(route.href, '_blank')
 }
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]

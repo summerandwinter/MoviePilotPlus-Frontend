@@ -6,7 +6,7 @@ console.log('props: ', props)
 
 <template>
   <div class="ms-1">
-    <span class="slider-title" v-if="props.link_to === 'disabled'">{{ props?.title }}</span>
+    <span class="slider-title" v-if="props?.link_to === 'disabled'">{{ props?.title }}</span>
     <RouterLink v-else :to="props?.linkurl ? props?.linkurl : ''" class="slider-title">
       <span>{{ props?.title }}</span>
       <VIcon icon="mdi-arrow-right-circle-outline" class="ms-1" />

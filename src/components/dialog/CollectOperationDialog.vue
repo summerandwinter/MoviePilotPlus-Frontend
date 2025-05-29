@@ -77,8 +77,8 @@ async function handleSubmit() {
   let result: { [key: string]: any }
    result = await api.get(`collect/${props?.operation}/${props?.collect.id}`, {
       params: {
-        next_step: next_step,
-        skip_if_exists: skip_if_exists,
+        next_step: next_step.value,
+        skip_if_exists: skip_if_exists.value,
       }})
    const title = getTitle()
  if (result && result.success) {
