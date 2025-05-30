@@ -135,3 +135,7 @@ export const tagOptions = {
   'UHD': '8K',
   'HLG': 'HLG'
 }
+export const mediaTypeOptions = {
+  'Movie': '电影',
+  'TV': '剧集'
+}

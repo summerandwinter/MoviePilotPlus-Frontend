@@ -2,16 +2,13 @@
 import { useToast } from 'vue-toast-notification'
 
 import api from '@/api'
-import { tagOptions, teamOptions } from '@/api/constants'
-import type { VideoInfo, CollectCreate, NotExistMediaInfo, Site, Subscribe, TmdbEpisode } from '@/api/types'
+import { tagOptions, teamOptions, mediaTypeOptions } from '@/api/constants'
+import type { VideoInfo, CollectCreate, Site } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
-import { formatSeason } from '@/@core/utils/formatters'
 import router from '@/router'
-import SubscribeEditDialog from '@/components/dialog/SubscribeEditDialog.vue'
-import { isNullOrEmptyObject } from '@/@core/utils'
 import { useUserStore } from '@/stores'
 
 // 输入参数
@@ -72,7 +69,7 @@ const addForm = ref<CollectCreate>({
   imdb_id: "",
   cn_title: "",
   year: "",
-  type: "",
+  type: mediaProps.type ?? "",
   cate: "",
   site: "",
   cover: "",
@@ -474,6 +471,15 @@ function openDoubanDetail(doubanId: string) {
               <VChip :color="addForm.team === teamOption.team ? 'primary' : ''" filter variant="outlined"
                 :value="teamOption.team">
                 {{ teamOption.team }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
+        <div class="mt-6">
+          <VChipGroup column v-model="addForm.type">
+            <template v-for="(value, key) in mediaTypeOptions" :key="key">
+              <VChip :color="addForm.type === key ? 'primary' : ''" filter variant="outlined" :value="key">
+                {{ value }}
               </VChip>
             </template>
           </VChipGroup>
