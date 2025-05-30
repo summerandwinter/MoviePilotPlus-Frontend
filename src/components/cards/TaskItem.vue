@@ -18,8 +18,6 @@ const props = defineProps({
   task: Object as PropType<Collect>,
 })
 
-// 更多来源界面
-const showMoreTorrents = ref(false)
 
 // 任务信息
 const task = ref(props.task)
@@ -81,10 +79,6 @@ async function deleteCollect(collect_id: number | undefined) {
 }
 // 控制是否展开所有chip
 const showAll = ref(false)
-// 屏幕宽度响应式变量
-const screenWidth = ref(window.innerWidth)
-// 计算每个chip的估计宽度（根据实际UI调整，这里假设80px）
-const chipWidth = 100
 
 // 计算实际可见数量
 const visibleCount = computed(() => showAll.value ? siteSeedList.value.length : defaultVisible.value)
@@ -107,7 +101,7 @@ const recalculateVisible = () => {
   }
   
   // 计算实际可见数量（至少显示3个）
-  defaultVisible.value = Math.max(3, Math.floor(containerWidth / chipActualWidth.value))
+  defaultVisible.value = Math.max(2, Math.floor(containerWidth / chipActualWidth.value))
 }
 
 // 移除重复的computed声明，仅保留ref版本
@@ -144,7 +138,7 @@ onUnmounted(() => {
         {{ getCollectStatus(task?.status) }}
       </VChip>
 
-      <template v-if="!showMoreTorrents" #prepend>
+      <template #prepend>
         <VListItemMedia class="pr-2">
           <VImg :src="getCoverUrl" :width="60" aspect-ratio="9/16" cover />
         </VListItemMedia>
@@ -182,7 +176,7 @@ onUnmounted(() => {
               color="primary" 
               size="x-small" 
               @click.stop="showAll = !showAll"
-              class="ml-2"
+              class="ml-0"
             >
               <template #prepend>
                 <VIcon :icon="showAll ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
