@@ -23,7 +23,7 @@
   // Vue
   "[vue]": {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "johnsoncodehk.volar"
+    "editor.defaultFormatter": "Vue.volar"
   },
   // Extension: Volar
   "volar.preview.port": 3000,

@@ -69,6 +69,7 @@ const addForm = ref<CollectCreate>({
   cid: "",
   defn: "",
   douban_id: "",
+  imdb_id: "",
   cn_title: "",
   year: "",
   type: "",
@@ -112,8 +113,8 @@ async function getMediaDetail() {
     addForm.value.type = mediaProps.type ?? ''
     addForm.value.cate = mediaProps.cate ?? ''
     addForm.value.site = mediaProps.source ?? ''
-    addForm.value.cover = mediaDetail.value.new_pic_vt?? ''
-    addForm.value.poster = mediaDetail.value.new_pic_vt?? ''
+    addForm.value.cover = mediaDetail.value.new_pic_vt ?? ''
+    addForm.value.poster = mediaDetail.value.new_pic_vt ?? ''
     addForm.value.episodes_all = mediaDetail.value.episode_all ? Number(mediaDetail.value.episode_all) : 1
     isRefreshed.value = true
   }
@@ -196,7 +197,7 @@ function validateForm() {
   const selectedEpisodes = mediaDetail.value.episode_list?.filter(ep => ep.selected) || []
   if (selectedEpisodes.length > 0) {
     const episodeNumbers = selectedEpisodes.map(ep => ep.episode)
-    
+
     // 校验是否全为数字
     const nonNumberEpisodes = episodeNumbers.filter(num => typeof num !== 'number' || isNaN(num))
     if (nonNumberEpisodes.length > 0) {
@@ -219,8 +220,8 @@ function validateForm() {
     errors.push('请至少选择一个站点！')
   }
 
-  if (!addForm.value.douban_id) {
-    errors.push('豆瓣信息不能为空！')
+  if (!addForm.value.douban_id && !addForm.value.imdb_id) {
+    errors.push('豆瓣ID或者IMDBID需要至少需输入一个！')
   }
 
   if (!addForm.value.episodes_all) {
@@ -277,8 +278,8 @@ const getBackdropUrl: Ref<string> = computed(() => {
 
 // 计算订阅图标
 const getSubscribeIcon = computed(() => {
-  if (isSubscribed.value) return 'mdi-heart'
-  else return 'mdi-heart-outline'
+  if (isSubscribed.value) return 'mdi-magnify'
+  else return 'mdi-magnify'
 })
 
 // 计算订阅按钮颜色
@@ -291,14 +292,11 @@ const getSubscribeColor = computed(() => {
 async function handlePlay() {
   // 获取播放链接地址
   try {
-    const result: { [key: string]: any } = await api.get(`mediaserver/play/${existsItemId.value}`)
-    if (result?.success) {
+    if (mediaProps.mediaid) {
       // 打开链接地址
-      setTimeout(() => {
-        window.open(result.data.url, '_blank')
-      }, 100)
+      window.open(`https://v.qq.com/x/cover/${mediaProps.mediaid}.html`, '_blank')
     } else {
-      $toast.error(`获取播放链接失败：${result.message}！`)
+      $toast.error(`获取播放链接失败！`)
     }
   } catch (error) {
     console.error(error)
@@ -328,7 +326,7 @@ function autoSetEpisodeNumbers() {
     $toast.warning('请先选择需要设置编号的剧集！')
     return
   }
-  
+
   // 按顺序设置自增编号（从1开始）
   selectedEpisodes.forEach((ep, index) => {
     ep.episode = index + 1
@@ -399,7 +397,7 @@ function openDoubanDetail(doubanId: string) {
             <template #prepend>
               <VIcon :icon="getSubscribeIcon" />
             </template>
-            {{ '订阅' }}
+            搜索
           </VBtn>
           <VBtn v-if="existsItemId" class="ms-2 mb-2" variant="tonal" @click="handlePlay()">
             <template #prepend>
@@ -418,47 +416,29 @@ function openDoubanDetail(doubanId: string) {
               </v-col>
               <v-col cols="8">
                 <v-text-field label="总剧集" placeholder="未获取到，请手动输入" variant="plain"
-                v-model="addForm.episodes_all"></v-text-field>
+                  v-model="addForm.episodes_all"></v-text-field>
               </v-col>
             </v-row>
           </div>
           <h2 v-if="mediaDetail.overview">简介</h2>
           <p>{{ mediaDetail.overview }}</p>
         </div>
-        <div v-if="mediaDetail.douban_info" class="media-overview-right">
-          <div class="media-facts">
-            <div v-if="mediaDetail.douban_info.rating" class="media-ratings">
-              <VRating v-model="mediaDetail.douban_info.rating" density="compact" length="10" class="ma-2" readonly />
-            </div>
-            <div v-if="mediaDetail.douban_info.id" class="media-fact">
-              <span>豆瓣ID</span>
-              <span class="media-fact-value cursor-pointer" @click="openDoubanDetail(mediaDetail.douban_info.id)">
-                <span class="flex items-center justify-end">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" aria-hidden="true" class="h-4 w-4">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
-                  </svg>
-                  <span class="ml-1.5">{{ mediaDetail.douban_info.id }}
 
-                  </span>
-                </span>
-              </span>
-            </div>
-            <div v-if="mediaDetail.douban_info.title" class="media-fact">
-              <span>豆瓣标题</span>
-              <span class="media-fact-value">{{ mediaDetail.douban_info.title }}</span>
-            </div>
-
-            <div v-if="mediaDetail.douban_info.year" class="media-fact border-b-0">
-              <span>上映日期</span>
-              <span class="media-fact-value">
-                {{ mediaDetail.douban_info.year }}
-              </span>
-            </div>
-          </div>
+        <div class="media-overview-right">
+          <!-- 调整列宽设置为cols="6"，确保小屏幕也能并排显示 -->
+          <v-row>
+            <!-- 豆瓣ID输入框 -->
+            <v-col cols="6" md="6">
+              <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" hint="如：1878011" label="豆瓣 ID"
+                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact" />
+            </v-col>
+            <!-- IMDB ID输入框 -->
+            <v-col cols="6" md="6">
+              <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" hint="如：tt1878011" label="IMDB ID"
+                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact" />
+            </v-col>
+          </v-row>
         </div>
-
       </div>
       <div class="media-overview-bottom">
         <div class="mt-6">
@@ -519,16 +499,11 @@ function openDoubanDetail(doubanId: string) {
         </div>
       </div>
       <div v-if="mediaDetail.episode_list" class="relative mt-6">
-        <VBtn class="absolute right-0 -top-5"
+        <VBtn class="absolute right-0 -top-5" color="#5865f2" size="x-small" variant="flat"
+          @click="autoSetEpisodeNumbers">
+          自动设置集数
+        </VBtn>
 
-          color="#5865f2"
-          size="x-small"
-          variant="flat"
-              @click="autoSetEpisodeNumbers"
-            >
-              自动设置集数
-            </VBtn>
-        
         <SlideView>
           <template #content>
             <template v-for="data in mediaDetail.episode_list" :key="data.vid">

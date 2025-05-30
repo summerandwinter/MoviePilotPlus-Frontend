@@ -1571,6 +1571,8 @@ export interface CollectCreate {
   defn: string
   // 豆瓣ID
   douban_id: string
+  // IMDB ID
+  imdb_id: string
   // 中文标题
   cn_title: string
   // 年份
