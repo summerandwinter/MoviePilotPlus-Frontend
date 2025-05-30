@@ -272,6 +272,13 @@ const getBackdropUrl: Ref<string> = computed(() => {
   return url
 })
 
+const doubanHint = computed(() => {
+  if (mediaDetail.value.douban_id) {
+    return `${mediaDetail.value.title}(${mediaDetail.value.year})`
+  } else {
+    return '如：1878011'
+  }
+})
 
 // 计算订阅图标
 const getSubscribeIcon = computed(() => {
@@ -426,7 +433,7 @@ function openDoubanDetail(doubanId: string) {
           <v-row>
             <!-- 豆瓣ID输入框 -->
             <v-col cols="6" md="6">
-              <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" hint="如：1878011" label="豆瓣 ID"
+              <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" :hint="doubanHint" label="豆瓣 ID"
                 variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact" />
             </v-col>
             <!-- IMDB ID输入框 -->
