@@ -97,6 +97,10 @@ async function getMediaDetail() {
     // 默认选中所有剧集
     mediaDetail.value.episode_list?.forEach(episode => {
       episode.selected = true
+      // 新增：当只有1集且集数未设置时，默认设为1
+      if (mediaDetail.value.episode_list?.length === 1 && !episode.episode) {
+        episode.episode = 1
+      }
     })
     // 设置默认选中第一个清晰度
     if (mediaDetail.value.definition_list?.length > 0) {
@@ -112,7 +116,11 @@ async function getMediaDetail() {
     addForm.value.site = mediaProps.source ?? ''
     addForm.value.cover = mediaDetail.value.new_pic_vt ?? ''
     addForm.value.poster = mediaDetail.value.new_pic_vt ?? ''
-    addForm.value.episodes_all = mediaDetail.value.episode_all ? Number(mediaDetail.value.episode_all) : 1
+    // 设置总集数（修改核心逻辑）
+    const episodeListLength = mediaDetail.value.episode_list?.length || 1 // 剧集列表长度（至少1）
+    addForm.value.episodes_all = mediaDetail.value.episode_all
+      ? Math.max(Number(mediaDetail.value.episode_all), episodeListLength)  // 取较大值
+      : episodeListLength  // 无episode_all时使用列表长度
     isRefreshed.value = true
   }
 }
