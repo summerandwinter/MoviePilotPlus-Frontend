@@ -110,7 +110,7 @@ export const seedStatus = {
   'Init': '待',
   'TorrentUploaded': '传',
   'TorrentDownloaded': '下',
-  'TorrentPublished': '做',
+  'TorrentPublished': '种',
 }
 
 export const teamOptions = [

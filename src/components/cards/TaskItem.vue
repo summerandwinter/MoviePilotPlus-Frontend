@@ -79,8 +79,59 @@ async function deleteCollect(collect_id: number | undefined) {
     console.error(error)
   }
 }
+// 控制是否展开所有chip
+const showAll = ref(false)
+// 屏幕宽度响应式变量
+const screenWidth = ref(window.innerWidth)
+// 计算每个chip的估计宽度（根据实际UI调整，这里假设80px）
+const chipWidth = 100
+
+// 计算实际可见数量
+const visibleCount = computed(() => showAll.value ? siteSeedList.value.length : defaultVisible.value)
+
+// 添加容器ref
+const chipContainer = ref<HTMLDivElement | null>(null)
+// 单个chip的实际宽度（初始设为100px作为备用值）
+const chipActualWidth = ref(100)
+
+// 重新计算可见数量的方法
+const recalculateVisible = () => {
+  if (!chipContainer.value) return
+  
+  // 获取容器实际宽度（减去内边距）
+  const containerWidth = chipContainer.value.getBoundingClientRect().width - 24 // .p-3的内边距是12px*2
+  // 获取第一个chip的实际宽度（如果有chip的话）
+  const firstChip = chipContainer.value.querySelector('.v-chip') as HTMLElement | null
+  if (firstChip) {
+    chipActualWidth.value = firstChip.getBoundingClientRect().width + 16 // 加上margin-right: 12px和margin-bottom: 4px的总和
+  }
+  
+  // 计算实际可见数量（至少显示3个）
+  defaultVisible.value = Math.max(3, Math.floor(containerWidth / chipActualWidth.value))
+}
+
+// 移除重复的computed声明，仅保留ref版本
+// 计算默认显示数量（改为ref响应式变量）
+const defaultVisible = ref(3)
+// 更新监听逻辑
+const handleResize = () => {
+  recalculateVisible()
+}
+
 onMounted(() => {
+  window.addEventListener('resize', handleResize)
+  // 初始加载时计算一次
+  setTimeout(() => recalculateVisible(), 100) // 等待DOM渲染完成
   getSiteSeedList()
+})
+
+onUpdated(() => {
+  // 内容变化后重新计算
+  recalculateVisible()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -106,20 +157,12 @@ onMounted(() => {
       </VListItemTitle>
       <VListItemSubtitle> 【{{ task?.type }}】{{ task?.sub_title }} </VListItemSubtitle>
       <div class="pt-2">
-        <!-- <VChipGroup class="p-3" column>
-              <VChip v-for="(item, index) in siteSeedList" :key="index">
-                <template #append>
-                  <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="x-small" />
-                </template>
-               
-                {{ item.site_name }}
-              </VChip>
-            </VChipGroup> -->
-        <div class="p-3">
-          <template v-for="(item, index) in siteSeedList">
+        <div class="p-3" ref="chipContainer">
+          <!-- 显示可见范围内的chip -->
+          <template v-for="(item, index) in siteSeedList.slice(0, visibleCount)" :key="index">
             <template v-if="showSeedStatus(item.status)">
               <VBadge color="primary" class="mr-5" :content="getSeedStatus(item.status)" size="x-small">
-                <VChip>
+                <VChip class="mr-1 mb-1">
                   {{ item.site_name }}
                 </VChip>
               </VBadge>
@@ -130,10 +173,28 @@ onMounted(() => {
               </VChip>
             </template>
           </template>
+          
+          <!-- 调整按钮显示条件：总数量 > 默认显示数（5） -->
+          <!-- 修复：使用defaultVisible.value判断 -->
+          <template v-if="siteSeedList.length > defaultVisible">
+            <VBtn 
+              variant="text" 
+              color="primary" 
+              size="x-small" 
+              @click.stop="showAll = !showAll"
+              class="ml-2"
+            >
+              <template #prepend>
+                <VIcon :icon="showAll ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+              </template>
+              {{ showAll ? '收起' : '展开' }}
+            </VBtn>
+          </template>
         </div>
+      </div>
         
 
-      </div>
+
       <template #append>
         <div class="me-n3">
           <IconBtn>

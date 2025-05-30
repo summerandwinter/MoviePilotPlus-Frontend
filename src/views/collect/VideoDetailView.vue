@@ -235,6 +235,7 @@ function validateForm() {
     errors.forEach(msg => $toast.error(msg))
     return false
   }
+  return true
 }
 // 弹出添加订阅提示
 function showCollectAddToast(result: boolean, title: string, message: string) {
