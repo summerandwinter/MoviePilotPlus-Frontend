@@ -18,6 +18,8 @@ const activeState = computed(() => {
     recommend: route.path === '/recommend',
     movie: route.path === '/subscribe/movie',
     tv: route.path === '/subscribe/tv',
+    task: route.path === '/task',
+    collect: route.path === '/collect',
   }
 })
 
@@ -42,17 +44,18 @@ const currentPath = computed(() => route.path)
         <VIcon v-if="activeState.home" size="28">mdi-home</VIcon>
         <VIcon v-else size="28">mdi-home-outline</VIcon>
       </VBtn>
+      
+      <VBtn to="/collect" :ripple="false">
+        <VIcon v-if="activeState.collect" size="28">mdi-video</VIcon>
+        <VIcon v-else size="28">mdi-video-outline</VIcon>
+      </VBtn>
+      <VBtn to="/task" :ripple="false">
+        <VIcon v-if="activeState.task" size="28">mdi-arrow-down-bold-hexagon-outline</VIcon>
+        <VIcon v-else size="28">mdi-arrow-down-bold-hexagon-outline</VIcon>
+      </VBtn>
       <VBtn to="/recommend" :ripple="false">
         <VIcon v-if="activeState.recommend" size="28">mdi-star</VIcon>
         <VIcon v-else size="28">mdi-star-outline</VIcon>
-      </VBtn>
-      <VBtn to="/subscribe/movie" :ripple="false">
-        <VIcon v-if="activeState.movie" size="28">mdi-movie-open</VIcon>
-        <VIcon v-else size="28">mdi-movie-open-outline</VIcon>
-      </VBtn>
-      <VBtn to="/subscribe/tv" :ripple="false">
-        <VIcon v-if="activeState.tv" size="28">mdi-television-play</VIcon>
-        <VIcon v-else size="28">mdi-television</VIcon>
       </VBtn>
       <VBtn :ripple="false">
         <VIcon

@@ -38,7 +38,7 @@ export const SystemNavMenus = [
     to: '/subscribe/movie',
     header: '订阅',
     admin: false,
-    footer: true,
+    footer: false,
   },
   {
     title: '电视剧',
@@ -47,7 +47,7 @@ export const SystemNavMenus = [
     to: '/subscribe/tv',
     header: '订阅',
     admin: false,
-    footer: true,
+    footer: false,
   },
 
   {
@@ -121,7 +121,7 @@ export const SystemNavMenus = [
     icon: 'mdi-video',
     to: '/collect',
     header: '采集',
-    admin: false,
+    admin: true,
     footer: true,
   },
   {
@@ -129,8 +129,8 @@ export const SystemNavMenus = [
     icon: 'mdi-arrow-down-bold-hexagon-outline',
     to: '/task',
     header: '采集',
-    admin: false,
-    footer: false,
+    admin: true,
+    footer: true,
   },
 ]
 

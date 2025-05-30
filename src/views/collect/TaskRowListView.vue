@@ -248,21 +248,5 @@ onMounted(() => {
       </VCol>
       
     </VRow>
-
-    <!-- 底部操作按钮 -->
-    <div v-if="props.items">
-      <VFab
-        v-if="!display.mdAndUp.value"
-        icon="mdi-filter"
-        color="info"
-        location="bottom"
-        :class="appMode ? 'mb-28' : 'mb-16'"
-        size="x-large"
-        fixed
-        app
-        appear
-        @click="filterDialog = true"
-      />
-    </div>
   </div>
 </template>
