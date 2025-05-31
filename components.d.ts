@@ -11,6 +11,7 @@ declare module 'vue' {
     DialogCloseBtn: typeof import('./src/@core/components/DialogCloseBtn.vue')['default']
     ErrorHeader: typeof import('./src/@core/components/ErrorHeader.vue')['default']
     ExistIcon: typeof import('./src/@core/components/ExistIcon.vue')['default']
+    IgnoreIcon: typeof import('./src/@core/components/IgnoreIcon.vue')['default']
     LoadingBanner: typeof import('./src/@core/components/LoadingBanner.vue')['default']
     MoreBtn: typeof import('./src/@core/components/MoreBtn.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

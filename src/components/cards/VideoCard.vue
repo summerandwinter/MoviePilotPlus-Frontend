@@ -2,9 +2,11 @@
 import { defineProps, PropType, ref } from 'vue'
 import { useToast } from 'vue-toast-notification'
 import api from '@/api'
-import { VideoInfo } from '@/api/types'
+import { VideoInfo, Site } from '@/api/types'
 import router, { registerAbortController } from '@/router'
+import { doneNProgress, startNProgress } from '@/api/nprogress'
 import noImage from '@images/no-image.jpeg'
+import SiteSearchDialog from '../dialog/SiteSearchDialog.vue'
 import tmdbImage from '@images/logos/tmdb.png'
 import doubanImage from '@images/logos/douban-black.png'
 import bangumiImage from '@images/logos/bangumi.png'
@@ -43,6 +45,14 @@ const tmdbFlag = ref(true)
 // 本地存在状态
 const isExists = ref(false)
 
+// 本地忽略状态
+const isIgnore = ref(false)
+
+// 所有站点
+const allSites = ref<Site[]>([])
+
+// 选中的站点
+const selectedSites = ref<number>(25)
 
 // 绑定MediaCard元素
 const videoCardRef = ref<HTMLElement | null>(null)
@@ -51,8 +61,13 @@ const videoCardRef = ref<HTMLElement | null>(null)
 // 搜索菜单显示状态
 const searchMenuShow = ref(false)
 
+// 资源浏览弹窗
+const resourceDialog = ref(false)
 
-
+// 资源浏览弹窗关闭后的回调
+function onSiteResourceDone() {
+  resourceDialog.value = false
+}
 // 获得mediaid
 function getMediaId() {
   if (props.media?.tmdb_id) return `tmdb:${props.media?.tmdb_id}`
@@ -61,8 +76,10 @@ function getMediaId() {
   else return `${props.media?.source}:${props.media?.cid}`
 }
 
-
-
+function getSelectedSite() {
+  const selected_list = allSites.value.filter(item => selectedSites.value === item.id)
+  if (selected_list.length > 0) return selected_list[0]
+}
 // 打开详情页
 function goMediaDetail(isHovering = false) {
   if (isHovering) {
@@ -97,6 +114,22 @@ async function handleCheckExists() {
     console.error(error)
   }
 }
+
+async function handleCheckIgnore() {
+  try {
+    const abortController = new AbortController()
+    registerAbortController(abortController)
+    const { signal } = abortController
+    const result: { [key: string]: any } = await api.get(`collect/ignore/${props.media?.source}/${props.media?.cid}`, {
+      params: {},
+      signal,
+    })
+
+    if (result.success) isIgnore.value = true
+  } catch (error) {
+    console.error(error)
+  }
+}
 // 懒加载检查
 function handleCheckLazy() {
   console.log('handleCheckLazy', props.media?.cid)
@@ -104,6 +137,7 @@ function handleCheckLazy() {
   //   return
   // }
   handleCheckExists()
+  handleCheckIgnore()
 }
 // 在元素进入视窗时触发懒加载函数
 function setupIntersectionObserver() {
@@ -160,7 +194,71 @@ function getYear(airDate: string) {
   const date = new Date(airDate.replaceAll(/-/g, '/'))
   return date.getFullYear()
 }
+// 查询所有站点
+async function querySites() {
+  try {
+    const data: Site[] = await api.get('site/')
+    // 过滤站点，只有启用的站点才显示
+    allSites.value = data.filter(item => item.is_active)
+  } catch (error) {
+    console.log(error)
+  }
+}
+// 点击搜索
+async function clickSearch() {
+  if (allSites.value?.length > 0) return
+  querySites()
+}
+// 开始搜索
+function handleSearch() {
+  // TODO 显示搜索弹框
+  resourceDialog.value = true
 
+}
+// 调用API取消订阅
+async function removeIgnore() {
+  // 开始处理
+  startNProgress()
+  try {
+    const result: { [key: string]: any } = await api.delete(`collect/ignore/${props.media?.source}/${props.media?.cid}`)
+
+    if (result.success) {
+      isIgnore.value = false
+      $toast.success(`${props.media?.title} 已取消忽略！`)
+    } else {
+      $toast.error(`${props.media?.title} 取消忽略失败：${result.message}！`)
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    doneNProgress()
+  }
+}
+// 添加订阅处理
+async function addIgnore() {
+  // 开始处理
+  startNProgress()
+  try {
+    const result: { [key: string]: any } = await api.post(`collect/ignore/${props.media?.source}/${props.media?.cid}`)
+
+    if (result.success) {
+      isIgnore.value = true
+      $toast.success(`${props.media?.title} 已忽略！`)
+    } else {
+      $toast.error(`${props.media?.title} 忽略失败：${result.message}！`)
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    doneNProgress()
+  }
+}
+
+// 爱心订阅按钮响应
+function handleIgnore() {
+  if (isIgnore.value) removeIgnore()
+  else addIgnore()
+}
 </script>
 
 <template>
@@ -169,9 +267,9 @@ function getYear(airDate: string) {
       <div ref="videoCardRef">
         <VCard v-bind="hover.props" :height="props.height" :width="props.width"
           class="outline-none shadow ring-gray-500 rounded-lg" :class="{
-      'transition transform-cpu duration-300 scale-105 shadow-lg': hover.isHovering,
-      'ring-1': isImageLoaded,
-    }" @click.stop="goMediaDetail(hover.isHovering ?? false)">
+            'transition transform-cpu duration-300 scale-105 shadow-lg': hover.isHovering,
+            'ring-1': isImageLoaded,
+          }" @click.stop="goMediaDetail(hover.isHovering ?? false)">
           <VImg aspect-ratio="2/3" :src="getImgUrl" class="object-cover aspect-w-2 aspect-h-3" cover
             @load="isImageLoaded = true" @error="imageLoadError = true">
             <template #placeholder>
@@ -192,22 +290,49 @@ function getYear(airDate: string) {
               {{ props.media?.overview }}
             </p>
             <div v-if="props.media?.vid" class="mb-3" @click.stop=""></div>
+            <div v-else class="flex align-center justify-between">
+              <VMenu close-on-content-click v-model="searchMenuShow" max-width="450">
+                <template v-slot:activator="{ props }">
+                  <IconBtn v-bind="props" icon="mdi-magnify" color="white" @click.stop="clickSearch" />
+                </template>
+                <VList>
+                  <VListItem>
+                    <VChipGroup v-model="selectedSites" column @click.stop>
+                      <VChip v-for="site in allSites" :key="site.id" :color="selectedSites === site.id ? 'primary' : ''"
+                        filter variant="outlined" :value="site.id" size="small">
+                        {{ site.name }}
+                      </VChip>
+                    </VChipGroup>
+                  </VListItem>
+                  <VListItem>
+                    <VBtn @click="handleSearch" block>搜索</VBtn>
+                  </VListItem>
+                </VList>
+              </VMenu>
+              <IconBtn :icon="isIgnore ? 'mdi-eye-off' : 'mdi-eye'" :color="isIgnore ? 'error' : 'white'"
+                @click.stop="handleIgnore" />
+            </div>
           </VCardText>
           <!-- 类型角标 -->
-          <VChip v-show="isImageLoaded && props.media?.pay_type && !hover.isHovering" variant="elevated" size="small" 
+          <VChip v-show="isImageLoaded && props.media?.pay_type && !hover.isHovering" variant="elevated" size="small"
             class="absolute left-2 top-2 bg-opacity-80 shadow-md text-white font-bold border-red-600 bg-red-600">
             {{ props.media?.pay_type }}
           </VChip>
           <!-- 本地存在标识 -->
           <ExistIcon v-if="isExists && !hover.isHovering" />
+          <IgnoreIcon v-if="!isExists && isIgnore && !hover.isHovering" />
+
           <!-- 评分角标 -->
-          <VChip v-if="isImageLoaded && !hover.isHovering && props.media?.rating"
-            variant="elevated" size="small"
+          <VChip v-if="isImageLoaded && !hover.isHovering && props.media?.rating" variant="elevated" size="small"
             class="absolute right-2 bottom-2 bg-opacity-80 shadow-md text-white font-bold border-purple-600 bg-purple-600">
             {{ props.media?.rating }}
           </VChip>
-          
+
+
         </VCard>
+        <!-- 站点资源弹窗 -->
+        <SiteSearchDialog v-if="resourceDialog" v-model="resourceDialog" :site="getSelectedSite()"
+          :keyword="props.media?.title" @close="onSiteResourceDone" />
       </div>
     </template>
   </VHover>
