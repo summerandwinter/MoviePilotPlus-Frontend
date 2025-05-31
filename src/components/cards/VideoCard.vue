@@ -52,7 +52,7 @@ const isIgnore = ref(false)
 const allSites = ref<Site[]>([])
 
 // 选中的站点
-const selectedSites = ref<number>(25)
+const selectedSites = ref<number>(26)
 
 // 绑定MediaCard元素
 const videoCardRef = ref<HTMLElement | null>(null)
