@@ -282,7 +282,7 @@ const getBackdropUrl: Ref<string> = computed(() => {
 
 const doubanHint = computed(() => {
   if (mediaDetail.value.douban_id) {
-    return `${mediaDetail.value.title}(${mediaDetail.value.year})`
+    return `${mediaDetail.value.douban_info.title}(${mediaDetail.value.douban_info.year})`
   } else {
     return '如：1878011'
   }
