@@ -1573,6 +1573,7 @@ export interface CollectCreate {
   douban_id: string
   // IMDB ID
   imdb_id: string
+  overview: string
   // 中文标题
   cn_title: string
   // 年份

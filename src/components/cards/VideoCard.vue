@@ -7,9 +7,6 @@ import router, { registerAbortController } from '@/router'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import noImage from '@images/no-image.jpeg'
 import SiteSearchDialog from '../dialog/SiteSearchDialog.vue'
-import tmdbImage from '@images/logos/tmdb.png'
-import doubanImage from '@images/logos/douban-black.png'
-import bangumiImage from '@images/logos/bangumi.png'
 import { useUserStore } from '@/stores'
 
 // 输入参数

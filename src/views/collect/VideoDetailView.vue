@@ -7,6 +7,7 @@ import type { VideoInfo, CollectCreate, Site } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
+import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import router from '@/router'
 import { useUserStore } from '@/stores'
@@ -40,8 +41,6 @@ const mediaDetail = ref<VideoInfo>({} as VideoInfo)
 // 站点列表
 const siteList = ref<Site[]>([])
 
-// 本地是否存在，存在则包括Item信息
-const existsItemId = ref('1')
 
 // 选中的剧集数量
 const selectedCount = computed(() => {
@@ -54,8 +53,6 @@ const selectedCount = computed(() => {
   return count
 })
 
-// 是否已订阅
-const isSubscribed = ref(false)
 
 // 是否已加载完成
 const isRefreshed = ref(false)
@@ -70,6 +67,7 @@ const addForm = ref<CollectCreate>({
   cn_title: "",
   year: "",
   type: mediaProps.type ?? "",
+  overview: "",
   cate: "",
   site: "",
   cover: "",
@@ -116,6 +114,7 @@ async function getMediaDetail() {
     addForm.value.site = mediaProps.source ?? ''
     addForm.value.cover = mediaDetail.value.new_pic_vt ?? ''
     addForm.value.poster = mediaDetail.value.new_pic_vt ?? ''
+    addForm.value.overview = mediaDetail.value.overview ?? ''
     // 设置总集数（修改核心逻辑）
     const episodeListLength = mediaDetail.value.episode_list?.length || 1 // 剧集列表长度（至少1）
     addForm.value.episodes_all = mediaDetail.value.episode_all
@@ -132,7 +131,30 @@ async function getSites() {
     console.error(error)
   }
 }
+async function handleCheckExists() {
+  try {
+    const result: { [key: string]: any } = await api.get('task/exist_cid/' + mediaProps?.mediaid, {
+      params: {}
+    })
 
+    if (result.success) isExists.value = true
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function handleCheckIgnore() {
+  try {
+
+    const result: { [key: string]: any } = await api.get(`collect/ignore/${mediaProps?.source}/${mediaProps?.mediaid}`, {
+      params: {},
+    })
+
+    if (result.success) isIgnore.value = true
+  } catch (error) {
+    console.error(error)
+  }
+}
 // 调用API添加采集任务
 async function addCollect() {
   try {
@@ -173,7 +195,7 @@ async function addCollect() {
     if (result.success) {
       // 成功
       router.push({ path: '/task' })
-      isSubscribed.value = true
+      isExists.value = true
     }
 
     // 提示
@@ -225,9 +247,9 @@ function validateForm() {
     errors.push('请至少选择一个站点！')
   }
 
-  if (!addForm.value.douban_id && !addForm.value.imdb_id) {
-    errors.push('豆瓣ID或者IMDBID需要至少需输入一个！')
-  }
+  // if (!addForm.value.douban_id && !addForm.value.imdb_id) {
+  //   errors.push('豆瓣ID或者IMDBID需要至少需输入一个！')
+  // }
 
   if (!addForm.value.episodes_all) {
     errors.push('总集数不能为空！')
@@ -289,14 +311,14 @@ const doubanHint = computed(() => {
 })
 
 // 计算订阅图标
-const getSubscribeIcon = computed(() => {
-  if (isSubscribed.value) return 'mdi-magnify'
+const getAddBtnIcon = computed(() => {
+  if (isExists.value) return 'mdi-magnify'
   else return 'mdi-magnify'
 })
 
 // 计算订阅按钮颜色
-const getSubscribeColor = computed(() => {
-  if (isSubscribed.value) return 'error'
+const getAddBtnColor = computed(() => {
+  if (isExists.value) return 'error'
   else return 'warning'
 })
 
@@ -316,6 +338,8 @@ async function handlePlay() {
 }
 
 onBeforeMount(() => {
+  handleCheckExists()
+  handleCheckIgnore()
   getMediaDetail()
   getSites()
 })
@@ -352,6 +376,97 @@ function openDoubanDetail(doubanId: string) {
   }
   window.open(`https://movie.douban.com/subject/${doubanId}/`, '_blank')
 }
+
+function openImdbDetail(imdbId: string) {
+  if (!imdbId) {
+    $toast.warning('IMDB ID不存在，无法打开详情页！')
+    return
+  }
+  window.open(`https://www.imdb.com/title/${imdbId}/`, '_blank')
+}
+
+// 资源浏览弹窗
+const resourceDialog = ref(false)
+// 本地存在状态
+const isExists = ref(false)
+
+// 本地忽略状态
+const isIgnore = ref(false)
+
+// 所有站点
+const allSites = ref<Site[]>([])
+
+// 选中的站点
+const selectedSites = ref<number>(26)
+// 资源浏览弹窗关闭后的回调
+function onSiteResourceDone() {
+  resourceDialog.value = false
+}
+function getSelectedSite() {
+  const selected_list = allSites.value.filter(item => selectedSites.value === item.id)
+  if (selected_list.length > 0) return selected_list[0]
+}
+// 查询所有站点
+async function querySites() {
+  try {
+    const data: Site[] = await api.get('site/')
+    // 过滤站点，只有启用的站点才显示
+    allSites.value = data.filter(item => item.is_active)
+  } catch (error) {
+    console.log(error)
+  }
+}
+// 点击搜索
+async function clickSearch() {
+  if (allSites.value?.length > 0) return
+  querySites()
+}
+// 开始搜索
+function handleSearch() {
+  // TODO 显示搜索弹框
+  resourceDialog.value = true
+}
+async function removeIgnore() {
+  // 开始处理
+  startNProgress()
+  try {
+    const result: { [key: string]: any } = await api.delete(`collect/ignore/${mediaProps?.source}/${mediaProps?.mediaid}`)
+
+    if (result.success) {
+      isIgnore.value = false
+      $toast.success(`${mediaProps?.title} 已取消忽略！`)
+    } else {
+      $toast.error(`${mediaProps?.title} 取消忽略失败：${result.message}！`)
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    doneNProgress()
+  }
+}
+// 添加订阅处理
+async function addIgnore() {
+  // 开始处理
+  startNProgress()
+  try {
+    const result: { [key: string]: any } = await api.post(`collect/ignore/${mediaProps?.source}/${mediaProps?.mediaid}`)
+
+    if (result.success) {
+      isIgnore.value = true
+      $toast.success(`${mediaProps?.title} 已忽略！`)
+    } else {
+      $toast.error(`${mediaProps?.title} 忽略失败：${result.message}！`)
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    doneNProgress()
+  }
+}
+function handleIgnore() {
+  if (isIgnore.value) removeIgnore()
+  else addIgnore()
+}
 </script>
 
 <template>
@@ -375,12 +490,17 @@ function openDoubanDetail(doubanId: string) {
           </VImg>
         </div>
         <div class="media-title">
-          <div v-if="existsItemId" class="media-status">
-            <span
-              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
+          <div class="media-status">
+            <span v-if="isExists"
+              class="mr-2 mb-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>已采集</span></div>
             </span>
+            <span v-if="isIgnore"
+              class="mr-2 mb-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-gray-500 bg-opacity-80 border border-gray-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
+              <div class="relative z-20 flex items-center false"><span>已忽略</span></div>
+            </span>
           </div>
+
           <h1 class="d-flex flex-column flex-lg-row align-baseline justify-center justify-lg-start">
             <div class="align-self-center align-self-lg-end">
               {{ mediaDetail.title }}
@@ -403,15 +523,40 @@ function openDoubanDetail(doubanId: string) {
             <template #prepend>
               <VIcon icon="mdi-plus" />
             </template>
-            {{ '添加' }}
+            添加
           </VBtn>
-          <VBtn class="ms-2 mb-2" :color="getSubscribeColor" variant="tonal">
-            <template #prepend>
-              <VIcon :icon="getSubscribeIcon" />
+
+          <VMenu close-on-content-click max-width="450">
+            <template v-slot:activator="{ props }">
+              <VBtn v-bind="props" class="ms-2 mb-2" :color="getAddBtnColor" variant="tonal" @click.stop="clickSearch">
+                <template #prepend>
+                  <VIcon :icon="getAddBtnIcon" />
+                </template>
+                搜索
+              </VBtn>
+
             </template>
-            搜索
+            <VList>
+              <VListItem>
+                <VChipGroup v-model="selectedSites" column @click.stop>
+                  <VChip v-for="site in allSites" :key="site.id" :color="selectedSites === site.id ? 'primary' : ''"
+                    filter variant="outlined" :value="site.id" size="small">
+                    {{ site.name }}
+                  </VChip>
+                </VChipGroup>
+              </VListItem>
+              <VListItem>
+                <VBtn @click="handleSearch" block>搜索</VBtn>
+              </VListItem>
+            </VList>
+          </VMenu>
+          <VBtn variant="tonal" color="info" class="ms-2 mb-2" @click="handleIgnore">
+            <template #prepend>
+              <VIcon :icon="isIgnore ? 'mdi-eye-off' : 'mdi-eye'" />
+            </template>
+            {{ isIgnore ? '取消忽略' : '忽略' }}
           </VBtn>
-          <VBtn v-if="existsItemId" class="ms-2 mb-2" variant="tonal" @click="handlePlay()">
+          <VBtn class="ms-2 mb-2" variant="tonal" @click="handlePlay()">
             <template #prepend>
               <VIcon icon="mdi-play" />
             </template>
@@ -442,12 +587,24 @@ function openDoubanDetail(doubanId: string) {
             <!-- 豆瓣ID输入框 -->
             <v-col cols="6" md="6">
               <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" :hint="doubanHint" label="豆瓣 ID"
-                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact" />
+                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact">
+                <!-- 修复图标绑定逻辑：根据douban_id是否存在动态显示图标 -->
+                <template #prepend-inner v-if="addForm.douban_id">
+                  <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg"
+                    @click="addForm.douban_id && openDoubanDetail(addForm.douban_id)" />
+                </template>
+              </VTextField>
             </v-col>
             <!-- IMDB ID输入框 -->
             <v-col cols="6" md="6">
               <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" hint="如：tt1878011" label="IMDB ID"
-                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact" />
+                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact">
+                <template #prepend-inner v-if="addForm.imdb_id">
+                  <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg"
+                    @click="addForm.imdb_id && openImdbDetail(addForm.imdb_id)" />
+                </template>
+              </VTextField>
+
             </v-col>
           </v-row>
         </div>
@@ -536,6 +693,9 @@ function openDoubanDetail(doubanId: string) {
 
     </div>
   </div>
+  <!-- 站点资源弹窗 -->
+  <SiteSearchDialog v-if="resourceDialog" v-model="resourceDialog" :site="getSelectedSite()"
+    :keyword="mediaProps?.title" @close="onSiteResourceDone" />
   <NoDataFound v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
     error-code="500" error-title="出错啦！" error-description="未识别到媒体信息。" />
 </template>
