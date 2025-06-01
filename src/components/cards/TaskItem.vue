@@ -36,13 +36,19 @@ const getCoverUrl: Ref<string> = computed(() => {
 
 function goDetail() {
   // 跳转到媒体详情页（新标签页）
-  const route = router.resolve({
+  // const route = router.resolve({
+  //   path: '/cdetail',
+  //   query: {
+  //     id: props.task?.id
+  //   },
+  // })
+  // window.open(route.href, '_blank')
+  router.push({
     path: '/cdetail',
     query: {
       id: props.task?.id
     },
   })
-  window.open(route.href, '_blank')
 }
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
@@ -91,7 +97,7 @@ const chipActualWidth = ref(100)
 // 重新计算可见数量的方法
 const recalculateVisible = () => {
   if (!chipContainer.value) return
-  
+
   // 获取容器实际宽度（减去内边距）
   const containerWidth = chipContainer.value.getBoundingClientRect().width - 24 // .p-3的内边距是12px*2
   // 获取第一个chip的实际宽度（如果有chip的话）
@@ -99,7 +105,7 @@ const recalculateVisible = () => {
   if (firstChip) {
     chipActualWidth.value = firstChip.getBoundingClientRect().width + 16 // 加上margin-right: 12px和margin-bottom: 4px的总和
   }
-  
+
   // 计算实际可见数量（至少显示3个）
   defaultVisible.value = Math.max(2, Math.floor(containerWidth / chipActualWidth.value))
 }
@@ -167,17 +173,11 @@ onUnmounted(() => {
               </VChip>
             </template>
           </template>
-          
+
           <!-- 调整按钮显示条件：总数量 > 默认显示数（5） -->
           <!-- 修复：使用defaultVisible.value判断 -->
           <template v-if="siteSeedList.length > defaultVisible">
-            <VBtn 
-              variant="text" 
-              color="primary" 
-              size="x-small" 
-              @click.stop="showAll = !showAll"
-              class="ml-0"
-            >
+            <VBtn variant="text" color="primary" size="x-small" @click.stop="showAll = !showAll" class="ml-0">
               <template #prepend>
                 <VIcon :icon="showAll ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
               </template>
@@ -186,7 +186,7 @@ onUnmounted(() => {
           </template>
         </div>
       </div>
-        
+
 
 
       <template #append>
