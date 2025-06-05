@@ -88,9 +88,8 @@ function setViewType(type: string) {
 async function fetchData() {
   try {
     // 查询上次搜索结果
-    const result_collect = await api.get('collect/')
-    taskList.value = await api.get('task/')?? []
-    collectList.value = result_collect.data?? []
+    collectList.value = await api.get('collect/') ?? []
+    taskList.value = await api.get('task/') ?? []
     // 标记已刷新
     isRefreshed.value = true
   } catch (error) {
@@ -113,49 +112,25 @@ onUnmounted(() => {
 <template>
   <LoadingBanner v-if="!isRefreshed" class="mt-12" :text="progressText" :progress="progressValue" />
   <div v-if="viewType === 'list'">
-    <NoDataFound
-      v-if="collectList.length === 0 && isRefreshed"
-      :error-title="errorTitle"
-      :error-description="errorDescription"
-    />
+    <NoDataFound v-if="collectList.length === 0 && isRefreshed" :error-title="errorTitle"
+      :error-description="errorDescription" />
     <div v-if="collectList.length > 0">
       <TaskRowListView :items="collectList" />
     </div>
   </div>
   <div v-else>
-    <NoDataFound
-      v-if="taskList.length === 0 && isRefreshed"
-      :error-title="errorTitle"
-      :error-description="errorDescription"
-    />
+    <NoDataFound v-if="taskList.length === 0 && isRefreshed" :error-title="errorTitle"
+      :error-description="errorDescription" />
     <div v-if="taskList.length > 0">
       <TaskCardListView :items="taskList" />
     </div>
   </div>
-  
+
   <!-- 视图切换 -->
   <div v-if="isRefreshed">
-    <VFab
-      v-if="viewType === 'list'"
-      icon="mdi-view-grid"
-      location="bottom"
-      size="x-large"
-      absolute
-      app
-      appear
-      @click="setViewType('card')"
-      :class="{ 'mb-12': appMode }"
-    />
-    <VFab
-      v-else
-      icon="mdi-view-list"
-      location="bottom"
-      size="x-large"
-      fixed
-      app
-      appear
-      @click="setViewType('list')"
-      :class="{ 'mb-12': appMode }"
-    />
+    <VFab v-if="viewType === 'list'" icon="mdi-view-grid" location="bottom" size="x-large" absolute app appear
+      @click="setViewType('card')" :class="{ 'mb-12': appMode }" />
+    <VFab v-else icon="mdi-view-list" location="bottom" size="x-large" fixed app appear @click="setViewType('list')"
+      :class="{ 'mb-12': appMode }" />
   </div>
 </template>

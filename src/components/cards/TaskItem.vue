@@ -3,14 +3,19 @@ import type { PropType } from 'vue'
 import router from '@/router'
 import type { Collect, SiteSeed } from '@/api/types'
 import api from '@/api'
-import { seedStatus, collectStatus } from '@/api/constants'
+import { seedStatus, collectStatus, tagOptions } from '@/api/constants'
 import { useToast } from 'vue-toast-notification'
-
+import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
+import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
+import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 const $toast = useToast()
 
 // 定义触发的自定义事件
 const emit = defineEmits(['remove'])
-
+const showAddSiteSedd = ref(false)
+const showSiteSeedInfo = ref(false)
+const showDescInfo = ref(false)
+const seedInfo = ref<SiteSeed>({} as SiteSeed)
 // 从 provide 中获取全局设置
 const globalSettings: any = inject('globalSettings')
 // 输入参数
@@ -49,6 +54,47 @@ function goDetail() {
       id: props.task?.id
     },
   })
+}
+// 删除任务成功
+function deleteSiteSeedSuccess() {
+  showSiteSeedInfo.value = false
+  // 重新加载做种列表
+  getSiteSeedList()
+}
+function showSiteSeedInfoDialog(seed: SiteSeed) {
+  console.log('SiteSeedInfoDialog')
+  seedInfo.value = seed
+  showSiteSeedInfo.value = true
+}
+function addSiteSeedSuccess() {
+  showAddSiteSedd.value = false
+  // 重新加载做种列表
+  getSiteSeedList()
+}
+function showAddSiteSeddoDialog() {
+  console.log('AddSiteSeedDialog')
+  showAddSiteSedd.value = true
+}
+function showDescInfoDialog() {
+  showDescInfo.value = true
+}
+function getTags() {
+  if (!props.task?.tags)
+    return []
+  const tags = JSON.parse(props.task?.tags)
+  if (!tags)
+    return []
+  // 明确指定 tagList 的类型为 string 数组，避免隐式的 any[] 类型
+  let tagList: string[] = []
+  tags.forEach((t: string) => {
+    const tag = tagOptions[t as keyof typeof tagOptions]
+    tagList.push(tag)
+  })
+  return tagList
+}
+// 添加做种任务失败
+function addSiteSeedError(error: string) {
+  showAddSiteSedd.value = false
 }
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
@@ -152,23 +198,38 @@ onUnmounted(() => {
       </template>
       <VListItemTitle class="break-words overflow-visible whitespace-break-spaces">
         {{ task?.name }}
-        <span class="text-green-700 ms-2 text-sm">↑{{ task?.episodes_downloaded }}</span>
-        <span class="text-orange-700 ms-2 text-sm">↓{{ task?.episodes_total }}</span>
+
+        <span class="text-green-700 ms-2 text-sm">↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}</span>
       </VListItemTitle>
-      <VListItemSubtitle> 【{{ task?.type }}】{{ task?.sub_title }} </VListItemSubtitle>
+      <VListItemSubtitle class="mt-1">
+        {{ task?.sub_title }}
+        <VChip label class="ml-1" variant="outlined" size="x-small" color="primary" v-if="task?.resolution">
+          {{ task?.resolution }}
+        </VChip>
+        <VChip label class="ml-1" variant="outlined" size="x-small" color="primary" v-for="tag in getTags()">
+          {{ tag }}
+        </VChip>
+
+      </VListItemSubtitle>
       <div class="pt-2">
         <div class="p-3" ref="chipContainer">
           <!-- 显示可见范围内的chip -->
+
+          <VChip class="mr-1 mb-1" color="success" variant="outlined" size="small"
+            @click.stop="showAddSiteSeddoDialog()">
+
+            添加
+          </VChip>
           <template v-for="(item, index) in siteSeedList.slice(0, visibleCount)" :key="index">
             <template v-if="showSeedStatus(item.status)">
               <VBadge color="primary" class="mr-5" :content="getSeedStatus(item.status)" size="x-small">
-                <VChip class="mr-1 mb-1">
+                <VChip class="mr-1 mb-1" @click.stop="showSiteSeedInfoDialog(item)" size="small">
                   {{ item.site_name }}
                 </VChip>
               </VBadge>
             </template>
             <template v-else>
-              <VChip class="mr-1 mb-1">
+              <VChip class="mr-1 mb-1" @click.stop="showSiteSeedInfoDialog(item)" size="small">
                 {{ item.site_name }}
               </VChip>
             </template>
@@ -195,7 +256,7 @@ onUnmounted(() => {
             <VIcon icon="mdi-dots-vertical" />
             <VMenu activator="parent" close-on-content-click>
               <VList>
-                <VListItem variant="plain">
+                <VListItem variant="plain" @click="showDescInfoDialog()">
                   <template #prepend>
                     <VIcon icon="mdi-information" />
                   </template>
@@ -214,4 +275,9 @@ onUnmounted(() => {
       </template>
     </VListItem>
   </div>
+  <SiteSeedInfoDialog v-if="showSiteSeedInfo" v-model="showSiteSeedInfo" :seed="seedInfo" @close="deleteSiteSeedSuccess"
+    @remove="deleteSiteSeedSuccess" />
+  <AddSiteSeedDialog v-if="showAddSiteSedd" v-model="showAddSiteSedd" :collect="task" :siteSeedList="siteSeedList"
+    @done="addSiteSeedSuccess" @error="addSiteSeedError" @close="showAddSiteSedd = false" />
+  <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
 </template>

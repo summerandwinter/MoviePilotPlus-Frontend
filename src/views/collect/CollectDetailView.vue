@@ -64,8 +64,10 @@ const addForm = ref<CollectCreate>({
   cid: "",
   defn: "",
   douban_id: "",
+  imdb_id: "",
   cn_title: "",
   year: "",
+  overview: "",
   type: "",
   site: "",
   cate: "",
@@ -305,7 +307,9 @@ onBeforeMount(() => {
           <div v-if="existsItemId" class="media-status">
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
-              <div class="relative z-20 flex items-center false"><span>{{getCollectStatus(collectDetail.status)}}</span></div>
+              <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
+                  }}</span>
+              </div>
             </span>
           </div>
           <h1 class="d-flex flex-column flex-lg-row align-baseline justify-center justify-lg-start">
@@ -323,13 +327,13 @@ onBeforeMount(() => {
             </template>
             媒体信息
           </VBtn>
-          <VBtn class="ms-2 mb-2" color="green"  @click="showDescInfoDialog()">
+          <VBtn class="ms-2 mb-2" color="green" @click="showDescInfoDialog()">
             <template #prepend>
               <VIcon icon="mdi-timetable" />
             </template>
             简介
           </VBtn>
-          <VBtn class="ms-2 mb-2" color="green"  @click="showProgressInfoDialog()">
+          <VBtn class="ms-2 mb-2" color="green" @click="showProgressInfoDialog()">
             <template #prepend>
               <VIcon icon="mdi-timetable" />
             </template>
@@ -342,38 +346,44 @@ onBeforeMount(() => {
           <div class="tagline">
             <div class="media-actions">
 
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('start_download_by_collect')">
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('start_download_by_collect')">
                 <template #prepend>
                   <VIcon :icon="getIcon('start_download_by_collect')" />
                 </template>
                 下载
               </VBtn>
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('metadata_by_collect')">
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('metadata_by_collect')">
                 <template #prepend>
                   <VIcon :icon="getIcon('metadata_by_collect')" />
                 </template>
                 采集媒体信息
               </VBtn>
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('screenshot_by_collect')">
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('screenshot_by_collect')">
                 <template #prepend>
                   <VIcon :icon="getIcon('screenshot_by_collect')" />
                 </template>
                 截图
               </VBtn>
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('collect_desc_by_collect')">
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('collect_desc_by_collect')">
                 <template #prepend>
                   <VIcon :icon="getIcon('collect_desc_by_collect')" />
                 </template>
                 采集简介
               </VBtn>
-              
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('collect_move')">
+
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('collect_move')">
                 <template #prepend>
                   <VIcon :icon="getIcon('collect_move')" />
                 </template>
                 重命名
               </VBtn>
-              <VBtn class="ms-2 mb-2" color="primary" variant="tonal" @click.stop="showCollectOperationDialog('torrent_create')">
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('torrent_create')">
                 <template #prepend>
                   <VIcon :icon="getIcon('torrent_create')" />
                 </template>
@@ -387,12 +397,11 @@ onBeforeMount(() => {
               edit-icon="mdi-checkbox-blank-circle">
               <v-stepper-header>
                 <v-stepper-item title="媒体下载" value="1" :color="collectDetail.is_downloaded ? 'success' : ''"
-                  :complete="collectDetail.is_downloaded"
-                  >
+                  :complete="collectDetail.is_downloaded">
                 </v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="媒体信息采集" value="2" :color="collectDetail.mediainfo_collected ? 'success' : ''"
-                :complete="collectDetail.mediainfo_collected" ></v-stepper-item>
+                  :complete="collectDetail.mediainfo_collected"></v-stepper-item>
                 <v-divider></v-divider>
                 <v-stepper-item title="截图" value="3" :color="collectDetail.image_collected ? 'success' : ''"
                   :complete="collectDetail.image_collected"></v-stepper-item>

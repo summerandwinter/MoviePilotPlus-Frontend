@@ -122,44 +122,35 @@ function getYear(airDate: string) {
       <div ref="videoCardRef">
         <VCard v-bind="hover.props" :height="props.height" :width="props.width"
           class="outline-none shadow ring-gray-500 rounded-lg" :class="{
-      'transition transform-cpu duration-300 scale-105 shadow-lg': hover.isHovering,
-      'ring-1': isImageLoaded,  }"
-      @click.stop="selectEsipode">
-          
-          <VImg  :src="getImgUrl" class="align-end brightness-50" cover
-            @load="isImageLoaded = true" @error="imageLoadError = true">
-            
-            
+            'transition transform-cpu duration-300 scale-105 shadow-lg': hover.isHovering,
+            'ring-1': isImageLoaded,
+          }" @click.stop="selectEsipode">
+
+          <VImg :src="getImgUrl" class="align-end brightness-50" cover @load="isImageLoaded = true"
+            @error="imageLoadError = true">
+
+
           </VImg>
-          
+
           <!-- <VCardTitle class="text-white -mt-20 z-50" v-text="props.episode?.play_title || props.episode?.title || ''"></VCardTitle> -->
-          <VCardTitle class="text-white absolute left-0 bottom-0 bg-opacity-90 shadow-md w-100"  v-text="props.episode?.play_title || props.episode?.title || ''"></VCardTitle>
+          <VCardTitle class="text-white absolute left-0 bottom-0 bg-opacity-90 shadow-md w-100">
+            {{ props.episode?.play_title || props.episode?.title || '' }}
+            <VTooltip activator="parent" location="bottom">{{ props.episode?.play_title || props.episode?.title || '' }}
+            </VTooltip>
+          </VCardTitle>
           <VChip
-              v-if="props.episode?.pay_type === '7' || props.episode?.pay_type === '6' || props.episode?.pay_type === '6' "
-              variant="elevated"
-              size="small"
-              class="border-red-500 bg-red-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold"
-            >
-              {{ props.episode?.pay_type === '7' ? '付费': 'VIP' }}
+            v-if="props.episode?.pay_type === '7' || props.episode?.pay_type === '6' || props.episode?.pay_type === '6'"
+            variant="elevated" size="small"
+            class="border-red-500 bg-red-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold">
+            {{ props.episode?.pay_type === '7' ? '付费' : 'VIP' }}
           </VChip>
           <!--来源图标-->
-          <VIcon v-if="props.episode?.selected" icon="mdi-check"  color="success" class="absolute top-1 right-1"
-          />
-          <v-text-field 
-            label="集" 
-            :model-value="episode.episode" 
-            variant="outlined" 
-            bg-color="white" 
-            color="white"  
-            base-color="white" 
-            text-color="white"
-            :width="60"
-            :height="30"
+          <VIcon v-if="props.episode?.selected" icon="mdi-check" color="success" class="absolute top-1 right-1" />
+          <v-text-field label="集" :model-value="episode.episode" variant="outlined" bg-color="white" color="white"
+            base-color="white" text-color="white" :width="60" :height="30"
             class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-            @keydown.enter="setEpisode($event.target.value)"
-            @blur="setEpisode($event.target.value)"
-            @click.stop
-          ></v-text-field>
+            @keydown.enter="setEpisode($event.target.value)" @blur="setEpisode($event.target.value)"
+            @click.stop></v-text-field>
         </VCard>
       </div>
     </template>
@@ -169,14 +160,16 @@ function getYear(airDate: string) {
 <style scoped>
 /* 现有输入框样式保持不变 */
 ::v-deep .v-field__input {
-  color: white !important;       
-  text-align: center !important; 
-  font-weight: bold !important;  
+  color: white !important;
+  text-align: center !important;
+  font-weight: bold !important;
 }
 
 /* 新增label居中样式 */
 ::v-deep .v-label {
-  text-align: center !important; /* label文本居中 */
-  width: 100% !important;        /* 强制label容器宽度占满，确保居中生效 */
+  text-align: center !important;
+  /* label文本居中 */
+  width: 100% !important;
+  /* 强制label容器宽度占满，确保居中生效 */
 }
 </style>

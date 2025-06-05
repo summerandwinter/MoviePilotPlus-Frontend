@@ -30,7 +30,7 @@ async function querySites() {
     allSites.value = data
     // 过滤站点，只有不在已添加列表中的才显示
     allSites.value = data.filter(item => {
-      return !props.siteSeedList?.some(siteSeed => 
+      return !props.siteSeedList?.some(siteSeed =>
         siteSeed.site_id === item.id
       )
     })
@@ -49,7 +49,7 @@ async function addDownload() {
       return
     }
     // 检查 props.collect 是否为 undefined 或 null，以及其 id 是否为 undefined
-  if (props.collect === undefined || props.collect === null || props.collect.id === undefined) {
+    if (props.collect === undefined || props.collect === null || props.collect.id === undefined) {
       $toast.error('请选择收集任务')
       return
     }
@@ -75,7 +75,7 @@ async function addDownload() {
 
 onMounted(() => {
   querySites()
-  
+
 })
 </script>
 <template>
@@ -87,30 +87,17 @@ onMounted(() => {
       </VCardItem>
       <VDivider />
       <VCardText v-if="allSites.length > 0">
-        <v-chip-group
-        v-model="selectedSites"
-        column
-        multiple
-      >
-        <v-chip v-for="site in allSites" :key="site.id" :value="site.id"
-          :text="site.name"
-          variant="outlined"
-          filter
-        ></v-chip>
-      </v-chip-group>
+        <v-chip-group v-model="selectedSites" column multiple>
+          <v-chip v-for="site in allSites" :key="site.id" :value="site.id" :text="site.name" variant="outlined"
+            filter></v-chip>
+        </v-chip-group>
       </VCardText>
       <VCardText v-else class="text-center">
         没有需要发布的站点
       </VCardText>
       <VCardText class="text-center mt-4">
-        <VBtn
-          variant="elevated"
-          :disabled="loading"
-          @click="addDownload"
-          prepend-icon="mdi-progress-upload"
-          class="px-5"
-          size="small"
-        >
+        <VBtn variant="elevated" :disabled="loading" @click="addDownload" prepend-icon="mdi-progress-upload"
+          class="px-5" size="small">
           添加任务
         </VBtn>
       </VCardText>
