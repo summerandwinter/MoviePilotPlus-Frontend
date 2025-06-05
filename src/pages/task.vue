@@ -114,14 +114,14 @@ onUnmounted(() => {
   <div v-if="viewType === 'list'">
     <NoDataFound v-if="collectList.length === 0 && isRefreshed" :error-title="errorTitle"
       :error-description="errorDescription" />
-    <div v-if="collectList.length > 0">
+    <div v-if="collectList.length > 0 && isRefreshed">
       <TaskRowListView :items="collectList" />
     </div>
   </div>
   <div v-else>
     <NoDataFound v-if="taskList.length === 0 && isRefreshed" :error-title="errorTitle"
       :error-description="errorDescription" />
-    <div v-if="taskList.length > 0">
+    <div v-if="taskList.length > 0 && isRefreshed">
       <TaskCardListView :items="taskList" />
     </div>
   </div>

@@ -201,15 +201,17 @@ onUnmounted(() => {
 
         <span class="text-green-700 ms-2 text-sm">↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}</span>
       </VListItemTitle>
-      <VListItemSubtitle class="mt-1">
-        {{ task?.sub_title }}
-        <VChip label class="ml-1" variant="outlined" size="x-small" color="primary" v-if="task?.resolution">
-          {{ task?.resolution }}
-        </VChip>
-        <VChip label class="ml-1" variant="outlined" size="x-small" color="primary" v-for="tag in getTags()">
-          {{ tag }}
-        </VChip>
-
+      <VListItemSubtitle class="mt-1 my-2 line-height-2 d-block">
+        <div class="text-wrap">
+          {{ task?.sub_title }}
+          <VChip v-if="task?.resolution" label class="ml-1 mt-1" variant="outlined" size="x-small" color="primary">
+            {{ task?.resolution }}
+          </VChip>
+          <VChip v-for="tag in getTags()" :key="tag" label class="ml-1 mt-1" variant="outlined" size="x-small"
+            color="primary">
+            {{ tag }}
+          </VChip>
+        </div>
       </VListItemSubtitle>
       <div class="pt-2">
         <div class="p-3" ref="chipContainer">
