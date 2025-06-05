@@ -192,7 +192,7 @@ onUnmounted(() => {
 
       <template #prepend>
         <VListItemMedia class="pr-2">
-          <VImg :src="getCoverUrl" :width="60" aspect-ratio="9/16" cover />
+          <VImg :src="getCoverUrl" :width="70" aspect-ratio="9/16" cover />
         </VListItemMedia>
 
       </template>
@@ -201,13 +201,13 @@ onUnmounted(() => {
 
         <span class="text-green-700 ms-2 text-sm">↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}</span>
       </VListItemTitle>
-      <VListItemSubtitle class="mt-1 my-2 line-height-2 d-block">
-        <div class="text-wrap">
+      <VListItemSubtitle class="mt-1 d-flex align-start">
+        <div class="text-wrap" style="flex-grow: 1;">
           {{ task?.sub_title }}
-          <VChip v-if="task?.resolution" label class="ml-1 mt-1" variant="outlined" size="x-small" color="primary">
+          <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.resolution }}
           </VChip>
-          <VChip v-for="tag in getTags()" :key="tag" label class="ml-1 mt-1" variant="outlined" size="x-small"
+          <VChip v-for="tag in getTags()" :key="tag" label class="ml-1" variant="outlined" size="x-small"
             color="primary">
             {{ tag }}
           </VChip>
