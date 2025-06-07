@@ -198,7 +198,6 @@ function startSSEMessager() {
     eventSource.addEventListener('message', event => {
       if (event.data) {
         progress.value = JSON.parse(event.data)
-        console.log(progress.value)
       }
     })
   }, 3000)
@@ -221,10 +220,10 @@ onMounted(() => {
         return item
       })
     }
-   // 显示前20个，4行左右。
-   if (displayDataList.value.length < 20) {
+    // 显示前20个，4行左右。
+    if (displayDataList.value.length < 20) {
       displayDataList.value = dataList.splice(0, 20)
-   }
+    }
   })
 })
 
@@ -240,28 +239,10 @@ function loadMore({ done }: { done: any }) {
   <VCard class="bg-transparent mb-3 pt-2 shadow-none">
     <VRow>
       <VCol v-for="(options, key) in filterOptionsNotEmpty" :key="key" cols="6" md="">
-        <VSelect
-          v-if="key === 'season'"
-          v-model="filterForm[key]"
-          :items="sortSeasonFilterOptions"
-          size="small"
-          density="compact"
-          chips
-          :label="filterTitles[key]"
-          multiple
-          clearable
-        />
-        <VSelect
-          v-else
-          v-model="filterForm[key]"
-          :items="options"
-          size="small"
-          density="compact"
-          chips
-          :label="filterTitles[key]"
-          multiple
-          clearable
-        />
+        <VSelect v-if="key === 'season'" v-model="filterForm[key]" :items="sortSeasonFilterOptions" size="small"
+          density="compact" chips :label="filterTitles[key]" multiple clearable />
+        <VSelect v-else v-model="filterForm[key]" :items="options" size="small" density="compact" chips
+          :label="filterTitles[key]" multiple clearable />
       </VCol>
     </VRow>
   </VCard>
@@ -269,13 +250,8 @@ function loadMore({ done }: { done: any }) {
     <template #loading />
     <template #empty />
     <div class="grid gap-3 grid-downloading-card">
-      <TaskCard
-        v-for="item in displayDataList"
-        :key="`${item.id}`"
-        :info="item"
-        :progress="progress"
-        @remove="remove"
-      />
+      <TaskCard v-for="item in displayDataList" :key="`${item.id}`" :info="item" :progress="progress"
+        @remove="remove" />
     </div>
   </VInfiniteScroll>
 </template>

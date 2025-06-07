@@ -2,7 +2,7 @@
 import { useToast } from 'vue-toast-notification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
-import type { Collect, CollectCreate, DownloadTask, SiteSeed, Subscribe, TmdbEpisode } from '@/api/types'
+import type { Collect, CollectCreate, DownloadTask, SiteSeed, Progress } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import TaskCard from '@/components/cards/TaskCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
@@ -58,6 +58,7 @@ const isSubscribed = ref(false)
 // 是否已加载完成
 const isRefreshed = ref(false)
 
+const progress = ref<Array<Progress>>([])
 
 // 采集任务添加表单
 const addForm = ref<CollectCreate>({
@@ -82,6 +83,21 @@ const addForm = ref<CollectCreate>({
   episode_list: [],
   site_list: []
 })
+// 事件源
+let eventSource: EventSource | null = null
+// SSE持续接收消息
+function startSSEMessager() {
+  // 延迟 3 秒启动 SSE，避免相关认证信息尚未写入 Cookie 导致 403
+  setTimeout(() => {
+    eventSource = new EventSource(`${import.meta.env.VITE_API_BASE_URL}task/progress`)
+    eventSource.addEventListener('message', event => {
+      if (event.data) {
+        progress.value = JSON.parse(event.data)
+        console.log(progress.value)
+      }
+    })
+  }, 3000)
+}
 function getCollectStatus(status: string | undefined) {
   return collectStatus[status as keyof typeof collectStatus]
 }
@@ -277,9 +293,17 @@ function getIcon(operation: string) {
       return 'mdi-arrow-down-bold-circle'
   }
 }
-onBeforeMount(() => {
+
+// 页面加载时，加载当前用户数据
+onBeforeMount(async () => {
   getDetail()
   getSiteSeedList()
+  startSSEMessager()
+})
+
+// 页面卸载时，关闭事件源
+onBeforeUnmount(() => {
+  if (eventSource) eventSource.close()
 })
 </script>
 
@@ -459,7 +483,7 @@ onBeforeMount(() => {
         <SlideView>
           <template #content>
             <template v-for="data in taskList" :key="data.id">
-              <TaskCard :info="data" height="11rem" width="20rem" @remove="removeTask" />
+              <TaskCard :info="data" :progress="progress" height="11rem" width="20rem" @remove="removeTask" />
             </template>
           </template>
         </SlideView>

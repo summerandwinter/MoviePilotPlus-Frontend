@@ -188,13 +188,15 @@ const taskCardRef = ref<HTMLElement | null>(null)
                 <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
                   v-if="props.info.resolution">{{ props.info.resolution }}</VChip>
                 <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
+                  v-if="props.info.total_size">{{ formatFileSize(props.info?.total_size || 0) }}</VChip>
+                <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
                   v-if="props.info.video_codec">{{ props.info.video_codec }}</VChip>
                 <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
                   v-if="props.info.hdr_format">{{ props.info.hdr_format }}</VChip>
                 <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
                   v-if="props.info.audio_codec">{{ props.info.audio_codec }}</VChip>
-                <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
-                  v-if="props.info.bit_depth">{{ props.info.bit_depth }}bits</VChip>
+                <!-- <VChip variant="outlined" size="x-small" label class="mr-1 text-white font-bold"
+                  v-if="props.info.bit_depth">{{ props.info.bit_depth }}bits</VChip> -->
 
               </VCardItem>
             </template>
