@@ -2,82 +2,105 @@
 import api from '@/api'
 import { RecommendSource } from '@/api/types'
 import MediaCardSlideView from '@/views/discover/MediaCardSlideView.vue'
+import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 
-// APP
 const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
 
-const viewList = reactive<{ apipath: string; linkurl: string; title: string }[]>([
+// 国际化
+const { t } = useI18n()
+
+// 当前选择的分类
+const currentCategory = ref(t('recommend.all'))
+
+const viewList = reactive<{ apipath: string; linkurl: string; title: string; type: string }[]>([
   {
     apipath: 'recommend/tmdb_trending',
-    linkurl: '/browse/recommend/tmdb_trending?title=流行趋势',
-    title: '流行趋势',
+    linkurl: '/browse/recommend/tmdb_trending?title=' + t('recommend.trendingNow'),
+    title: t('recommend.trendingNow'),
+    type: t('recommend.categoryRankings'),
   },
   {
     apipath: 'recommend/douban_showing',
-    linkurl: '/browse/recommend/douban_showing?title=正在热映',
-    title: '正在热映',
+    linkurl: '/browse/recommend/douban_showing?title=' + t('recommend.nowShowing'),
+    title: t('recommend.nowShowing'),
+    type: t('recommend.categoryMovie'),
   },
   {
-    apipath: 'bangumi/calendar',
-    linkurl: '/browse/bangumi/calendar?title=Bangumi每日放送',
-    title: 'Bangumi每日放送',
+    apipath: 'recommend/bangumi_calendar',
+    linkurl: '/browse/recommend/bangumi_calendar?title=' + t('recommend.bangumiDaily'),
+    title: t('recommend.bangumiDaily'),
+    type: t('recommend.categoryAnime'),
   },
   {
     apipath: 'recommend/tmdb_movies',
-    linkurl: '/browse/recommend/tmdb_movies?title=TMDB热门电影',
-    title: 'TMDB热门电影',
+    linkurl: '/browse/recommend/tmdb_movies?title=' + t('recommend.tmdbHotMovies'),
+    title: t('recommend.tmdbHotMovies'),
+    type: t('recommend.categoryMovie'),
   },
   {
     apipath: 'recommend/tmdb_tvs?with_original_language=zh|en|ja|ko',
-    linkurl: '/browse/recommend/tmdb_tvs??with_original_language=zh|en|ja|ko&title=TMDB热门电视剧',
-    title: 'TMDB热门电视剧',
+    linkurl: '/browse/recommend/tmdb_tvs??with_original_language=zh|en|ja|ko&title=' + t('recommend.tmdbHotTVShows'),
+    title: t('recommend.tmdbHotTVShows'),
+    type: t('recommend.categoryTV'),
   },
   {
     apipath: 'recommend/douban_movie_hot',
-    linkurl: '/browse/recommend/douban_movie_hot?title=豆瓣热门电影',
-    title: '豆瓣热门电影',
+    linkurl: '/browse/recommend/douban_movie_hot?title=' + t('recommend.doubanHotMovies'),
+    title: t('recommend.doubanHotMovies'),
+    type: t('recommend.categoryMovie'),
   },
   {
     apipath: 'recommend/douban_tv_hot',
-    linkurl: '/browse/recommend/douban_tv_hot?title=豆瓣热门电视剧',
-    title: '豆瓣热门电视剧',
+    linkurl: '/browse/recommend/douban_tv_hot?title=' + t('recommend.doubanHotTVShows'),
+    title: t('recommend.doubanHotTVShows'),
+    type: t('recommend.categoryTV'),
   },
   {
     apipath: 'recommend/douban_tv_animation',
-    linkurl: '/browse/recommend/douban_tv_animation?title=豆瓣热门动漫',
-    title: '豆瓣热门动漫',
+    linkurl: '/browse/recommend/douban_tv_animation?title=' + t('recommend.doubanHotAnime'),
+    title: t('recommend.doubanHotAnime'),
+    type: t('recommend.categoryAnime'),
   },
   {
     apipath: 'recommend/douban_movies',
-    linkurl: '/browse/recommend/douban_movies?title=豆瓣最新电影',
-    title: '豆瓣最新电影',
+    linkurl: '/browse/recommend/douban_movies?title=' + t('recommend.doubanNewMovies'),
+    title: t('recommend.doubanNewMovies'),
+    type: t('recommend.categoryMovie'),
   },
   {
     apipath: 'recommend/douban_tvs',
-    linkurl: '/browse/recommend/douban_tvs?title=豆瓣最新电视剧',
-    title: '豆瓣最新电视剧',
+    linkurl: '/browse/recommend/douban_tvs?title=' + t('recommend.doubanNewTVShows'),
+    title: t('recommend.doubanNewTVShows'),
+    type: t('recommend.categoryTV'),
   },
   {
     apipath: 'recommend/douban_movie_top250',
-    linkurl: '/browse/recommend/douban_movie_top250?title=电影TOP250',
-    title: '豆瓣电影TOP250',
+    linkurl: '/browse/recommend/douban_movie_top250?title=' + t('recommend.doubanTop250'),
+    title: t('recommend.doubanTop250'),
+    type: t('recommend.categoryRankings'),
   },
   {
     apipath: 'recommend/douban_tv_weekly_chinese',
-    linkurl: '/browse/recommend/douban_tv_weekly_chinese?title=豆瓣国产剧集榜',
-    title: '豆瓣国产剧集榜',
+    linkurl: '/browse/recommend/douban_tv_weekly_chinese?title=' + t('recommend.doubanChineseTVRankings'),
+    title: t('recommend.doubanChineseTVRankings'),
+    type: t('recommend.categoryRankings'),
   },
   {
     apipath: 'recommend/douban_tv_weekly_global',
-    linkurl: '/browse/recommend/douban_tv_weekly_global?title=豆瓣全球剧集榜',
-    title: '豆瓣全球剧集榜',
+    linkurl: '/browse/recommend/douban_tv_weekly_global?title=' + t('recommend.doubanGlobalTVRankings'),
+    title: t('recommend.doubanGlobalTVRankings'),
+    type: t('recommend.categoryRankings'),
   },
 ])
 
-// 计算启用的视图
-const enabledViews = computed(() => viewList.filter(item => enableConfig.value[item.title]))
+// 计算当前分类下显示的视图
+const filteredViews = computed(() => {
+  if (currentCategory.value === t('recommend.all')) {
+    return viewList.filter(item => enableConfig.value[item.title])
+  }
+  return viewList.filter(item => enableConfig.value[item.title] && item.type === currentCategory.value)
+})
 
 // 榜单启用配置， 以title为key
 const enableConfig = ref<{ [key: string]: boolean }>({
@@ -95,13 +118,16 @@ async function loadExtraRecommendSources() {
   try {
     extraRecommendSources.value = await api.get('recommend/source')
     if (extraRecommendSources.value.length > 0) {
-      viewList.push(
-        ...extraRecommendSources.value.map(source => ({
-          apipath: source.api_path,
-          linkurl: `/browse/recommend/${source.api_path}?title=${source.name}`,
-          title: source.name,
-        })),
-      )
+      extraRecommendSources.value.map(source => {
+        if (!viewList.some(item => item.apipath === source.api_path)) {
+          viewList.push({
+            apipath: source.api_path,
+            linkurl: `/browse/${source.api_path}&title=${source.name}`,
+            title: source.name,
+            type: source.type,
+          })
+        }
+      })
     }
   } catch (error) {
     console.log(error)
@@ -138,6 +164,35 @@ async function saveConfig() {
   dialog.value = false
 }
 
+// 标签图标映射
+const categoryItems: Record<string, string>[] = [
+  {
+    title: t('recommend.all'),
+    icon: 'mdi-filmstrip-box-multiple',
+    tab: t('recommend.all'),
+  },
+  {
+    title: t('recommend.categoryMovie'),
+    icon: 'mdi-movie',
+    tab: t('recommend.categoryMovie'),
+  },
+  {
+    title: t('recommend.categoryTV'),
+    icon: 'mdi-television-classic',
+    tab: t('recommend.categoryTV'),
+  },
+  {
+    title: t('recommend.categoryAnime'),
+    icon: 'mdi-animation',
+    tab: t('recommend.categoryAnime'),
+  },
+  {
+    title: t('recommend.categoryRankings'),
+    icon: 'mdi-trophy',
+    tab: t('recommend.categoryRankings'),
+  },
+]
+
 onBeforeMount(async () => {
   await loadConfig()
 })
@@ -152,45 +207,229 @@ onActivated(async () => {
 </script>
 
 <template>
-  <div>
-    <MediaCardSlideView v-for="item in enabledViews" :key="item.title" v-bind="item" />
-    <!-- 弹窗，根据配置生成选项 -->
-    <VDialog v-if="dialog" v-model="dialog" max-width="35rem" scrollable>
-      <VCard>
-        <VCardItem>
-          <VCardTitle>设置推荐榜单</VCardTitle>
+  <div class="mp-recommend">
+    <!-- 页面顶部控制栏 -->
+    <VHeaderTab :items="categoryItems" v-model="currentCategory">
+      <template #append>
+        <VBtn
+          icon="mdi-tune"
+          variant="text"
+          color="grey"
+          size="default"
+          class="settings-icon-button"
+          @click="dialog = true"
+        />
+      </template>
+    </VHeaderTab>
+
+    <!-- 滚动内容区域 -->
+    <div class="recommend-content">
+      <TransitionGroup name="fade">
+        <MediaCardSlideView v-for="item in filteredViews" :key="item.title" v-bind="item" class="content-group" />
+      </TransitionGroup>
+
+      <div v-if="filteredViews.length === 0" class="empty-category">
+        <VIcon icon="mdi-alert-circle-outline" size="large" class="empty-icon" />
+        <p class="empty-text">{{ t('recommend.noCategoryContent') }}</p>
+        <VBtn color="primary" variant="tonal" size="small" @click="dialog = true">
+          {{ t('recommend.configureContent') }}
+        </VBtn>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <VDialog v-model="dialog" width="35rem" class="settings-dialog" scrollable :fullscreen="!display.mdAndUp.value">
+      <VCard class="settings-card">
+        <VCardItem class="settings-card-header">
+          <VCardTitle>
+            <VIcon icon="mdi-tune" size="small" class="me-2" />
+            {{ t('recommend.customizeContent') }}
+          </VCardTitle>
+          <VDialogCloseBtn @click="dialog = false" />
         </VCardItem>
         <VDivider />
         <VCardText>
-          <VRow>
-            <VCol v-for="item in viewList" :key="item.title" cols="6" md="4" sm="4">
-              <VCheckbox v-model="enableConfig[item.title]" :label="item.title" />
-            </VCol>
-          </VRow>
+          <p class="settings-hint">{{ t('recommend.selectContentToDisplay') }}</p>
+          <div class="settings-grid">
+            <VCard
+              v-for="item in viewList"
+              :key="item.title"
+              class="setting-item"
+              :class="{
+                'enabled': enableConfig[item.title],
+                [item.type]: true,
+              }"
+              @click="enableConfig[item.title] = !enableConfig[item.title]"
+            >
+              <div class="setting-item-inner">
+                <div class="setting-check">
+                  <VIcon
+                    :icon="enableConfig[item.title] ? 'mdi-check-circle' : 'mdi-circle-outline'"
+                    :color="enableConfig[item.title] ? 'primary' : undefined"
+                    size="small"
+                  />
+                </div>
+                <span class="setting-label">{{ item.title }}</span>
+              </div>
+            </VCard>
+          </div>
         </VCardText>
-        <VDivider />
-        <VCardText class="pt-5 text-end">
+        <VCardActions class="pt-3">
+          <VBtn variant="text" @click="Object.keys(enableConfig).forEach(key => (enableConfig[key] = true))">
+            {{ t('recommend.selectAll') }}
+          </VBtn>
+          <VBtn variant="text" @click="Object.keys(enableConfig).forEach(key => (enableConfig[key] = false))">
+            {{ t('recommend.selectNone') }}
+          </VBtn>
           <VSpacer />
-          <VBtn variant="outlined" color="secondary" class="me-4" @click="dialog = false"> 关闭 </VBtn>
-          <VBtn @click="saveConfig">
+          <VBtn @click="saveConfig" color="primary" class="px-5">
             <template #prepend>
               <VIcon icon="mdi-content-save" />
             </template>
-            保存
+            {{ t('common.save') }}
           </VBtn>
-        </VCardText>
+        </VCardActions>
       </VCard>
     </VDialog>
+
+    <!-- 快速滚动到顶部按钮 -->
+    <VScrollToTopBtn />
   </div>
-  <!-- 底部操作按钮 -->
-  <VFab
-    icon="mdi-text-box-edit"
-    location="bottom"
-    size="x-large"
-    fixed
-    app
-    appear
-    @click="dialog = true"
-    :class="{ 'mb-12': appMode }"
-  />
 </template>
+
+<style lang="scss" scoped>
+.mp-recommend {
+  position: relative;
+  padding: 0;
+  max-inline-size: 100%;
+}
+
+.recommend-content {
+  padding-block: 0;
+}
+
+/* Fade transition for content groups */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.content-group {
+  margin-block-end: 24px;
+  transition: opacity 0.3s ease;
+}
+
+.empty-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  text-align: center;
+}
+
+.empty-icon {
+  margin-block-end: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 1rem;
+  margin-block-end: 16px;
+}
+
+/* Settings Dialog Styles */
+.settings-card-header {
+  padding-block: 16px;
+  padding-inline: 20px;
+}
+
+.settings-hint {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: 0.9rem;
+  margin-block-end: 16px;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.setting-label {
+  color: rgba(var(--v-theme-on-surface), 0.8);
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.setting-item {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+  border-radius: 8px;
+  background-color: rgba(var(--v-theme-surface-variant), 0.3);
+  cursor: pointer;
+  padding-block: 10px;
+  padding-inline: 12px;
+  transition: all 0.2s ease;
+
+  &::before {
+    position: absolute;
+    background-color: transparent;
+    block-size: 100%;
+    content: '';
+    inline-size: 4px;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    transition: background-color 0.3s ease;
+  }
+
+  &.电影::before {
+    background-color: #4caf50;
+  } // Green
+  &.电视剧::before {
+    background-color: #2196f3;
+  } // Blue
+  &.动漫::before {
+    background-color: #ff9800;
+  } // Orange
+  &.榜单::before {
+    background-color: #9c27b0;
+  } // Purple
+
+  &:hover {
+    border-color: rgba(var(--v-theme-on-surface), 0.15);
+    background-color: rgba(var(--v-theme-surface-variant), 0.6);
+  }
+
+  &.enabled {
+    border-color: rgba(var(--v-theme-primary), 0.5);
+    background-color: rgba(var(--v-theme-primary), 0.05);
+
+    .setting-label {
+      color: rgb(var(--v-theme-primary));
+      font-weight: 500;
+    }
+  }
+}
+
+.setting-item-inner {
+  display: flex;
+  align-items: center;
+}
+
+.setting-check {
+  margin-inline-end: 8px;
+}
+
+/* Remove old tune button styles if they exist */
+.tune-button {
+  display: none; // Hide the old button definitively
+}
+</style>

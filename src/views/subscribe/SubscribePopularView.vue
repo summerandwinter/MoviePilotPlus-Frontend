@@ -3,6 +3,10 @@ import api from '@/api'
 import type { MediaInfo } from '@/api/types'
 import MediaCard from '@/components/cards/MediaCard.vue'
 import NoDataFound from '@/components/NoDataFound.vue'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 输入参数
 const props = defineProps({
@@ -107,10 +111,10 @@ async function fetchData({ done }: { done: any }) {
 
 <template>
   <LoadingBanner v-if="!isRefreshed" class="mt-12" />
-  <VInfiniteScroll mode="intersect" side="end" :items="dataList" class="overflow-hidden" @load="fetchData">
+  <VInfiniteScroll mode="intersect" side="end" :items="dataList" class="overflow-visible px-2" @load="fetchData">
     <template #loading />
     <template #empty />
-    <div v-if="dataList.length > 0" class="grid gap-4 grid-media-card mx-3" tabindex="0">
+    <div v-if="dataList.length > 0" class="grid gap-4 grid-media-card" tabindex="0">
       <div v-for="data in dataList" :key="data.tmdb_id || data.douban_id">
         <MediaCard :media="data" />
         <div v-if="data.popularity" class="mt-2 flex flex-row justify-center align-center text-subtitle-2">
@@ -122,8 +126,8 @@ async function fetchData({ done }: { done: any }) {
     <NoDataFound
       v-if="dataList.length === 0 && isRefreshed"
       error-code="404"
-      error-title="没有数据"
-      error-description="未获取到热门订阅数据，未开启数据分享或服务器无法连接。"
+      :error-title="t('common.noData')"
+      :error-description="t('subscribe.noPopularData')"
     />
   </VInfiniteScroll>
 </template>

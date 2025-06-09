@@ -1,5 +1,13 @@
 <script lang="ts" setup>
 import api from '@/api'
+import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
+
+// 显示器宽度
+const display = useDisplay()
+
+// 多语言支持
+const { t } = useI18n()
 
 // 定义输入
 const props = defineProps({
@@ -14,7 +22,7 @@ if (!props.conf.filepath) {
 }
 
 if (!props.conf.content) {
-  props.conf.content = '# 请在此处填写rclone配置文件内容 \n# 请参考 https://rclone.org/docs/ \n# 存储节点名必须为：MP'
+  props.conf.content = t('dialog.rcloneConfig.defaultContent')
 }
 
 // 定义事件
@@ -34,32 +42,61 @@ async function savaRcloneConfig() {
     console.error(e)
   }
 }
+
+// 重置配置
+async function handleReset() {
+  try {
+    const result: { [key: string]: any } = await api.get('/storage/reset/rclone')
+    if (result.success) {
+      handleDone()
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
 </script>
 
 <template>
-  <VDialog width="50rem" scrollable max-height="85vh">
-    <VCard title="RClone配置" class="rounded-t">
-      <DialogCloseBtn @click="emit('close')" />
+  <VDialog width="50rem" scrollable :fullscreen="!display.mdAndUp.value">
+    <VCard>
+      <VDialogCloseBtn @click="emit('close')" />
+      <VCardItem>
+        <template #prepend>
+          <VIcon icon="mdi-cog-outline" class="me-2" />
+        </template>
+        <VCardTitle>
+          {{ t('dialog.rcloneConfig.title') }}
+        </VCardTitle>
+      </VCardItem>
+      <VDivider />
       <VCardText>
         <VRow>
           <VCol cols="12">
-            <VTextField v-model="props.conf.filepath" label="rclone配置文件路径" />
+            <VTextField
+              v-model="props.conf.filepath"
+              :label="t('dialog.rcloneConfig.filePath')"
+              prepend-inner-icon="mdi-file-document"
+            />
           </VCol>
           <VCol cols="12">
             <VAceEditor
               v-model:value="props.conf.content"
               lang="ini"
               theme="monokai"
-              style="block-size: 30rem"
-              class="rounded"
+              class="rounded h-full min-h-[30rem]"
             >
             </VAceEditor>
           </VCol>
         </VRow>
       </VCardText>
       <VCardActions>
+        <VBtn color="error" @click="handleReset" prepend-icon="mdi-restore" class="px-5 me-3">
+          {{ t('dialog.rcloneConfig.reset') }}
+        </VBtn>
         <VSpacer />
-        <VBtn variant="elevated" @click="handleDone" prepend-icon="mdi-check" class="px-5 me-3"> 完成 </VBtn>
+        <VBtn @click="handleDone" prepend-icon="mdi-check" class="px-5 me-3">
+          {{ t('dialog.rcloneConfig.complete') }}
+        </VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

@@ -8,9 +8,15 @@ import NoDataFound from '@/components/NoDataFound.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { formatSeason } from '@/@core/utils/formatters'
 import router from '@/router'
-import SubscribeEditDialog from '@/components/dialog/SubscribeEditDialog.vue'
 import { isNullOrEmptyObject } from '@/@core/utils'
 import { useUserStore } from '@/stores'
+import SubscribeEditDialog from '@/components/dialog/SubscribeEditDialog.vue'
+import SearchSiteDialog from '@/components/dialog/SearchSiteDialog.vue'
+import { useTheme } from 'vuetify'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 输入参数
 const mediaProps = defineProps({
@@ -28,6 +34,9 @@ const userStore = useUserStore()
 
 // 提示框
 const $toast = useToast()
+
+// 获取主题信息
+const theme = useTheme()
 
 // 媒体详情
 const mediaDetail = ref<MediaInfo>({} as MediaInfo)
@@ -67,6 +76,14 @@ const selectedSites = ref<number[]>([])
 
 // 搜索方式 title/imdbid
 const searchType = ref('title')
+
+// 选择站点对话框
+const chooseSiteDialog = ref(false)
+
+// 计算主题是否为透明
+const isNonTransparentTheme = computed(() => {
+  return theme.name.value !== 'transparent'
+})
 
 // 查询所有站点
 async function querySites() {
@@ -278,10 +295,10 @@ async function addSubscribe(season = 0) {
 function showSubscribeAddToast(result: boolean, title: string, season: number, message: string, best_version: number) {
   if (season) title = `${title} ${formatSeason(season.toString())}`
 
-  let subname = '订阅'
-  if (best_version > 0) subname = '洗版订阅'
+  let subname = t('media.subscribe.normal')
+  if (best_version > 0) subname = t('media.subscribe.bestVersion')
 
-  if (!result) $toast.error(`${title} 添加${subname}失败：${message}！`)
+  if (!result) $toast.error(`${title} ${t('media.subscribe.addFailed', { reason: message })}`)
 }
 
 // 调用API取消订阅
@@ -300,9 +317,9 @@ async function removeSubscribe(season: number) {
     if (result.success) {
       isSubscribed.value = false
       if (season) seasonsSubscribed.value[season] = false
-      $toast.success(`${mediaDetail.value?.title} 已取消订阅！`)
+      $toast.success(`${mediaDetail.value?.title} ${t('media.subscribe.canceled')}`)
     } else {
-      $toast.error(`${mediaDetail.value?.title} 取消订阅失败：${result.message}！`)
+      $toast.error(`${mediaDetail.value?.title} ${t('media.subscribe.cancelFailed', { reason: result.message })}`)
     }
   } catch (error) {
     console.error(error)
@@ -407,11 +424,11 @@ function getExistColor(season: number) {
 // 计算存在状态的文本
 function getExistText(season: number) {
   const state = seasonsNotExisted.value[season]
-  if (!state) return '已入库'
+  if (!state) return t('media.status.inLibrary')
 
-  if (state === 1) return '部分缺失'
-  else if (state === 2) return '缺失'
-  else return '已入库'
+  if (state === 1) return t('media.status.partiallyMissing')
+  else if (state === 2) return t('media.status.missing')
+  else return t('media.status.inLibrary')
 }
 
 // 计算订阅图标
@@ -491,10 +508,24 @@ function onSubscribeEditRemove() {
 }
 
 // 点击搜索
-async function clickSearch() {
-  if (allSites.value?.length > 0) return
-  querySites()
-  querySelectedSites()
+async function clickSearch(type: string) {
+  searchType.value = type
+  if (allSites.value?.length == 0) {
+    await querySites()
+    await querySelectedSites()
+  }
+  if (allSites.value?.length > 0) {
+    chooseSiteDialog.value = true
+  } else {
+    handleSearch()
+  }
+}
+
+// 搜索多站点
+function searchSites(sites: number[]) {
+  chooseSiteDialog.value = false
+  selectedSites.value = sites
+  handleSearch()
 }
 
 onBeforeMount(() => {
@@ -505,7 +536,7 @@ onBeforeMount(() => {
 <template>
   <LoadingBanner v-if="!isRefreshed" class="mt-12" />
   <div v-if="mediaDetail.tmdb_id || mediaDetail.douban_id || mediaDetail.bangumi_id" class="max-w-8xl mx-auto px-4">
-    <template v-if="getBackdropUrl || getPosterUrl">
+    <template v-if="(getBackdropUrl || getPosterUrl) && isNonTransparentTheme">
       <div class="vue-media-back absolute left-0 top-0 w-full h-96">
         <VImg class="h-96" position="top" :src="getBackdropUrl || getPosterUrl" cover />
       </div>
@@ -531,7 +562,9 @@ onBeforeMount(() => {
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden"
             >
-              <div class="relative z-20 flex items-center false"><span>已入库</span></div>
+              <div class="relative z-20 flex items-center false">
+                <span>{{ t('media.status.inLibrary') }}</span>
+              </div>
             </span>
           </div>
           <h1 class="d-flex flex-column flex-lg-row align-baseline justify-center justify-lg-start">
@@ -544,7 +577,7 @@ onBeforeMount(() => {
           </h1>
           <span class="media-attributes">
             <span v-if="mediaDetail.runtime || mediaDetail.episode_run_time[0]"
-              >{{ mediaDetail.runtime || mediaDetail.episode_run_time[0] }} 分钟</span
+              >{{ mediaDetail.runtime || mediaDetail.episode_run_time[0] }} {{ t('media.minutes') }}</span
             >
             <span v-if="(mediaDetail.runtime || mediaDetail.episode_run_time[0]) && mediaDetail.genres" class="mx-1">
               |
@@ -558,37 +591,18 @@ onBeforeMount(() => {
             variant="tonal"
             color="info"
             class="mb-2"
-            @click="clickSearch"
           >
             <template #prepend>
               <VIcon icon="mdi-magnify" />
             </template>
-            搜索资源
-            <VMenu activator="parent" close-on-content-click max-width="450">
+            {{ t('media.actions.searchResource') }}
+            <VMenu activator="parent" close-on-content-click>
               <VList>
-                <VListItem>
-                  <VBtnToggle v-model="searchType" color="primary" @click.stop>
-                    <VBtn value="title">标题</VBtn>
-                    <VBtn value="imdbid" v-show="mediaDetail.imdb_id">IMDB链接</VBtn>
-                  </VBtnToggle>
+                <VListItem @click="clickSearch('title')">
+                  <VListItemTitle>{{ t('media.search.byTitle') }}</VListItemTitle>
                 </VListItem>
-                <VListItem>
-                  <VChipGroup v-model="selectedSites" column multiple @click.stop>
-                    <VChip
-                      v-for="site in allSites"
-                      :key="site.id"
-                      :color="selectedSites.includes(site.id) ? 'primary' : ''"
-                      filter
-                      variant="outlined"
-                      :value="site.id"
-                      size="small"
-                    >
-                      {{ site.name }}
-                    </VChip>
-                  </VChipGroup>
-                </VListItem>
-                <VListItem>
-                  <VBtn @click="handleSearch" block>搜索</VBtn>
+                <VListItem @click="clickSearch('imdb')">
+                  <VListItemTitle>{{ t('media.search.byImdb') }}</VListItemTitle>
                 </VListItem>
               </VList>
             </VMenu>
@@ -603,13 +617,13 @@ onBeforeMount(() => {
             <template #prepend>
               <VIcon :icon="getSubscribeIcon" />
             </template>
-            {{ isSubscribed ? '已订阅' : '订阅' }}
+            {{ isSubscribed ? t('media.status.subscribed') : t('media.actions.subscribe') }}
           </VBtn>
           <VBtn v-if="existsItemId" class="ms-2 mb-2" variant="tonal" @click="handlePlay()">
             <template #prepend>
               <VIcon icon="mdi-play" />
             </template>
-            在线播放
+            {{ t('media.actions.playOnline') }}
           </VBtn>
         </div>
       </div>
@@ -618,7 +632,7 @@ onBeforeMount(() => {
           <div v-if="mediaDetail.tagline" class="tagline">
             {{ mediaDetail.tagline }}
           </div>
-          <h2 v-if="mediaDetail.overview">简介</h2>
+          <h2 v-if="mediaDetail.overview">{{ t('media.overview') }}</h2>
           <p>{{ mediaDetail.overview }}</p>
           <ul v-if="mediaDetail.tmdb_id" class="media-crew">
             <li v-for="director in mediaDetail.directors" :key="director.id">
@@ -691,7 +705,7 @@ onBeforeMount(() => {
               </div>
             </a>
           </div>
-          <h2 v-if="mediaDetail.type === '电视剧' && mediaDetail.tmdb_id" class="py-4">季</h2>
+          <h2 v-if="mediaDetail.type === '电视剧' && mediaDetail.tmdb_id" class="py-4">{{ t('media.seasons') }}</h2>
           <div v-if="mediaDetail.type === '电视剧' && mediaDetail.tmdb_id" class="flex w-full flex-col space-y-2">
             <VExpansionPanels>
               <VExpansionPanel
@@ -702,8 +716,12 @@ onBeforeMount(() => {
                 <VExpansionPanelTitle>
                   <template #default>
                     <div class="flex flex-row items-center justify-between">
-                      <span class="font-weight-bold">第 {{ season.season_number }} 季</span>
-                      <VChip size="small" class="ms-1"> {{ season.episode_count }}集 </VChip>
+                      <span class="font-weight-bold">{{
+                        t('media.seasonNumber', { number: season.season_number })
+                      }}</span>
+                      <VChip size="small" class="ms-1">
+                        {{ t('media.episodeCount', { count: season.episode_count }) }}
+                      </VChip>
                       <div class="absolute right-12">
                         <VChip v-if="seasonsNotExisted" :color="getExistColor(season.season_number || 0)" flat>
                           {{ getExistText(season.season_number || 0) }}
@@ -779,15 +797,15 @@ onBeforeMount(() => {
               <span class="media-fact-value">{{ mediaDetail.tmdb_id }}</span>
             </div>
             <div v-if="mediaDetail.original_title || mediaDetail.original_name" class="media-fact">
-              <span>原始标题</span>
+              <span>{{ t('media.info.originalTitle') }}</span>
               <span class="media-fact-value">{{ mediaDetail.original_title || mediaDetail.original_name }}</span>
             </div>
             <div v-if="mediaDetail.status" class="media-fact">
-              <span>状态</span>
+              <span>{{ t('media.info.status') }}</span>
               <span class="media-fact-value">{{ mediaDetail.status }}</span>
             </div>
             <div v-if="mediaDetail.release_date || mediaDetail.first_air_date" class="media-fact">
-              <span>上映日期</span>
+              <span>{{ t('media.info.releaseDate') }}</span>
               <span class="media-fact-value">
                 <span class="flex items-center justify-end">
                   <svg
@@ -810,11 +828,11 @@ onBeforeMount(() => {
               </span>
             </div>
             <div v-if="mediaDetail.original_language" class="media-fact">
-              <span>原始语言</span>
+              <span>{{ t('media.info.originalLanguage') }}</span>
               <span class="media-fact-value">{{ mediaDetail.original_language }}</span>
             </div>
             <div v-if="mediaDetail.production_countries" class="media-fact">
-              <span>出品国家</span>
+              <span>{{ t('media.info.productionCountries') }}</span>
               <span class="media-fact-value">
                 <span
                   v-for="country in getProductionCountries"
@@ -826,7 +844,7 @@ onBeforeMount(() => {
               </span>
             </div>
             <div class="media-fact border-b-0">
-              <span>制作公司</span>
+              <span>{{ t('media.info.productionCompanies') }}</span>
               <span class="media-fact-value text-end">
                 <span v-for="company in getProductionCompanies" :key="company" class="block">{{ company }}</span>
               </span>
@@ -839,21 +857,21 @@ onBeforeMount(() => {
               <VRating v-model="mediaDetail.vote_average" density="compact" length="10" class="ma-2" readonly />
             </div>
             <div v-if="mediaDetail.douban_id" class="media-fact">
-              <span>豆瓣ID</span>
+              <span>{{ t('media.info.doubanId') }}</span>
               <span class="media-fact-value">{{ mediaDetail.douban_id }}</span>
             </div>
             <div v-if="mediaDetail.original_title" class="media-fact">
-              <span>原始标题</span>
+              <span>{{ t('media.info.originalTitle') }}</span>
               <span class="media-fact-value">{{ mediaDetail.original_title }}</span>
             </div>
             <div v-if="mediaDetail.release_date" class="media-fact">
-              <span>上映日期</span>
+              <span>{{ t('media.info.releaseDate') }}</span>
               <span class="media-fact-value">
                 {{ mediaDetail.release_date }}
               </span>
             </div>
             <div v-if="mediaDetail.production_countries" class="media-fact border-b-0">
-              <span>出品国家</span>
+              <span>{{ t('media.info.productionCountries') }}</span>
               <span class="media-fact-value">
                 <span
                   v-for="country in getProductionCountries"
@@ -876,11 +894,11 @@ onBeforeMount(() => {
               <span class="media-fact-value">{{ mediaDetail.bangumi_id }}</span>
             </div>
             <div v-if="mediaDetail.original_title" class="media-fact">
-              <span>原始标题</span>
+              <span>{{ t('media.info.originalTitle') }}</span>
               <span class="media-fact-value">{{ mediaDetail.original_title }}</span>
             </div>
             <div v-if="mediaDetail.release_date" class="media-fact border-b-0">
-              <span>上映日期</span>
+              <span>{{ t('media.info.releaseDate') }}</span>
               <span class="media-fact-value">
                 {{ mediaDetail.release_date }}
               </span>
@@ -891,53 +909,61 @@ onBeforeMount(() => {
       <div v-if="mediaDetail.tmdb_id">
         <PersonCardSlideView
           :apipath="`tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}`"
-          :linkurl="`/credits/tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}?title=演员阵容&type=tmdb`"
-          title="演员阵容"
+          :linkurl="`/credits/tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t(
+            'media.castAndCrew',
+          )}&type=tmdb`"
+          :title="t('media.castAndCrew')"
           type="tmdb"
         />
       </div>
       <div v-else-if="mediaDetail.douban_id">
         <PersonCardSlideView
           :apipath="`douban/credits/${mediaDetail.douban_id}/${mediaProps.type}`"
-          :linkurl="`/credits/douban/credits/${mediaDetail.douban_id}/${mediaProps.type}?title=演员阵容&type=douban`"
-          title="演员阵容"
+          :linkurl="`/credits/douban/credits/${mediaDetail.douban_id}/${mediaProps.type}?title=${t(
+            'media.castAndCrew',
+          )}&type=douban`"
+          :title="t('media.castAndCrew')"
           type="douban"
         />
       </div>
       <div v-else-if="mediaDetail.bangumi_id">
         <PersonCardSlideView
           :apipath="`bangumi/credits/${mediaDetail.bangumi_id}`"
-          :linkurl="`/credits/bangumi/credits/${mediaDetail.bangumi_id}?title=演员阵容&type=bangumi`"
-          title="演员阵容"
+          :linkurl="`/credits/bangumi/credits/${mediaDetail.bangumi_id}?title=${t('media.castAndCrew')}&type=bangumi`"
+          :title="t('media.castAndCrew')"
           type="bangumi"
         />
       </div>
       <div v-if="mediaDetail.tmdb_id">
         <MediaCardSlideView
           :apipath="`tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}`"
-          :linkurl="`/browse/tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}?title=推荐`"
-          title="推荐"
+          :linkurl="`/browse/tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t(
+            'media.recommendations',
+          )}`"
+          :title="t('media.recommendations')"
         />
       </div>
       <div v-else-if="mediaDetail.douban_id">
         <MediaCardSlideView
           :apipath="`douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}`"
-          :linkurl="`/browse/douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}?title=推荐`"
-          title="推荐"
+          :linkurl="`/browse/douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}?title=${t(
+            'media.recommendations',
+          )}`"
+          :title="t('media.recommendations')"
         />
       </div>
       <div v-else-if="mediaDetail.bangumi_id">
         <MediaCardSlideView
           :apipath="`bangumi/recommend/${mediaDetail.bangumi_id}`"
-          :linkurl="`/browse/bangumi/recommend/${mediaDetail.bangumi_id}?title=推荐`"
-          title="推荐"
+          :linkurl="`/browse/bangumi/recommend/${mediaDetail.bangumi_id}?title=${t('media.recommendations')}`"
+          :title="t('media.recommendations')"
         />
       </div>
       <div v-if="mediaDetail.tmdb_id">
         <MediaCardSlideView
           :apipath="`tmdb/similar/${mediaDetail.tmdb_id}/${mediaProps.type}`"
-          :linkurl="`/browse/tmdb/similar/${mediaDetail.tmdb_id}/${mediaProps.type}?title=类似`"
-          title="类似"
+          :linkurl="`/browse/tmdb/similar/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t('media.similar')}`"
+          :title="t('media.similar')"
         />
       </div>
     </div>
@@ -945,8 +971,8 @@ onBeforeMount(() => {
   <NoDataFound
     v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
     error-code="500"
-    error-title="出错啦！"
-    error-description="未识别到媒体信息。"
+    :error-title="t('media.error.title')"
+    :error-description="t('media.error.noMediaInfo')"
   />
   <!-- 订阅编辑弹窗 -->
   <SubscribeEditDialog
@@ -957,9 +983,18 @@ onBeforeMount(() => {
     @save="subscribeEditDialog = false"
     @remove="onSubscribeEditRemove"
   />
+  <!-- 站点选择对话框 -->
+  <SearchSiteDialog
+    v-if="chooseSiteDialog"
+    v-model="chooseSiteDialog"
+    :sites="allSites"
+    :selected="selectedSites"
+    @search="searchSites"
+    @close="chooseSiteDialog = false"
+  />
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .vue-media-back {
   background-image: linear-gradient(
       180deg,
@@ -968,7 +1003,6 @@ onBeforeMount(() => {
     ),
     linear-gradient(90deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(270deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%);
-  box-shadow: 0 0 0 2px rgb(var(--v-theme-background));
   margin-block-start: calc(-70px - env(safe-area-inset-top));
 }
 

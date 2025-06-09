@@ -3,6 +3,10 @@ import { useTheme } from 'vuetify'
 import api from '@/api'
 import { hexToRgb } from '@layouts/utils'
 import { useUserStore } from '@/stores'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 const vuetifyTheme = useTheme()
 
@@ -113,6 +117,10 @@ async function getWeeklyData() {
 onMounted(() => {
   getWeeklyData()
 })
+
+onActivated(() => {
+  getWeeklyData()
+})
 </script>
 
 <template>
@@ -123,7 +131,7 @@ onMounted(() => {
           <template #append>
             <VIcon class="cursor-move" v-if="hover.isHovering">mdi-drag</VIcon>
           </template>
-          <VCardTitle>最近入库</VCardTitle>
+          <VCardTitle>{{ t('dashboard.weeklyOverview') }}</VCardTitle>
         </VCardItem>
 
         <VCardText>
@@ -132,10 +140,10 @@ onMounted(() => {
             <h5 class="text-h5 me-4">
               {{ totalCount }}
             </h5>
-            <p>最近一周入库了 {{ totalCount }} 部影片 😎</p>
+            <p>{{ t('dashboard.weeklyOverviewDescription', { count: totalCount }) }} 😎</p>
           </div>
 
-          <VBtn v-if="superUser" block to="/history"> 查看详情 </VBtn>
+          <VBtn v-if="superUser" block to="/history"> {{ t('common.viewDetails') }} </VBtn>
         </VCardText>
       </VCard>
     </template>

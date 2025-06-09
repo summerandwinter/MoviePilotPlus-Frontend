@@ -2,6 +2,10 @@
 import api from '@/api'
 import type { MediaServerConf, MediaServerLibrary } from '@/api/types'
 import LibraryCard from '@/components/cards/LibraryCard.vue'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 媒体库列表
 const libraryList = ref<MediaServerLibrary[]>([])
@@ -26,19 +30,32 @@ async function loadLibrary(server: string) {
       params: { server: server, hidden: true },
     })
     if (result && result.length > 0) {
-      libraryList.value = libraryList.value.concat(result)
+      // 不存在时添加
+      for (const item of result) {
+        const index = libraryList.value.findIndex(i => i.id === item.id)
+        if (index === -1) libraryList.value.push(item)
+      }
     }
   } catch (e) {
     console.log(e)
   }
 }
 
-onMounted(async () => {
+// 加载数据
+async function loadData() {
   await loadMediaServerSetting()
   const enabledServers = mediaServers.value.filter(server => server.enabled)
   for (const server of enabledServers) {
     loadLibrary(server.name)
   }
+}
+
+onMounted(() => {
+  loadData()
+})
+
+onActivated(() => {
+  loadData()
 })
 </script>
 
@@ -50,9 +67,9 @@ onMounted(async () => {
           <template #append>
             <VIcon class="cursor-move" v-if="hover.isHovering">mdi-drag</VIcon>
           </template>
-          <VCardTitle>我的媒体库</VCardTitle>
+          <VCardTitle>{{ t('dashboard.library') }}</VCardTitle>
         </VCardItem>
-        <div class="grid gap-4 grid-backdrop-card mx-3" tabindex="0">
+        <div class="grid gap-4 grid-backdrop-card mx-3 mb-3" tabindex="0">
           <LibraryCard v-for="item in libraryList" :key="item.id" :media="item" height="10rem" />
         </div>
       </VCard>

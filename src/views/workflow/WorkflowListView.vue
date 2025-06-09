@@ -5,6 +5,11 @@ import { useDisplay } from 'vuetify'
 import WorkflowAddEditDialog from '@/components/dialog/WorkflowAddEditDialog.vue'
 import WorkflowTaskCard from '@/components/cards/WorkflowTaskCard.vue'
 import NoDataFound from '@/components/NoDataFound.vue'
+import { useDynamicButton } from '@/composables/useDynamicButton'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // APP
 const display = useDisplay()
@@ -42,27 +47,33 @@ onMounted(() => {
 onActivated(() => {
   fetchData()
 })
-</script>
 
+// 使用动态按钮钩子 新增
+useDynamicButton({
+  icon: 'mdi-plus',
+  onClick: () => {
+    addDialog.value = true
+  },
+})
+</script>
 <template>
   <div>
+    <VPageContentTitle :title="t('workflow.title')" />
     <LoadingBanner v-if="!isRefreshed" class="mt-12" />
-    <VRow v-if="workflowList.length > 0" class="match-height">
-      <VCol cols="12" md="6" lg="4" v-for="item in workflowList" :key="item.id">
-        <WorkflowTaskCard :workflow="item" @refresh="fetchData" />
-      </VCol>
-    </VRow>
+    <div v-if="workflowList.length > 0 && isRefreshed" class="grid gap-4 grid-workflow-card px-2">
+      <WorkflowTaskCard v-for="item in workflowList" :key="item.id" :workflow="item" @refresh="fetchData" />
+    </div>
     <NoDataFound
       v-if="workflowList.length === 0 && isRefreshed"
       error-code="404"
-      error-title="没有工作流"
-      error-description="点击添加按钮创建工作流任务。"
+      :error-title="t('workflow.noWorkflow')"
+      :error-description="t('workflow.noWorkflowDescription')"
     />
   </div>
 
   <!-- 新增按钮 -->
   <VFab
-    v-if="isRefreshed"
+    v-if="isRefreshed && !appMode"
     icon="mdi-plus"
     location="bottom"
     size="x-large"

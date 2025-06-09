@@ -3,13 +3,12 @@ import './ace-config'
 import '@/@core/utils/compatibility'
 import '@/@iconify/icons-bundle'
 import '@/plugins/webfontloader'
-// 解决非被动事件监听警告，提升滚动性能  
-import "default-passive-events"
 // 2. 核心插件和 UI 框架
 import { createApp } from 'vue'
 import vuetify from '@/plugins/vuetify'
 import router from '@/router'
 import pinia from '@/stores/index'
+import i18n from '@/plugins/i18n'
 
 // 3. 全局组件
 import App from '@/App.vue'
@@ -18,16 +17,19 @@ import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar'
 import { CronVuetify } from '@vue-js-cron/vuetify'
 
 // 4. 工具函数和其他辅助模块
-import { fetchGlobalSettings } from './api'
 import { isPWA } from './@core/utils/navigator'
+import { loadRemoteComponents } from './utils/federationLoader'
+import { fetchGlobalSettings } from './utils/globalSetting'
 
 // 5. 其他插件和功能模块
 import ToastPlugin from 'vue-toast-notification'
-import VuetifyUseDialog from 'vuetify-use-dialog'
+import ConfirmDialog from '@/composables/useConfirm'
 import VueApexCharts from 'vue3-apexcharts'
 
 // 6. 注册自定义组件
 import DialogCloseBtn from '@/@core/components/DialogCloseBtn.vue'
+import ScrollToTopBtn from '@/@core/components/ScrollToTopBtn.vue'
+import PageContentTitle from './@core/components/PageContentTitle.vue'
 import MediaCard from './components/cards/MediaCard.vue'
 import PosterCard from './components/cards/PosterCard.vue'
 import BackdropCard from './components/cards/BackdropCard.vue'
@@ -38,16 +40,10 @@ import MediaIdSelector from './components/misc/MediaIdSelector.vue'
 import CronField from './components/field/CronField.vue'
 import PathField from './components/field/PathField.vue'
 import VideoCard from './components/cards/VideoCard.vue'
+import HeaderTab from './layouts/components/HeaderTab.vue'
 
-// 7. 样式文件
-import '@core/scss/template/libs/vuetify/index.scss'
-import 'vuetify/styles'
-import '@core/scss/template/index.scss'
-import '@layouts/styles/index.scss'
-import 'vue-toast-notification/dist/theme-bootstrap.css'
-import 'vue3-perfect-scrollbar/style.css'
-import '@vue-js-cron/vuetify/dist/vuetify.css'
-import '@styles/styles.scss'
+// 7. 样式文件 - 合并为单一导入
+import '@/styles/main.scss'
 
 // 注册 tiptap 组件
 import useRichText from '@/plugins/useRichText'
@@ -55,11 +51,22 @@ import useRichText from '@/plugins/useRichText'
 // 创建Vue实例
 const app = createApp(App)
 
+// 注册pinia
+app.use(pinia)
+
+// 初始化配置
 async function initializeApp() {
   try {
     // 是否为PWA
     const pwaMode = await isPWA()
     app.provide('pwaMode', pwaMode)
+
+    // 全局设置
+    const globalSettings = await fetchGlobalSettings()
+    app.provide('globalSettings', globalSettings)
+
+    // 加载并注册远程联邦组件
+    await loadRemoteComponents()
   } catch (error) {
     console.error('Failed to initialize app', error)
   }
@@ -70,18 +77,16 @@ initializeApp().then(() => {
   // 1. 注册 UI 框架
   app.use(vuetify)
 
-  // 2. 注册状态管理与路由
-  app.use(pinia).use(router)
+  // 2. 注册路由
+  app.use(router)
 
-  // 3. 全局设置
-  app.provide('globalSettings', fetchGlobalSettings())
-
-  // 4. 注册全局组件
+  // 3. 注册全局组件
   app
     .component('VAceEditor', VAceEditor)
     .component('VApexChart', VueApexCharts)
     .component('VCronVuetify', CronVuetify)
     .component('VDialogCloseBtn', DialogCloseBtn)
+    .component('VScrollToTopBtn', ScrollToTopBtn)
     .component('VMediaCard', MediaCard)
     .component('VPosterCard', PosterCard)
     .component('VBackdropCard', BackdropCard)
@@ -92,6 +97,8 @@ initializeApp().then(() => {
     .component('VCronField', CronField)
     .component('VPathField', PathField)
     .component('VVideoCard', VideoCard)
+    .component('VHeaderTab', HeaderTab)
+    .component('VPageContentTitle', PageContentTitle)
 
   // 5. 注册其他插件
   app
@@ -100,25 +107,7 @@ initializeApp().then(() => {
     .use(ToastPlugin, {
       position: 'bottom-right',
     })
-    .use(VuetifyUseDialog, {
-      confirmDialog: {
-        dialogProps: {
-          maxWidth: '30rem',
-        },
-        confirmationButtonProps: {
-          variant: 'elevated',
-          color: 'primary',
-          class: 'me-3 px-5',
-          'prepend-icon': 'mdi-check',
-        },
-        cancellationButtonProps: {
-          variant: 'outlined',
-          color: 'secondary',
-          class: 'me-3',
-        },
-        confirmationText: '确认',
-        cancellationText: '取消',
-      },
-    })
+    .use(ConfirmDialog)
+    .use(i18n)
     .mount('#app')
 })

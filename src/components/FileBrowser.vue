@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import type { Axios } from 'axios'
 import FileList from './filebrowser/FileList.vue'
 import FileToolbar from './filebrowser/FileToolbar.vue'
+import FileNavigator from './filebrowser/FileNavigator.vue'
 import type { EndPoints, FileItem, StorageConf } from '@/api/types'
-import { storageOptions } from '@/api/constants'
+import { useDisplay } from 'vuetify'
+import { storageIconDict } from '@/api/constants'
 
 // 输入参数
 const props = defineProps({
@@ -11,7 +12,7 @@ const props = defineProps({
   tree: Boolean,
   endpoints: Object as PropType<EndPoints>,
   axios: {
-    type: Object as PropType<Axios>,
+    type: Function,
     required: true,
   },
   axiosconfig: Object,
@@ -27,6 +28,12 @@ const props = defineProps({
 
 // 对外事件
 const emit = defineEmits(['pathchanged'])
+
+// 显示器宽度
+const display = useDisplay()
+
+// APP
+const appMode = inject('pwaMode') && display.mdAndDown.value
 
 const fileIcons = {
   // 压缩包
@@ -126,10 +133,22 @@ const refreshPending = ref(false)
 // 排序
 const sort = ref('name')
 
+// 是否显示目录树
+const showDirTree = ref(false)
+
+// 拖动分隔条相关
+const navigatorWidth = ref(280) // 初始宽度
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartWidth = ref(0)
+
 // 计算属性
 const storagesArray = computed(() => {
-  const storageCodes = props.storages?.map(item => item.type)
-  return storageOptions.filter(item => storageCodes?.includes(item.value))
+  return props.storages?.map(item => ({
+    title: item.name,
+    value: item.type,
+    icon: storageIconDict[item.type] ?? 'mdi-server-network-outline',
+  }))
 })
 
 // 方法
@@ -154,10 +173,89 @@ function sortChanged(s: string) {
   sort.value = s
   refreshPending.value = true
 }
+
+// 切换目录树
+function switchDirTree(state: boolean) {
+  showDirTree.value = state
+}
+
+// 文件列表
+const fileListItems = ref<FileItem[]>([])
+
+// 文件列表数据更新
+function fileListUpdated(items: FileItem[]) {
+  fileListItems.value = items
+}
+
+// 阻止选择事件
+function preventSelect(event: Event) {
+  event.preventDefault()
+  return false
+}
+
+// 拖动分隔条相关方法
+function startDrag(event: MouseEvent) {
+  event.preventDefault() // 阻止默认行为
+  event.stopPropagation() // 阻止事件冒泡
+
+  isDragging.value = true
+  dragStartX.value = event.clientX
+  dragStartWidth.value = navigatorWidth.value
+
+  document.addEventListener('mousemove', handleDrag, { passive: false })
+  document.addEventListener('mouseup', stopDrag, { passive: false })
+  document.addEventListener('selectstart', preventSelect) // 阻止选择开始
+
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  ;(document.body.style as any).webkitUserSelect = 'none' // Safari兼容
+  ;(document.body.style as any).mozUserSelect = 'none' // Firefox兼容
+}
+
+function handleDrag(event: MouseEvent) {
+  if (!isDragging.value) return
+
+  event.preventDefault() // 阻止默认行为
+
+  const deltaX = event.clientX - dragStartX.value
+  const newWidth = dragStartWidth.value + deltaX
+
+  // 设置最小和最大宽度限制
+  const minWidth = 200
+  const maxWidth = window.innerWidth * 0.6
+
+  navigatorWidth.value = Math.max(minWidth, Math.min(maxWidth, newWidth))
+}
+
+function stopDrag() {
+  isDragging.value = false
+  document.removeEventListener('mousemove', handleDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('selectstart', preventSelect)
+
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+  ;(document.body.style as any).webkitUserSelect = ''
+  ;(document.body.style as any).mozUserSelect = ''
+}
+
+// 外层DIV大小控制
+const scrollStyle = computed(() => {
+  return appMode
+    ? 'height: calc(100vh - 10.5rem - env(safe-area-inset-bottom) - 6.5rem)'
+    : 'height: calc(100vh - 10.5rem - env(safe-area-inset-bottom)'
+})
+
+// 文件列表大小限制
+const fileListStyle = computed(() => {
+  return appMode
+    ? 'height: calc(100vh - 14rem - env(safe-area-inset-bottom) - 7rem)'
+    : 'height: calc(100vh - 14rem - env(safe-area-inset-bottom)'
+})
 </script>
 
 <template>
-  <VCard class="mx-auto" :loading="loading > 0">
+  <div class="mx-auto" :loading="loading > 0">
     <div v-if="activeStorage && item">
       <FileToolbar
         :item="item"
@@ -171,20 +269,103 @@ function sortChanged(s: string) {
         @foldercreated="refreshPending = true"
         @sortchanged="sortChanged"
       />
-      <FileList
-        :item="item"
-        :storage="activeStorage"
-        :icons="fileIcons"
-        :endpoints="endpoints"
-        :axios="axios"
-        :refreshpending="refreshPending"
-        :sort="sort"
-        @pathchanged="pathChanged"
-        @loading="loadingChanged"
-        @refreshed="refreshPending = false"
-        @filedeleted="refreshPending = true"
-        @renamed="refreshPending = true"
-      />
+      <div class="flex" :style="scrollStyle">
+        <FileNavigator
+          v-if="showDirTree"
+          :storage="activeStorage"
+          :currentPath="item.path"
+          :items="fileListItems"
+          :endpoints="endpoints"
+          :axios="axios"
+          :style="{ width: `${navigatorWidth}px`, minWidth: `${navigatorWidth}px` }"
+          @navigate="pathChanged"
+        />
+        <!-- 拖动分隔条 -->
+        <div v-if="showDirTree" class="divider" :class="{ 'divider-dragging': isDragging }" @mousedown="startDrag">
+          <div class="divider-line"></div>
+          <VIcon class="divider-icon" size="small">mdi-drag-vertical</VIcon>
+        </div>
+        <FileList
+          :item="item"
+          :storage="activeStorage"
+          :icons="fileIcons"
+          :endpoints="endpoints"
+          :axios="axios"
+          :refreshpending="refreshPending"
+          :sort="sort"
+          :listStyle="fileListStyle"
+          :showTree="showDirTree"
+          :style="{ flex: 1 }"
+          @pathchanged="pathChanged"
+          @loading="loadingChanged"
+          @refreshed="refreshPending = false"
+          @filedeleted="refreshPending = true"
+          @renamed="refreshPending = true"
+          @items-updated="fileListUpdated"
+          @switch-tree="switchDirTree"
+        />
+      </div>
     </div>
-  </VCard>
+  </div>
 </template>
+
+<style scoped>
+.divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  cursor: col-resize;
+  inline-size: 4px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.divider:hover {
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.divider-dragging {
+  background-color: rgba(var(--v-theme-primary), 0.12) !important;
+}
+
+.divider-line {
+  background-color: rgba(var(--v-theme-outline), 0.3);
+  block-size: 100%;
+  inline-size: 1px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.divider-dragging .divider-line {
+  background-color: rgb(var(--v-theme-primary)) !important;
+}
+
+.divider:hover .divider-line {
+  background-color: rgba(var(--v-theme-primary), 0.8);
+}
+
+.divider-icon {
+  position: absolute;
+  z-index: 1;
+  padding: 2px;
+  border-radius: 2px;
+  background-color: rgba(var(--v-theme-surface), 0.9);
+  color: rgba(var(--v-theme-on-surface-variant), 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.divider-dragging .divider-icon {
+  background-color: rgba(var(--v-theme-surface), 0.95);
+  color: rgb(var(--v-theme-primary));
+  opacity: 1;
+}
+
+.divider:hover .divider-icon {
+  color: rgba(var(--v-theme-primary), 0.9);
+  opacity: 1;
+}
+</style>

@@ -7,6 +7,10 @@ import type { User } from '@/api/types'
 import avatar1 from '@images/avatars/avatar-1.png'
 import { useDisplay } from 'vuetify'
 import { useUserStore } from '@/stores'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 显示器宽度
 const display = useDisplay()
@@ -57,6 +61,7 @@ const accountInfo = ref<User>({
   is_otp: false,
   permissions: {},
   settings: {},
+  nickname: '',
 })
 
 // 二维码信息
@@ -72,19 +77,19 @@ function changeAvatar(file: Event) {
     const maxSize = 800 * 1024
     // 检查文件是否为图片
     if (!allowedTypes.includes(selectedFile.type)) {
-      $toast.error('上传的文件不符合要求，请重新选择头像')
+      $toast.error(t('profile.avatarFormatError'))
       return
     }
     // 检查文件大小
     if (selectedFile.size > maxSize) {
-      $toast.error('文件大小不得大于800KB')
+      $toast.error(t('profile.avatarSizeError'))
       return
     }
     fileReader.readAsDataURL(selectedFile)
     fileReader.onload = () => {
       if (typeof fileReader.result === 'string') {
         currentAvatar.value = fileReader.result
-        $toast.success('新头像上传成功，待保存后生效!')
+        $toast.success(t('profile.avatarUploadSuccess'))
       }
     }
   }
@@ -93,26 +98,25 @@ function changeAvatar(file: Event) {
 // 重置默认头像
 function resetDefaultAvatar() {
   currentAvatar.value = avatar1
-  $toast.success('已重置为默认头像，待保存后生效！')
+  $toast.success(t('profile.resetAvatarSuccess'))
 }
 
 // 还原当前头像
 function restoreCurrentAvatar() {
   currentAvatar.value = accountInfo.value.avatar
-  $toast.success('已还原当前使用头像！')
+  $toast.success(t('profile.restoreAvatarSuccess'))
 }
 
-// 调用API，加载当前用户数据
-async function loadAccountInfo() {
+// 加载当前用户信息
+async function fetchUserInfo() {
   try {
-    const user: User = await api.get('user/current')
-    console.log(user)
-    accountInfo.value = user
-    if (!accountInfo.value.avatar) {
-      accountInfo.value.avatar = avatar1
+    const result: User = await api.get(`user/${userStore.userName}`)
+    if (result) {
+      accountInfo.value = result
+      accountInfo.value.avatar = accountInfo.value.avatar ? accountInfo.value.avatar : avatar1
+      currentUserName.value = accountInfo.value.name
+      currentAvatar.value = accountInfo.value.avatar
     }
-    currentAvatar.value = accountInfo.value.avatar
-    currentUserName.value = accountInfo.value.name
   } catch (error) {
     console.log(error)
   }
@@ -121,34 +125,47 @@ async function loadAccountInfo() {
 // 保存用户信息
 async function saveAccountInfo() {
   if (isSaving.value) {
-    $toast.error('正在保存中，请稍后...')
+    $toast.error(t('profile.savingInProgress'))
     return
   }
   if (!currentUserName.value) {
-    $toast.error('用户名不能为空')
+    $toast.error(t('profile.usernameRequired'))
     return
   }
   if (newPassword.value || confirmPassword.value) {
     if (newPassword.value !== confirmPassword.value) {
-      $toast.error('两次输入的密码不一致')
+      $toast.error(t('profile.passwordMismatch'))
       return
     }
     accountInfo.value.password = newPassword.value
   }
+
+  // 将nickname保存到settings中，后端可以直接处理JSON对象
+  if (accountInfo.value.nickname) {
+    if (!accountInfo.value.settings) {
+      accountInfo.value.settings = {}
+    }
+    accountInfo.value.settings.nickname = accountInfo.value.nickname
+  }
+
   const oldUserName = accountInfo.value.name
   const oldAvatar = accountInfo.value.avatar
   accountInfo.value.avatar = currentAvatar.value
   accountInfo.value.name = currentUserName.value
   isSaving.value = true
   try {
-    const result: { [key: string]: any } = await api.put('user/', accountInfo.value)
+    // 创建一个临时对象来保存用户数据，确保所有字段都会发送
+    const userData = { ...accountInfo.value }
+
+    const result: { [key: string]: any } = await api.put('user/', userData)
+
     if (result.success) {
       if (oldUserName !== currentUserName.value) {
-        $toast.success(`【${oldUserName}】更名【${currentUserName.value}】，用户信息保存成功！`)
+        $toast.success(t('profile.usernameChangeSuccess', { oldName: oldUserName, newName: currentUserName.value }))
         // 更新本地用户名显示
         userStore.setUserName(currentUserName.value)
       } else {
-        $toast.success('用户信息保存成功！')
+        $toast.success(t('profile.saveSuccess'))
       }
       // 更新本地头像显示
       if (oldAvatar !== currentAvatar.value) {
@@ -156,9 +173,15 @@ async function saveAccountInfo() {
       }
     } else {
       if (oldAvatar !== currentAvatar.value) {
-        $toast.error(`【${oldUserName}】更名【${currentUserName.value}】，信息保存失败：${result.message}！`)
+        $toast.error(
+          t('profile.saveFailedWithNameChange', {
+            oldName: oldUserName,
+            newName: currentUserName.value,
+            message: result.message,
+          }),
+        )
       } else {
-        $toast.error(`用户信息保存失败：${result.message}！`)
+        $toast.error(t('profile.saveFailed', { message: result.message }))
       }
       // 失败缓存值还原
       currentUserName.value = accountInfo.value.name
@@ -167,7 +190,7 @@ async function saveAccountInfo() {
       accountInfo.value.avatar = oldAvatar
     }
   } catch (error) {
-    console.log(error)
+    console.log('保存失败:', error)
   }
   isSaving.value = false
 }
@@ -182,7 +205,7 @@ async function getOtpUri() {
       qrCode.value = result.data.uri
       otpDialog.value = true
     } else {
-      $toast.error(`获取otp uri失败：${result.message}！`)
+      $toast.error(t('profile.otpGenerateFailed', { message: result.message }))
     }
   } catch (error) {
     console.log(error)
@@ -195,9 +218,9 @@ async function disableOtp() {
     const result: { [key: string]: any } = await api.post('user/otp/disable')
     if (result.success) {
       accountInfo.value.is_otp = false
-      $toast.success('关闭登录双重验证成功！')
+      $toast.success(t('profile.otpDisableSuccess'))
     } else {
-      $toast.error(`关闭otp失败：${result.message}！`)
+      $toast.error(t('profile.otpDisableFailed', { message: result.message }))
     }
   } catch (error) {
     console.log(error)
@@ -207,7 +230,7 @@ async function disableOtp() {
 // 启用Otp
 async function judgeOtpPassword() {
   if (!otpPassword.value) {
-    $toast.error('请填写6位验证码')
+    $toast.error(t('profile.otpCodeRequired'))
     return
   }
   try {
@@ -217,11 +240,11 @@ async function judgeOtpPassword() {
     })
 
     if (result.success) {
-      $toast.success('开启登录双重验证成功！')
+      $toast.success(t('profile.otpEnableSuccess'))
       otpDialog.value = false
       accountInfo.value.is_otp = true
     } else {
-      $toast.error(`开启otp失败：${result.message}！`)
+      $toast.error(t('profile.otpEnableFailed', { message: result.message }))
     }
   } catch (error) {
     console.log(error)
@@ -230,7 +253,7 @@ async function judgeOtpPassword() {
 
 // 加载当前用户数据
 onMounted(() => {
-  loadAccountInfo()
+  fetchUserInfo()
 })
 
 // 监听 localStorage 中的用户头像变化
@@ -246,7 +269,7 @@ watch(
   <div>
     <VRow>
       <VCol cols="12">
-        <VCard title="个人信息">
+        <VCard :title="t('profile.personalInfo')">
           <VCardText class="flex">
             <!-- 👉 Avatar -->
             <VAvatar rounded="lg" size="100" class="me-6" :image="currentAvatar" />
@@ -256,7 +279,7 @@ watch(
               <div class="flex flex-wrap gap-2">
                 <VBtn color="primary" @click="refInputEl?.click()">
                   <VIcon icon="mdi-cloud-upload-outline" />
-                  <span v-if="display.mdAndUp.value" class="ms-2">上传新头像</span>
+                  <span v-if="display.mdAndUp.value" class="ms-2">{{ t('profile.uploadNewAvatar') }}</span>
                 </VBtn>
 
                 <input
@@ -270,12 +293,12 @@ watch(
 
                 <VBtn type="reset" color="info" variant="tonal" @click="restoreCurrentAvatar">
                   <VIcon icon="mdi-refresh" />
-                  <span v-if="display.mdAndUp.value" class="ms-2">重置</span>
+                  <span v-if="display.mdAndUp.value" class="ms-2">{{ t('common.reset') }}</span>
                 </VBtn>
 
                 <VBtn type="reset" color="error" variant="tonal" @click="resetDefaultAvatar">
                   <VIcon icon="mdi-image-sync-outline" />
-                  <span v-if="display.mdAndUp.value" class="ms-2">默认</span>
+                  <span v-if="display.mdAndUp.value" class="ms-2">{{ t('common.default') }}</span>
                 </VBtn>
 
                 <VBtn
@@ -285,12 +308,12 @@ watch(
                 >
                   <VIcon icon="mdi-account-key" />
                   <span v-if="display.mdAndUp.value" class="ms-2">{{
-                    accountInfo.is_otp ? '关闭双重验证' : '开启双重验证'
+                    accountInfo.is_otp ? t('profile.disableTwoFactor') : t('profile.enableTwoFactor')
                   }}</span>
                 </VBtn>
               </div>
 
-              <p class="text-body-1 mb-0">允许 JPG、PNG、GIF、WEBP 格式， 最大尺寸 800KB。</p>
+              <p class="text-body-1 mb-0">{{ t('profile.avatarFormatTip') }}</p>
             </form>
           </VCardText>
 
@@ -298,11 +321,24 @@ watch(
             <!-- 👉 Form -->
             <VForm class="mt-6">
               <VRow>
-                <VCol md="6" cols="12">
-                  <VTextField v-model="currentUserName" density="comfortable" readonly label="用户名" />
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="currentUserName"
+                    density="comfortable"
+                    readonly
+                    :label="t('user.username')"
+                    prepend-inner-icon="mdi-account"
+                  />
                 </VCol>
                 <VCol cols="12" md="6">
-                  <VTextField v-model="accountInfo.email" density="comfortable" clearable label="邮箱" type="email" />
+                  <VTextField
+                    v-model="accountInfo.email"
+                    density="comfortable"
+                    clearable
+                    :label="t('user.email')"
+                    type="email"
+                    prepend-inner-icon="mdi-email"
+                  />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VTextField
@@ -311,8 +347,9 @@ watch(
                     :type="isNewPasswordVisible ? 'text' : 'password'"
                     :append-inner-icon="isNewPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                     clearable
-                    label="新密码"
+                    :label="t('user.password')"
                     autocomplete=""
+                    prepend-inner-icon="mdi-lock"
                     @click:append-inner="isNewPasswordVisible = !isNewPasswordVisible"
                   />
                 </VCol>
@@ -324,14 +361,25 @@ watch(
                     :type="isConfirmPasswordVisible ? 'text' : 'password'"
                     :append-inner-icon="isConfirmPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                     clearable
-                    label="确认新密码"
+                    :label="t('user.confirmPassword')"
+                    prepend-inner-icon="mdi-lock-check"
                     @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VTextField
+                    v-model="accountInfo.nickname"
+                    density="comfortable"
+                    clearable
+                    :label="t('profile.nickname')"
+                    :placeholder="t('profile.nicknamePlaceholder')"
+                    prepend-inner-icon="mdi-card-account-details"
                   />
                 </VCol>
               </VRow>
 
               <VDivider class="my-10">
-                <span>账号绑定</span>
+                <span>{{ t('profile.accountBinding') }}</span>
               </VDivider>
 
               <VRow>
@@ -340,7 +388,8 @@ watch(
                     v-model="accountInfo.settings.wechat_userid"
                     density="comfortable"
                     clearable
-                    label="微信用户"
+                    :label="t('profile.wechatUser')"
+                    prepend-inner-icon="mdi-wechat"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
@@ -348,7 +397,8 @@ watch(
                     v-model="accountInfo.settings.telegram_userid"
                     density="comfortable"
                     clearable
-                    label="Telegram用户"
+                    :label="t('profile.telegramUser')"
+                    prepend-inner-icon="mdi-send"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
@@ -356,7 +406,8 @@ watch(
                     v-model="accountInfo.settings.slack_userid"
                     density="comfortable"
                     clearable
-                    label="Slack用户"
+                    :label="t('profile.slackUser')"
+                    prepend-inner-icon="mdi-slack"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
@@ -364,7 +415,8 @@ watch(
                     v-model="accountInfo.settings.vocechat_userid"
                     density="comfortable"
                     clearable
-                    label="VoceChat用户"
+                    :label="t('profile.vocechatUser')"
+                    prepend-inner-icon="mdi-chat"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
@@ -372,7 +424,8 @@ watch(
                     v-model="accountInfo.settings.synologychat_userid"
                     density="comfortable"
                     clearable
-                    label="SynologyChat用户"
+                    :label="t('profile.synologychatUser')"
+                    prepend-inner-icon="mdi-message"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
@@ -380,16 +433,17 @@ watch(
                     v-model="accountInfo.settings.douban_userid"
                     density="comfortable"
                     clearable
-                    label="豆瓣用户"
+                    :label="t('profile.doubanUser')"
+                    prepend-inner-icon="mdi-movie"
                   />
                 </VCol>
               </VRow>
               <VRow>
                 <!-- 👉 Form Actions -->
                 <VCol cols="12" class="d-flex flex-wrap gap-4">
-                  <VBtn @click="saveAccountInfo" :disabled="isSaving">
-                    <span v-if="isSaving">保存中...</span>
-                    <span v-else>保存</span>
+                  <VBtn @click="saveAccountInfo" :disabled="isSaving" prepend-icon="mdi-content-save">
+                    <span v-if="isSaving">{{ t('common.saving') }}...</span>
+                    <span v-else>{{ t('common.save') }}</span>
                   </VBtn>
                 </VCol>
               </VRow>
@@ -400,45 +454,39 @@ watch(
     </VRow>
 
     <!-- 双重验证弹窗 -->
-    <VDialog v-if="otpDialog" v-model="otpDialog" max-width="45rem" persistent scrollable>
+    <VDialog v-if="otpDialog" v-model="otpDialog" max-width="45rem" scrollable>
       <!-- 开启双重验证弹窗内容 -->
       <VCard>
-        <DialogCloseBtn @click="otpDialog = false" />
+        <VDialogCloseBtn @click="otpDialog = false" />
         <VCardText>
-          <h4 class="text-h4 text-center mb-6 mt-5">登录双重验证</h4>
-          <h5 class="text-h5 font-weight-medium mb-2">身份验证器</h5>
+          <h4 class="text-h4 text-center mb-6 mt-5">{{ t('profile.twoFactorAuthentication') }}</h4>
+          <h5 class="text-h5 font-weight-medium mb-2">{{ t('profile.authenticatorApp') }}</h5>
           <p class="mb-6">
-            使用像Google Authenticator、Microsoft
-            Authenticator、Authy或1Password这样的身份验证器应用程序，扫描二维码。它将为您生成一个6位数的代码，供您在下方输入。
+            {{ t('profile.authenticatorAppDescription') }}
           </p>
           <div class="my-6">
             <QrcodeVue class="mx-auto" :value="qrCode" :size="200" max-width="25rem" />
           </div>
-          <VAlert
-            :title="secret"
-            variant="tonal"
-            type="warning"
-            class="my-4"
-            text="如果您在使用二维码时遇到困难，请在您的应用程序中选择手动输入以上代码。"
-          >
+          <VAlert :title="secret" variant="tonal" type="warning" class="my-4" :text="t('profile.secretKeyTip')">
             <template #prepend />
           </VAlert>
           <VForm>
             <VTextField
               v-model="otpPassword"
               type="text"
-              label="输入验证码以确认开启双重验证"
+              :label="t('profile.enterVerificationCode')"
               autocomplete=""
               class="mb-8"
               variant="outlined"
+              prepend-inner-icon="mdi-shield-key"
             />
             <div class="d-flex justify-end flex-wrap gap-4">
-              <VBtn variant="outlined" color="secondary" @click="otpDialog = false"> 取消 </VBtn>
+              <VBtn variant="outlined" color="secondary" @click="otpDialog = false"> {{ t('common.cancel') }} </VBtn>
               <VBtn @click="judgeOtpPassword">
                 <template #prepend>
                   <VIcon icon="mdi-check" />
                 </template>
-                确定
+                {{ t('common.confirm') }}
               </VBtn>
             </div>
           </VForm>

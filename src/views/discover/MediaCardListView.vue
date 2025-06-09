@@ -3,6 +3,9 @@ import api from '@/api'
 import type { MediaInfo } from '@/api/types'
 import MediaCard from '@/components/cards/MediaCard.vue'
 import NoDataFound from '@/components/NoDataFound.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 输入参数
 const props = defineProps({
@@ -109,17 +112,17 @@ async function fetchData({ done }: { done: any }) {
 
 <template>
   <LoadingBanner v-if="!isRefreshed" class="mt-12" />
-  <VInfiniteScroll mode="intersect" side="end" :items="dataList" class="overflow-hidden" @load="fetchData">
+  <VInfiniteScroll mode="intersect" side="end" :items="dataList" class="overflow-visible pt-3 px-2" @load="fetchData">
     <template #loading />
     <template #empty />
-    <div v-if="dataList.length > 0" class="grid gap-4 grid-media-card mx-3" tabindex="0">
+    <div v-if="dataList.length > 0" class="grid gap-4 grid-media-card" tabindex="0">
       <MediaCard v-for="data in dataList" :key="data.tmdb_id || data.douban_id" :media="data" />
     </div>
     <NoDataFound
       v-if="dataList.length === 0 && isRefreshed"
       error-code="404"
-      error-title="没有数据"
-      error-description="无法获取到媒体信息。"
+      :error-title="t('common.noData')"
+      :error-description="t('error.networkError')"
     />
   </VInfiniteScroll>
 </template>

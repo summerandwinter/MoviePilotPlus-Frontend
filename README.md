@@ -2,15 +2,34 @@
 
 [MoviePilotPlus](https://github.com/summerandwinter/MoviePilotPlus) 的前端项目，NodeJS版本：>= `v20.12.1`。
 
-## 推荐的IDE设置
+## 特性
+
+- 基于 Vue 3 和 Vuetify 3 构建的现代化界面
+- 使用 Vite 作为构建工具，提供快速的开发体验
+- 支持多语言（中文/英文）
+- 完整的插件系统支持，包括远程组件动态加载
+
+## 模块联邦功能
+
+MoviePilot 现已支持模块联邦（Module Federation）功能，允许插件开发者创建可动态加载的远程组件，实现更丰富的插件用户界面。
+
+### 相关文档
+
+- [模块联邦开发指南](docs/module-federation-guide.md) - 如何开发远程组件插件
+- [模块联邦问题排查指南](docs/federation-troubleshooting.md) - 常见问题和解决方案
+- [插件远程组件示例](examples/plugin-component/) - 开发插件组件的完整示例项目 
+
+## 开发部署
+
+### 推荐的IDE设置
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) (并禁用 Vetur).
 
-## 配置Vite
+### 配置Vite
 
 请参阅 [Vite 配置参考](https://vitejs.dev/config/).
 
-## 依赖安装
+### 依赖安装
 
 ```sh
 yarn

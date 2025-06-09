@@ -4,8 +4,11 @@ import { numberValidator } from '@/@validators'
 import api from '@/api'
 import type { DownloaderConf, FilterRuleGroup, Site, Subscribe, TransferDirectoryConf } from '@/api/types'
 import { useDisplay } from 'vuetify'
-import { useConfirm } from 'vuetify-use-dialog'
-import { VTextarea, VTextField } from 'vuetify/lib/components/index.mjs'
+import { useConfirm } from '@/composables/useConfirm'
+import { useI18n } from 'vue-i18n'
+import { qualityOptions, resolutionOptions, effectOptions } from '@/api/constants'
+// i18n
+const { t } = useI18n()
 
 // 显示器宽度
 const display = useDisplay()
@@ -53,6 +56,7 @@ const subscribeForm = ref<Subscribe>({
   downloader: '',
   date: '',
   show_edit_dialog: false,
+  episode_group: '',
 })
 
 // 提示框
@@ -61,11 +65,52 @@ const $toast = useToast()
 // 下载器选项
 const downloaderOptions = ref<{ title: string; value: string }[]>([])
 
+// 所有剧集组
+const episodeGroups = ref<{ [key: string]: any }[]>([])
+
+// 剧集组选项
+const episodeGroupOptions = computed(() => {
+  return (episodeGroups.value as { id: number; name: string; group_count: number; episode_count: number }[]).map(
+    item => {
+      return {
+        title: item.name,
+        subtitle: `${item.group_count} 季 • ${item.episode_count} 集`,
+        value: item.id,
+      }
+    },
+  )
+})
+
+// 生成1到100季的下拉框选项
+const seasonItems = ref(
+  Array.from({ length: 101 }, (_, i) => i).map(item => ({
+    title: t('dialog.subscribeEdit.seasonFormat', { number: item }),
+    value: item,
+  })),
+)
+
+// 剧集组选项属性
+function episodeGroupItemProps(item: { title: string; subtitle: string }) {
+  return {
+    title: item.title,
+    subtitle: item.subtitle,
+  }
+}
+
+// 查询所有剧集组
+async function getEpisodeGroups() {
+  try {
+    episodeGroups.value = await api.get(`media/groups/${subscribeForm.value.tmdbid}`)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 async function loadDownloaderSetting() {
   try {
     const downloaders: DownloaderConf[] = await api.get('download/clients')
     downloaderOptions.value = [
-      { title: '默认', value: '' },
+      { title: t('common.default'), value: '' },
       ...downloaders.map((item: { name: any }) => ({
         title: item.name,
         value: item.name,
@@ -178,6 +223,8 @@ async function getSubscribeInfo() {
     subscribeForm.value = result
     subscribeForm.value.best_version = subscribeForm.value.best_version === 1
     subscribeForm.value.search_imdbid = subscribeForm.value.search_imdbid === 1
+    // 加载剧集组
+    if (subscribeForm.value.type == '电视剧') getEpisodeGroups()
   } catch (e) {
     console.log(e)
   }
@@ -186,8 +233,8 @@ async function getSubscribeInfo() {
 // 删除订阅
 async function removeSubscribe() {
   const isConfirmed = await createConfirm({
-    title: '确认',
-    content: `是否确认取消订阅？`,
+    title: t('common.confirm'),
+    content: t('dialog.subscribeEdit.cancelSubscribeConfirm'),
   })
 
   if (!isConfirmed) return
@@ -222,90 +269,6 @@ const targetDirectories = computed(() => {
   return downloadDirectories.value.map(item => item.download_path)
 })
 
-// 质量选择框数据
-const qualityOptions = ref([
-  {
-    title: '全部',
-    value: '',
-  },
-  {
-    title: '蓝光原盘',
-    value: 'Blu-?Ray.+VC-?1|Blu-?Ray.+AVC|UHD.+blu-?ray.+HEVC|MiniBD',
-  },
-  {
-    title: 'Remux',
-    value: 'Remux',
-  },
-  {
-    title: 'BluRay',
-    value: 'Blu-?Ray',
-  },
-  {
-    title: 'UHD',
-    value: 'UHD|UltraHD',
-  },
-  {
-    title: 'WEB-DL',
-    value: 'WEB-?DL|WEB-?RIP',
-  },
-  {
-    title: 'HDTV',
-    value: 'HDTV',
-  },
-  {
-    title: 'H265',
-    value: '[Hx].?265|HEVC',
-  },
-  {
-    title: 'H264',
-    value: '[Hx].?264|AVC',
-  },
-])
-
-// 分辨率选择框数据
-const resolutionOptions = ref([
-  {
-    title: '全部',
-    value: '',
-  },
-  {
-    title: '4k',
-    value: '4K|2160p|x2160',
-  },
-  {
-    title: '1080p',
-    value: '1080[pi]|x1080',
-  },
-  {
-    title: '720p',
-    value: '720[pi]|x720',
-  },
-])
-
-// 特效选择框数据
-const effectOptions = ref([
-  {
-    title: '全部',
-    value: '',
-  },
-  {
-    title: '杜比视界',
-    value: 'Dolby[\\s.]+Vision|DOVI|[\\s.]+DV[\\s.]+',
-  },
-  {
-    title: '杜比全景声',
-    value: 'Dolby[\\s.]*\\+?Atmos|Atmos',
-  },
-  {
-    title: 'HDR',
-    value: '[\\s.]+HDR[\\s.]+|HDR10|HDR10\\+',
-  },
-  {
-    title: 'SDR',
-    value: '[\\s.]+SDR[\\s.]+',
-  },
-])
-
 onMounted(() => {
   queryFilterRuleGroups()
   loadDownloadDirectories()
@@ -317,24 +280,34 @@ onMounted(() => {
 </script>
 
 <template>
-  <VDialog scrollable max-width="50rem" :fullscreen="!display.mdAndUp.value">
-    <VCard
-      :title="`${
-        props.default
-          ? `${props.type}默认订阅规则`
-          : `编辑订阅 - ${subscribeForm.name} ${subscribeForm.season ? `第 ${subscribeForm.season} 季` : ''}`
-      }`"
-      class="rounded-t"
-    >
+  <VDialog scrollable max-width="45rem" :fullscreen="!display.mdAndUp.value">
+    <VCard>
+      <VCardItem class="py-2">
+        <template #prepend>
+          <VIcon icon="mdi-clipboard-list-outline" class="me-2" />
+        </template>
+        <VCardTitle>
+          {{ props.default ? t('dialog.subscribeEdit.titleDefault') : t('dialog.subscribeEdit.titleEdit') }}
+        </VCardTitle>
+        <VCardSubtitle v-if="!props.default">
+          {{ subscribeForm.name }}
+          <span v-if="subscribeForm.season">
+            {{ t('dialog.subscribeEdit.seasonFormat', { number: subscribeForm.season }) }}
+          </span>
+        </VCardSubtitle>
+        <VCardSubtitle v-else>
+          {{ props.type }}
+        </VCardSubtitle>
+      </VCardItem>
       <VCardText>
-        <DialogCloseBtn @click="emit('close')" />
+        <VDialogCloseBtn @click="emit('close')" />
         <VForm @submit.prevent="() => {}">
           <VTabs v-model="activeTab" show-arrows>
             <VTab value="basic">
-              <div>基础</div>
+              <div>{{ t('dialog.subscribeEdit.tabs.basic') }}</div>
             </VTab>
             <VTab value="advance">
-              <div>进阶</div>
+              <div>{{ t('dialog.subscribeEdit.tabs.advance') }}</div>
             </VTab>
           </VTabs>
           <VWindow v-model="activeTab" class="mt-5 disable-tab-transition" :touch="false">
@@ -344,90 +317,99 @@ onMounted(() => {
                   <VCol cols="12" md="4">
                     <VTextField
                       v-model="subscribeForm.keyword"
-                      label="搜索关键词"
-                      hint="指定搜索站点时使用的关键词"
+                      :label="t('dialog.subscribeEdit.searchKeyword')"
+                      :hint="t('dialog.subscribeEdit.searchKeywordHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-magnify"
                     />
                   </VCol>
                   <VCol v-if="subscribeForm.type === '电视剧'" cols="12" md="4">
                     <VTextField
                       v-model="subscribeForm.total_episode"
-                      label="总集数"
+                      :label="t('dialog.subscribeEdit.totalEpisode')"
                       :rules="[numberValidator]"
-                      hint="剧集总集数"
+                      :hint="t('dialog.subscribeEdit.totalEpisodeHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-playlist-play"
                     />
                   </VCol>
                   <VCol v-if="subscribeForm.type === '电视剧'" cols="12" md="4">
                     <VTextField
                       v-model="subscribeForm.start_episode"
-                      label="开始集数"
+                      :label="t('dialog.subscribeEdit.startEpisode')"
                       :rules="[numberValidator]"
-                      hint="开始订阅集数"
+                      :hint="t('dialog.subscribeEdit.startEpisodeHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-play-circle-outline"
                     />
                   </VCol>
                 </VRow>
                 <VRow>
                   <VCol cols="12" md="4">
-                    <VSelect
+                    <VAutocomplete
                       v-model="subscribeForm.quality"
-                      label="质量"
+                      :label="t('dialog.subscribeEdit.quality')"
                       :items="qualityOptions"
-                      hint="订阅资源质量"
+                      :hint="t('dialog.subscribeEdit.qualityHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-quality-high"
                     />
                   </VCol>
                   <VCol cols="12" md="4">
-                    <VSelect
+                    <VAutocomplete
                       v-model="subscribeForm.resolution"
-                      label="分辨率"
+                      :label="t('dialog.subscribeEdit.resolution')"
                       :items="resolutionOptions"
-                      hint="订阅资源分辨率"
+                      :hint="t('dialog.subscribeEdit.resolutionHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-monitor"
                     />
                   </VCol>
                   <VCol cols="12" md="4">
-                    <VSelect
+                    <VAutocomplete
                       v-model="subscribeForm.effect"
-                      label="特效"
+                      :label="t('dialog.subscribeEdit.effect')"
                       :items="effectOptions"
-                      hint="订阅资源特效"
+                      :hint="t('dialog.subscribeEdit.effectHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-auto-fix"
                     />
                   </VCol>
                 </VRow>
                 <VRow>
                   <VCol cols="12">
-                    <VSelect
+                    <VAutocomplete
                       v-model="subscribeForm.sites"
                       :items="selectSitesOptions"
                       chips
-                      label="订阅站点"
+                      :label="t('dialog.subscribeEdit.subscribeSites')"
                       multiple
                       clearable
-                      hint="订阅的站点范围，不选使用系统设置"
+                      :hint="t('dialog.subscribeEdit.subscribeSitesHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-web"
                     />
                   </VCol>
                 </VRow>
                 <VRow>
                   <VCol cols="12" md="6">
-                    <VSelect
+                    <VAutocomplete
                       v-model="subscribeForm.downloader"
                       :items="downloaderOptions"
-                      label="下载器"
-                      hint="指定该订阅使用的下载器"
+                      :label="t('dialog.subscribeEdit.downloader')"
+                      :hint="t('dialog.subscribeEdit.downloaderHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-download"
                     />
                   </VCol>
                   <VCol cols="12" md="6">
                     <VCombobox
                       v-model="subscribeForm.save_path"
                       :items="targetDirectories"
-                      label="保存路径"
-                      hint="指定该订阅的下载保存路径，留空自动使用设定的下载目录"
+                      :label="t('dialog.subscribeEdit.savePath')"
+                      :hint="t('dialog.subscribeEdit.savePathHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-folder"
                     />
                   </VCol>
                 </VRow>
@@ -435,24 +417,24 @@ onMounted(() => {
                   <VCol cols="12" md="4">
                     <VSwitch
                       v-model="subscribeForm.best_version"
-                      label="洗版"
-                      hint="根据洗版优先级进行洗版订阅"
+                      :label="t('dialog.subscribeEdit.bestVersion')"
+                      :hint="t('dialog.subscribeEdit.bestVersionHint')"
                       persistent-hint
                     />
                   </VCol>
                   <VCol cols="12" md="4">
                     <VSwitch
                       v-model="subscribeForm.search_imdbid"
-                      label="使用 ImdbID 搜索"
-                      hint="开使用 ImdbID 精确搜索资源"
+                      :label="t('dialog.subscribeEdit.searchImdbid')"
+                      :hint="t('dialog.subscribeEdit.searchImdbidHint')"
                       persistent-hint
                     />
                   </VCol>
                   <VCol v-if="props.default" cols="12" md="4">
                     <VSwitch
                       v-model="subscribeForm.show_edit_dialog"
-                      label="订阅时编辑更多规则"
-                      hint="添加订阅时显示此编辑订阅对话框"
+                      :label="t('dialog.subscribeEdit.showEditDialog')"
+                      :hint="t('dialog.subscribeEdit.showEditDialogHint')"
                       persistent-hint
                     />
                   </VCol>
@@ -465,39 +447,64 @@ onMounted(() => {
                   <VCol cols="12" md="6">
                     <VTextField
                       v-model="subscribeForm.include"
-                      label="包含（关键字、正则式）"
-                      hint="包含规则，支持正则表达式"
+                      :label="t('dialog.subscribeEdit.include')"
+                      :hint="t('dialog.subscribeEdit.includeHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-plus-circle-outline"
                     />
                   </VCol>
                   <VCol cols="12" md="6">
                     <VTextField
                       v-model="subscribeForm.exclude"
-                      label="排除（关键字、正则式）"
-                      hint="排除规则，支持正则表达式"
+                      :label="t('dialog.subscribeEdit.exclude')"
+                      :hint="t('dialog.subscribeEdit.excludeHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-minus-circle-outline"
                     />
                   </VCol>
                 </VRow>
                 <VRow>
-                  <VCol cols="12" md="6">
-                    <VSelect
+                  <VCol cols="12">
+                    <VAutocomplete
                       v-model="subscribeForm.filter_groups"
                       :items="filterRuleGroupOptions"
                       chips
                       multiple
                       clearable
-                      label="优先级规则组"
-                      hint="按选定的过滤规则组对订阅进行过滤"
+                      :label="t('dialog.subscribeEdit.filterGroups')"
+                      :hint="t('dialog.subscribeEdit.filterGroupsHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-filter"
                     />
                   </VCol>
-                  <VCol cols="12" md="6" v-if="!props.default">
+                  <VCol v-if="!props.default && subscribeForm.type === '电视剧'" cols="12" md="6">
+                    <VAutocomplete
+                      v-model="subscribeForm.episode_group"
+                      :items="episodeGroupOptions"
+                      :item-props="episodeGroupItemProps"
+                      :label="t('dialog.subscribeEdit.episodeGroup')"
+                      :hint="t('dialog.subscribeEdit.episodeGroupHint')"
+                      persistent-hint
+                      prepend-inner-icon="mdi-view-list"
+                    />
+                  </VCol>
+                  <VCol v-if="!props.default && subscribeForm.type === '电视剧'" cols="12" md="6">
+                    <VAutocomplete
+                      v-model="subscribeForm.season"
+                      :items="seasonItems"
+                      :label="t('dialog.subscribeEdit.season')"
+                      :hint="t('dialog.subscribeEdit.seasonHint')"
+                      persistent-hint
+                      prepend-inner-icon="mdi-calendar"
+                    />
+                  </VCol>
+                  <VCol cols="12" v-if="!props.default">
                     <VTextField
                       v-model="subscribeForm.media_category"
-                      label="自定义类别"
-                      hint="指定类别名称，留空自动识别"
+                      :label="t('dialog.subscribeEdit.mediaCategory')"
+                      :hint="t('dialog.subscribeEdit.mediaCategoryHint')"
                       persistent-hint
+                      prepend-inner-icon="mdi-tag"
                     />
                   </VCol>
                 </VRow>
@@ -505,14 +512,11 @@ onMounted(() => {
                   <VCol cols="12">
                     <VTextarea
                       v-model="subscribeForm.custom_words"
-                      label="自定义识别词"
-                      hint="只对该订阅使用的识别词"
+                      :label="t('dialog.subscribeEdit.customWords')"
+                      :hint="t('dialog.subscribeEdit.customWordsHint')"
                       persistent-hint
-                      placeholder="屏蔽词
-被替换词 => 替换词
-前定位词 <> 后定位词 >> 集偏移量（EP）
-被替换词 => 替换词 && 前定位词 <> 后定位词 >> 集偏移量（EP）
-其中替换词支持格式：{[tmdbid/doubanid=xxx;type=movie/tv;s=xxx;e=xxx]} 直接指定TMDBID/豆瓣ID识别，其中s、e为季数和集数（可选）"
+                      :placeholder="t('dialog.subscribeEdit.customWordsPlaceholder')"
+                      prepend-inner-icon="mdi-text"
                     />
                   </VCol>
                 </VRow>
@@ -522,17 +526,16 @@ onMounted(() => {
         </VForm>
       </VCardText>
       <VCardActions class="pt-3">
-        <VBtn v-if="!props.default" color="error" @click="removeSubscribe" variant="outlined" class="me-3">
-          取消订阅
+        <VBtn v-if="!props.default" color="error" @click="removeSubscribe" class="me-3">
+          {{ t('dialog.subscribeEdit.cancelSubscribe') }}
         </VBtn>
         <VSpacer />
         <VBtn
-          variant="elevated"
           @click=";`${props.default ? saveDefaultSubscribeConfig() : updateSubscribeInfo()}`"
           prepend-icon="mdi-content-save"
           class="px-5"
         >
-          保存
+          {{ t('dialog.subscribeEdit.save') }}
         </VBtn>
       </VCardActions>
     </VCard>

@@ -2,14 +2,25 @@
 import api from '@/api'
 import { DownloaderConf } from '@/api/types'
 import DownloadingListView from '@/views/reorganize/DownloadingListView.vue'
-import router from '@/router'
 import NoDataFound from '@/components/NoDataFound.vue'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 const route = useRoute()
 const activeTab = ref(route.query.tab)
 
 // 下载器
 const downloaders = ref<DownloaderConf[]>([])
+
+// 下载器字典
+const downloaderItems = computed(() => {
+  return downloaders.value.map(item => ({
+    title: item.name,
+    tab: item.name,
+  }))
+})
 
 // 调用API查询下载器设置
 async function loadDownloaderSetting() {
@@ -20,10 +31,6 @@ async function loadDownloaderSetting() {
   } catch (error) {
     console.log(error)
   }
-}
-
-function jumpTab(tab: string) {
-  router.push('/subscribe/movie?tab=' + tab)
 }
 
 onMounted(async () => {
@@ -37,12 +44,7 @@ onActivated(async () => {
 
 <template>
   <div v-if="downloaders.length > 0">
-    <VTabs v-model="activeTab">
-      <VTab v-for="item in downloaders" :value="item.name" @to="jumpTab(item.name)">
-        <span class="min-w-24">{{ item.name }}</span>
-      </VTab>
-    </VTabs>
-
+    <VHeaderTab :items="downloaderItems" v-model="activeTab" />
     <VWindow v-model="activeTab" class="mt-5 disable-tab-transition" :touch="false">
       <VWindowItem v-for="item in downloaders" :value="item.name">
         <transition name="fade-slide" appear>
@@ -56,7 +58,7 @@ onActivated(async () => {
   <NoDataFound
     v-else
     error-code="404"
-    error-title="没有下载器"
-    error-description="请先在设置中正确配置并启用下载器。"
+    :error-title="t('downloading.noDownloader')"
+    :error-description="t('downloading.configureDownloader')"
   />
 </template>

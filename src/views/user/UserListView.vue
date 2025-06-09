@@ -1,10 +1,15 @@
 <script lang="ts" setup>
 import api from '@/api'
 import type { User } from '@/api/types'
-import { useDisplay } from 'vuetify'
 import NoDataFound from '@/components/NoDataFound.vue'
 import UserCard from '@/components/cards/UserCard.vue'
 import UserAddEditDialog from '@/components/dialog/UserAddEditDialog.vue'
+import { useDisplay } from 'vuetify'
+import { useDynamicButton } from '@/composables/useDynamicButton'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // APP
 const display = useDisplay()
@@ -41,6 +46,11 @@ const onUserAdd = () => {
   loadAllUsers()
 }
 
+// 打开添加用户对话框
+const openAddUserDialog = () => {
+  addUserDialog.value = true
+}
+
 // 加载当前用户数据
 onMounted(() => {
   loadAllUsers()
@@ -51,42 +61,61 @@ onActivated(() => {
     loadAllUsers()
   }
 })
+
+// 使用动态按钮钩子
+useDynamicButton({
+  icon: 'mdi-account-plus',
+  onClick: () => {
+    openAddUserDialog()
+  },
+})
 </script>
 
 <template>
-  <LoadingBanner v-if="!isRefreshed" class="mt-12" />
+  <!-- 页面标题 -->
+  <VPageContentTitle :title="t('user.management')" />
+  <div class="card-list-container">
+    <!-- 加载中提示 -->
+    <LoadingBanner v-if="!isRefreshed" class="mt-12" />
+    <!-- 用户卡片网格 -->
+    <div v-if="allUsers.length > 0 && isRefreshed" class="grid gap-4 grid-user-card px-2">
+      <!-- 普通用户卡片 -->
+      <UserCard
+        v-for="user in allUsers"
+        :key="user.id"
+        :user="user"
+        :users="allUsers"
+        @remove="loadAllUsers"
+        @save="loadAllUsers"
+      />
+    </div>
 
-  <div v-if="allUsers.length > 0" class="grid gap-3 grid-user-card">
-    <UserCard v-for="user in allUsers" :user="user" :users="allUsers" @remove="loadAllUsers" @save="loadAllUsers" />
+    <!-- 无数据提示 -->
+    <div v-if="allUsers.length === 0 && isRefreshed">
+      <NoDataFound error-code="404" :error-title="t('user.noUsers')" :error-description="t('user.clickToAddUser')" />
+    </div>
+
+    <!-- 新增用户按钮 -->
+    <VFab
+      v-if="isRefreshed && !appMode"
+      icon="mdi-account-plus"
+      location="bottom"
+      size="x-large"
+      fixed
+      app
+      appear
+      @click="openAddUserDialog"
+      :class="{ 'mb-12': appMode }"
+    />
+
+    <!-- 用户添加弹窗 -->
+    <UserAddEditDialog
+      v-if="addUserDialog"
+      v-model="addUserDialog"
+      oper="add"
+      max-width="45rem"
+      @save="onUserAdd"
+      @close="addUserDialog = false"
+    />
   </div>
-
-  <NoDataFound
-    v-if="allUsers.length === 0 && isRefreshed"
-    error-code="404"
-    error-title="没有用户"
-    error-description="点击右下角按钮添加用户"
-  />
-
-  <VFab
-    v-if="isRefreshed"
-    icon="mdi-plus"
-    location="bottom"
-    size="x-large"
-    fixed
-    app
-    appear
-    @click="addUserDialog = true"
-    :class="{ 'mb-12': appMode }"
-  />
-
-  <!-- 弹窗 -->
-  <UserAddEditDialog
-    v-if="addUserDialog"
-    v-model="addUserDialog"
-    oper="add"
-    max-width="50rem"
-    persistent
-    @save="onUserAdd"
-    @close="addUserDialog = false"
-  />
 </template>

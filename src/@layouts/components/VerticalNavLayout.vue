@@ -51,14 +51,23 @@ export default defineComponent({
       const main = h(
         'main',
         { class: 'layout-page-content' },
-        h(Transition, { name: 'fade-slide', mode: 'out-in', appear: true },
-          () => h('section', { class: 'page-content-container' }, slots.default?.()),
+        h(Transition, { name: 'fade-slide', mode: 'out-in', appear: true }, () =>
+          h('section', { class: 'page-content-container' }, slots.default?.()),
         ),
       )
 
+      // 👉 根据路由 meta 决定 footer 高度
+      const shouldShowFooter = !route.meta.hideFooter
+
       // 👉 Footer
       const footer = h('footer', { class: 'layout-footer' }, [
-        h('div', { class: 'footer-content-container' }, slots.footer?.()),
+        h(
+          'div',
+          {
+            class: ['footer-content-container', !shouldShowFooter && 'footer-content-container-noheight'],
+          },
+          slots.footer?.(),
+        ),
       ])
 
       // 👉 Overlay
@@ -80,11 +89,7 @@ export default defineComponent({
             scrollDistance.value && 'window-scrolled',
           ],
         },
-        [
-          verticalNav,
-          h('div', { class: 'layout-content-wrapper' }, [navbar, main, footer]),
-          layoutOverlay,
-        ],
+        [verticalNav, h('div', { class: 'layout-content-wrapper' }, [navbar, main, footer]), layoutOverlay],
       )
     }
   },
@@ -92,9 +97,15 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-@use "@configured-variables" as variables;
-@use "@layouts/styles/placeholders";
-@use "@layouts/styles/mixins";
+@use '@configured-variables' as variables;
+@use '@layouts/styles/placeholders';
+@use '@layouts/styles/mixins';
+
+.layout-page-content {
+  position: relative;
+  z-index: 1;
+  margin-block-start: 0;
+}
 
 .layout-wrapper.layout-nav-type-vertical {
   // TODO(v2): Check why we need height in vertical nav & min-height in horizontal nav
@@ -111,14 +122,12 @@ export default defineComponent({
 
   .layout-navbar {
     position: fixed;
-    width: calc(100vw - variables.$layout-vertical-nav-width - 0.5rem);
     z-index: variables.$layout-vertical-nav-layout-navbar-z-index;
+    inline-size: calc(100vw - variables.$layout-vertical-nav-width - 0.5rem);
     inset-block-start: 0;
 
     .navbar-content-container {
-      block-size: calc(
-        env(safe-area-inset-top) + variables.$layout-vertical-nav-navbar-height
-      );
+      block-size: calc(env(safe-area-inset-top) + variables.$layout-vertical-nav-navbar-height);
     }
 
     @at-root {
@@ -128,7 +137,7 @@ export default defineComponent({
             @include mixins.boxed-content;
           } @else {
             .navbar-content-container {
-              @include mixins.boxed-content;
+              // @include mixins.boxed-content;
             }
           }
         }
@@ -168,7 +177,7 @@ export default defineComponent({
   }
 
   &:not(.layout-overlay-nav) .layout-content-wrapper {
-    padding-inline-start: variables.$layout-vertical-nav-width;
+    padding-inline-start: calc(variables.$layout-vertical-nav-width);
   }
 
   // Adjust right column pl when vertical nav is collapsed
@@ -200,7 +209,8 @@ export default defineComponent({
 
 .layout-wrapper.layout-nav-type-vertical.layout-overlay-nav {
   .layout-navbar {
-    width: 100%;
+    inline-size: 100%;
+    padding-inline: 0;
   }
 }
 </style>

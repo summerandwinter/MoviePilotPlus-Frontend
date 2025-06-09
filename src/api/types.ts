@@ -79,7 +79,9 @@ export interface Subscribe {
   // 过滤规则组
   filter_groups?: string[]
   // 下载器
-  downloader: string
+  downloader?: string
+  // 自定义剧集组
+  episode_group?: string
 }
 
 // 订阅分享
@@ -140,6 +142,8 @@ export interface SubscribeShare {
   media_category?: string
   // 复用次数
   count?: number
+  // 自定义剧集组
+  episode_group?: string
 }
 
 // 历史记录
@@ -186,6 +190,8 @@ export interface TransferHistory {
   errmsg?: string
   // 日期
   date?: string
+  // 源文件项
+  src_fileitem?: FileItem
 }
 
 // 媒体信息
@@ -288,6 +294,8 @@ export interface MediaInfo {
   next_episode_to_air?: object
   // 别名
   names?: string[]
+  // 剧集组
+  episode_group?: string
 }
 
 // 季信息
@@ -561,9 +569,9 @@ export interface NotExistMediaInfo {
 
 // 插件
 export interface Plugin {
-  id?: string
+  id: string
   // 插件名称
-  plugin_name?: string
+  plugin_name: string
   // 插件描述
   plugin_desc?: string
   // 插件图标
@@ -627,6 +635,8 @@ export interface DashboardItem {
   cols: { [key: string]: number }
   // 页面元素
   elements: RenderProps[]
+  // 渲染方式
+  render_mode?: string
 }
 
 // 种子信息
@@ -799,6 +809,8 @@ export interface User {
   permissions: { [key: string]: any }
   // 用户个性化设置 json
   settings: { [key: string]: string | null }
+  // 昵称
+  nickname?: string
 }
 
 // 存储空间
@@ -1216,6 +1228,8 @@ export interface TransferForm {
   library_type_folder?: boolean
   // 媒体库类别子目录
   library_category_folder?: boolean
+  // 剧集组编号
+  episode_group?: string
 }
 
 // 整理队列
@@ -1257,6 +1271,8 @@ export interface RecommendSource {
   name: string
   // 媒体数据源API地址
   api_path: string
+  // 类型
+  type: string
 }
 
 // 站点资源分类
@@ -1710,5 +1726,50 @@ export interface SiteSeed {
   torrent_uploaded: boolean
   torrent_downloaded: boolean
   torrent_seeded: boolean 
+}
   
+// 种子缓存项
+export interface TorrentCacheItem {
+  // 种子hash（用于操作标识）
+  hash: string
+  // 站点域名
+  domain: string
+  // 种子标题
+  title: string
+  // 种子描述
+  description?: string
+  // 种子大小
+  size: number
+  // 发布时间
+  pubdate?: string
+  // 站点名称
+  site_name?: string
+  // 识别的媒体名称
+  media_name?: string
+  // 识别的媒体年份
+  media_year?: string
+  // 识别的媒体类型
+  media_type?: string
+  // 季集信息
+  season_episode?: string
+  // 资源信息
+  resource_term?: string
+  // 种子链接
+  enclosure?: string
+  // 详情页面
+  page_url?: string
+  // 海报图片
+  poster_path?: string
+  // 背景图片
+  backdrop_path?: string
+}
+
+// 种子缓存数据
+export interface TorrentCacheData {
+  // 缓存数量
+  count: number
+  // 站点数量
+  sites: number
+  // 缓存数据
+  data: TorrentCacheItem[]
 }

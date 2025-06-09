@@ -103,7 +103,7 @@ onMounted(() => {
         @keydown.enter="searchMedias"
       />
     </VToolbar>
-    <DialogCloseBtn
+    <VDialogCloseBtn
       @click="
         () => {
           emit('close')
@@ -120,7 +120,7 @@ onMounted(() => {
               width="50"
               :src="item.poster"
               aspect-ratio="2/3"
-              class="object-cover rounded shadow ring-gray-500 me-3"
+              class="object-cover rounded ring-gray-500 me-3"
               cover
             >
               <template #placeholder>

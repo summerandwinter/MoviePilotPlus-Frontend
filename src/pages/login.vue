@@ -7,13 +7,13 @@ import { requiredValidator } from '@/@validators'
 import api from '@/api'
 import router from '@/router'
 import logo from '@images/logo.png'
-import { useTheme } from 'vuetify'
-import { checkPrefersColorSchemeIsDark } from '@/@core/utils'
 import { urlBase64ToUint8Array } from '@/@core/utils/navigator'
-import { saveLocalTheme } from '@/@core/utils/theme'
+import { SUPPORTED_LOCALES, SupportedLocale } from '@/types/i18n'
+import { getCurrentLocale, setI18nLanguage } from '@/plugins/i18n'
+import { useTheme } from 'vuetify'
 
-// 主题
-const { global: globalTheme } = useTheme()
+// 国际化
+const { t } = useI18n()
 // 认证 Store
 const authStore = useAuthStore()
 //用户 Store
@@ -35,26 +35,37 @@ const isPasswordVisible = ref(false)
 // 错误信息
 const errorMessage = ref('')
 
-// 背景图片 URL 和预加载 URL
-const backgroundImages = ref<string[]>([])
-const activeImageIndex = ref(0)
-
 // 是否开启双重验证
 const isOTP = ref(false)
 
 // 用户名称输入框
 const usernameInput = ref()
 
-// Interval定时器
-let intervalTimer: NodeJS.Timeout | null = null
+// 语言选择菜单
+const langMenu = ref(false)
 
-// 获取背景图片
-async function fetchBackgroundImage() {
-  try {
-    backgroundImages.value = await api.get('/login/wallpapers')
-  } catch (e) {
-    console.log(e)
-  }
+// 当前语言
+const currentLocale = ref(getCurrentLocale())
+
+// 当前主题
+const vuetifyTheme = useTheme()
+
+// 判断是否为透明主题
+const isTransparentTheme = computed(() => {
+  return vuetifyTheme.name.value === 'transparent'
+})
+
+// 可用的语言列表
+const locales = Object.values(SUPPORTED_LOCALES)
+
+// 登录按钮 loading
+const loading = ref(false)
+
+// 切换语言
+async function switchLanguage(locale: SupportedLocale) {
+  await setI18nLanguage(locale)
+  currentLocale.value = locale
+  langMenu.value = false
 }
 
 // 查询是否开启双重验证
@@ -73,24 +84,6 @@ const fetchOTP = debounce(async () => {
       console.log(error)
     })
 }, 500)
-
-// 获取用户主题配置
-async function fetchThemeConfig() {
-  const response = await api.get('/user/config/Layout')
-  if (response && response.data && response.data.value) {
-    return response.data.value?.theme
-  }
-  return null
-}
-
-// 生效主题
-async function setTheme() {
-  let themeValue = (await fetchThemeConfig()) || localStorage.getItem('theme') || 'light'
-  const autoTheme = checkPrefersColorSchemeIsDark() ? 'dark' : 'light'
-  globalTheme.name.value = themeValue === 'auto' ? autoTheme : themeValue
-  // 存储主题到本地
-  saveLocalTheme(themeValue, globalTheme)
-}
 
 // 订阅推送通知
 async function subscribeForPushNotifications() {
@@ -119,12 +112,12 @@ async function subscribeForPushNotifications() {
 
 // 登录后处理
 async function afterLogin(superuser: boolean) {
-  // 生效主题配置
-  await setTheme()
   // 跳转到首页或回原始页面
   router.push(authStore.originalPath ?? '/')
   // 订阅推送通知
   if (superuser) await subscribeForPushNotifications()
+  // 登录按钮 loading
+  loading.value = false
 }
 
 // 登录获取token事件
@@ -135,6 +128,10 @@ function login() {
   if (!form.value.username || !form.value.password || (isOTP.value && !form.value.otp_password)) {
     return
   }
+
+  // 登录按钮 loading
+  loading.value = true
+
   // 用户名密码
   const formData = new FormData()
 
@@ -172,19 +169,14 @@ function login() {
     })
     .catch((error: any) => {
       // 登录失败，显示错误提示
-      if (!error.response) errorMessage.value = '登录失败，请检查网络连接！'
-      else if (error.response.status === 401) errorMessage.value = '登录失败，请检查用户名、密码或双重验证是否正确！'
-      else if (error.response.status === 403) errorMessage.value = '登录失败，您没有权限访问！'
-      else if (error.response.status === 500) errorMessage.value = '登录失败，服务器错误！'
-      else errorMessage.value = `登录失败 ${error.response.status}，请检查用户名、密码或双重验证码是否正确！`
+      if (!error.response) errorMessage.value = t('login.networkError')
+      else if (error.response.status === 401) errorMessage.value = t('login.authFailure')
+      else if (error.response.status === 403) errorMessage.value = t('login.permissionDenied')
+      else if (error.response.status === 500) errorMessage.value = t('login.serverError')
+      else errorMessage.value = `${t('login.loginFailed')} ${error.response.status}，${t('login.checkCredentials')}`
+      // 登录按钮 loading
+      loading.value = false
     })
-}
-
-// 初始化背景图片轮循
-function startBackgroundRotation() {
-  intervalTimer = setInterval(() => {
-    activeImageIndex.value = (activeImageIndex.value + 1) % backgroundImages.value.length
-  }, 5000) // 每5秒切换一次图片
 }
 
 // 自动登录
@@ -196,39 +188,21 @@ onMounted(async () => {
   // 如果token存在，且保持登录状态为true，则跳转到首页
   if (token && remember) {
     router.push('/')
-  } else {
-    // 获取背景图片
-    await fetchBackgroundImage()
-    if (backgroundImages.value.length > 1) {
-      startBackgroundRotation()
-    }
   }
-})
-
-onUnmounted(() => {
-  if (intervalTimer) clearInterval(intervalTimer)
 })
 </script>
 
 <template>
-  <!-- 当前背景图片 -->
-  <div class="relative flex min-h-screen flex-col bg-gray-900 items-center justify-center">
-    <div>
-      <div
-        v-for="(imageUrl, index) in backgroundImages"
-        class="absolute-top-shift absolute inset-0 bg-cover bg-center transition-opacity duration-300 ease-in"
-        :class="{ 'opacity-100': index === activeImageIndex, 'opacity-0': index !== activeImageIndex }"
-      >
-        <VImg :src="imageUrl" class="absolute inset-0 transition-opacity duration-1000" cover position="center top" />
-        <div
-          class="absolute inset-0"
-          style="background-image: linear-gradient(rgba(45, 55, 72, 47%) 0%, rgb(26, 32, 46) 100%)"
-        />
-      </div>
-    </div>
+  <!-- 登录页面容器 -->
+  <div class="relative flex min-h-screen flex-col items-center justify-center">
     <!-- 登录表单 -->
     <div class="auth-wrapper d-flex align-center justify-center">
-      <VCard class="auth-card px-7 py-3 w-full h-full rounded-lg opacity-85" max-width="24rem">
+      <VCard
+        class="auth-card px-7 py-3 w-full h-full"
+        :class="{ 'glass-effect': !isTransparentTheme }"
+        max-width="24rem"
+        border
+      >
         <VCardItem class="justify-center">
           <template #prepend>
             <div class="d-flex pe-0">
@@ -236,6 +210,35 @@ onUnmounted(() => {
             </div>
           </template>
           <VCardTitle class="font-weight-bold text-2xl text-uppercase"> MoviePilot </VCardTitle>
+
+          <!-- 语言切换按钮 -->
+          <template #append>
+            <VMenu v-model="langMenu" :close-on-content-click="false">
+              <template #activator="{ props }">
+                <VBtn variant="text" size="small" v-bind="props" class="lang-switch-btn">
+                  <span v-if="SUPPORTED_LOCALES[currentLocale].flag">{{ SUPPORTED_LOCALES[currentLocale].flag }}</span>
+                  <VIcon v-else icon="mdi-translate" />
+                  <span class="ms-1">{{ SUPPORTED_LOCALES[currentLocale].title }}</span>
+                </VBtn>
+              </template>
+              <VCard min-width="180">
+                <VList>
+                  <VListItem
+                    v-for="locale in locales"
+                    :key="locale.name"
+                    :value="locale.name"
+                    @click="switchLanguage(locale.name as SupportedLocale)"
+                  >
+                    <template #prepend>
+                      <span v-if="locale.flag" class="mr-2">{{ locale.flag }}</span>
+                      <VIcon v-else icon="mdi-translate" size="small" />
+                    </template>
+                    <VListItemTitle>{{ locale.title }}</VListItemTitle>
+                  </VListItem>
+                </VList>
+              </VCard>
+            </VMenu>
+          </template>
         </VCardItem>
         <VCardText>
           <VForm ref="refForm" autocomplete="on" @submit.prevent="() => {}">
@@ -245,7 +248,7 @@ onUnmounted(() => {
                 <VTextField
                   ref="usernameInput"
                   v-model="form.username"
-                  label="用户名"
+                  :label="t('login.username')"
                   type="text"
                   name="username"
                   autocomplete="username"
@@ -257,7 +260,7 @@ onUnmounted(() => {
               <VCol cols="12">
                 <VTextField
                   v-model="form.password"
-                  label="密码"
+                  :label="t('login.password')"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   name="current-password"
                   autocomplete="current-password"
@@ -267,15 +270,17 @@ onUnmounted(() => {
                 />
               </VCol>
               <VCol cols="12">
-                <VTextField v-if="isOTP" v-model="form.otp_password" label="双重验证码" type="input" />
+                <VTextField v-if="isOTP" v-model="form.otp_password" :label="t('login.otpCode')" type="input" />
                 <!-- remember me checkbox -->
                 <div class="d-flex align-center justify-space-between flex-wrap">
-                  <VCheckbox v-model="form.remember" label="保持登录" required />
+                  <VCheckbox v-model="form.remember" :label="t('login.stayLoggedIn')" required />
                 </div>
               </VCol>
               <VCol cols="12">
                 <!-- login button -->
-                <VBtn block type="submit" @click="login"> 登录 </VBtn>
+                <VBtn block type="submit" @click="login" prepend-icon="mdi-login" :loading="loading">
+                  {{ t('login.login') }}
+                </VBtn>
                 <VAlert v-if="errorMessage" type="error" variant="tonal" class="mt-3">
                   {{ errorMessage }}
                 </VAlert>
@@ -289,18 +294,25 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-@use '@core/scss/pages/page-auth.scss';
+@use '@core/scss/pages/page-auth';
 
 .v-card-item__prepend {
   padding-inline-end: 0 !important;
 }
 
-.absolute-top-shift {
-  inset-block-start: calc(-4rem - env(safe-area-inset-top));
-}
-
 .auth-wrapper {
   overflow: hidden;
   block-size: auto;
+}
+
+.lang-switch-btn {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+}
+
+.glass-effect {
+  backdrop-filter: blur(10px) !important;
+  background: rgba(var(--v-theme-surface), 0.7) !important;
 }
 </style>

@@ -5,6 +5,10 @@ import { doneNProgress, startNProgress } from '@/api/nprogress'
 import type { DownloaderConf, MediaInfo, TorrentInfo, TransferDirectoryConf } from '@/api/types'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { VCardTitle, VChip } from 'vuetify/lib/components/index.mjs'
+import { useI18n } from 'vue-i18n'
+
+// 多语言支持
+const { t } = useI18n()
 
 // 输入参数
 const props = defineProps({
@@ -38,7 +42,9 @@ const loading = ref(false)
 const icon = computed(() => (loading.value ? 'mdi-progress-download' : 'mdi-download'))
 
 // 计算按钮文字
-const buttonText = computed(() => (loading.value ? '下载中...' : '开始下载'))
+const buttonText = computed(() =>
+  loading.value ? t('dialog.addDownload.downloading') : t('dialog.addDownload.startDownload'),
+)
 
 // 加载目录设置
 async function loadDirectories() {
@@ -96,12 +102,20 @@ async function addDownload() {
 
     if (result && result.success) {
       // 添加下载成功
-      $toast.success(`${props.torrent?.site_name} ${props.torrent?.title} 下载成功！`)
+      $toast.success(
+        t('dialog.addDownload.downloadSuccess', { site: props.torrent?.site_name, title: props.torrent?.title }),
+      )
       // 下载成功，返回链接
       emit('done', props.torrent?.enclosure)
     } else {
       // 添加下载失败
-      $toast.error(`${props.torrent?.site_name} ${props.torrent?.title} 下载失败：${result?.message}！`)
+      $toast.error(
+        t('dialog.addDownload.downloadFailed', {
+          site: props.torrent?.site_name,
+          title: props.torrent?.title,
+          message: result?.message,
+        }),
+      )
       // 下载失败，返回错误原因
       emit('error', result?.message)
     }
@@ -118,13 +132,16 @@ onMounted(() => {
 })
 </script>
 <template>
-  <VDialog max-width="45rem" scrollable>
+  <VDialog max-width="35rem" scrollable>
     <VCard>
-      <VCardItem>
-        <VCardTitle v-if="title">{{ torrent?.site_name }} - {{ title }}</VCardTitle>
-        <VCardTitle v-else>确认下载</VCardTitle>
-        <DialogCloseBtn @click="emit('close')" />
+      <VCardItem class="py-2">
+        <template #prepend>
+          <VIcon icon="mdi-monitor-arrow-down-variant" class="me-2" />
+        </template>
+        <VCardTitle>{{ t('dialog.addDownload.confirmDownload') }}</VCardTitle>
+        <VCardSubtitle>{{ torrent?.site_name }} - {{ title }}</VCardSubtitle>
       </VCardItem>
+      <VDialogCloseBtn @click="emit('close')" />
       <VDivider />
       <VCardText>
         <VList lines="one">
@@ -138,20 +155,20 @@ onMounted(() => {
               <span class="text-orange-700 ms-2 text-sm">↓{{ torrent?.peers }}</span>
             </VListItemTitle>
           </VListItem>
-          <VListItem>
+          <VListItem v-if="torrent?.description">
             <template #prepend>
               <VIcon icon="mdi-subtitles-outline"></VIcon>
             </template>
             <VListItemTitle>
-              <span class="text-body-1 whitespace-break-spaces">{{ torrent?.description }}</span>
+              <span class="text-body-2 whitespace-break-spaces">{{ torrent?.description }}</span>
             </VListItemTitle>
           </VListItem>
-          <VListItem>
+          <VListItem v-if="torrent?.size">
             <template #prepend>
               <VIcon icon="mdi-database"></VIcon>
             </template>
             <VListItemTitle>
-              <span class="text-body-1">
+              <span class="text-body-2">
                 <VChip variant="tonal" label>
                   {{ formatFileSize(torrent?.size || 0) }}
                 </VChip>
@@ -159,36 +176,35 @@ onMounted(() => {
             </VListItemTitle>
           </VListItem>
         </VList>
-        <VRow>
-          <VCol cols="12" md="4">
+        <VRow class="px-5">
+          <VCol cols="12" md="6">
             <VSelect
               v-model="selectedDownloader"
               :items="downloaderOptions"
-              label="指定下载器"
+              size="small"
+              :label="t('dialog.addDownload.downloader')"
               variant="underlined"
-              placeholder="留空默认"
+              :placeholder="t('dialog.addDownload.defaultPlaceholder')"
+              density="comfortable"
+              prepend-inner-icon="mdi-download"
             />
           </VCol>
-          <VCol cols="12" md="8">
+          <VCol cols="12" md="6">
             <VCombobox
               v-model="selectedDirectory"
               :items="targetDirectories"
-              label="指定保存目录"
-              placeholder="留空自动匹配"
+              :label="t('dialog.addDownload.saveDirectory')"
+              size="small"
+              :placeholder="t('dialog.addDownload.autoPlaceholder')"
               variant="underlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-folder"
             />
           </VCol>
         </VRow>
       </VCardText>
       <VCardText class="text-center">
-        <VBtn
-          variant="elevated"
-          :disabled="loading"
-          @click="addDownload"
-          :prepend-icon="icon"
-          class="px-5"
-          size="large"
-        >
+        <VBtn variant="elevated" :disabled="loading" @click="addDownload" :prepend-icon="icon" class="px-5">
           {{ buttonText }}
         </VBtn>
       </VCardText>

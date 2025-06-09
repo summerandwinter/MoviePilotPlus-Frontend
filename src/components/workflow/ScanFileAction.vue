@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import api from '@/api'
+import { StorageConf } from '@/api/types'
 import { Handle, Position } from '@vue-flow/core'
-import { storageOptions } from '@/api/constants'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({
   id: {
@@ -12,6 +16,27 @@ defineProps({
     required: true,
   },
 })
+
+// 所有存储
+const storages = ref<StorageConf[]>([])
+
+// 查询存储
+async function loadStorages() {
+  const result: { [key: string]: any } = await api.get('system/setting/Storages')
+  storages.value = result.data?.value ?? []
+}
+
+// 存储字典
+const storageOptions = computed(() => {
+  return storages.value.map(item => ({
+    title: item.name,
+    value: item.type,
+  }))
+})
+
+onMounted(() => {
+  loadStorages()
+})
 </script>
 <template>
   <div>
@@ -20,20 +45,31 @@ defineProps({
       <VCardItem>
         <template v-slot:prepend>
           <VAvatar>
-            <VIcon icon="mdi-file-move" size="x-large"></VIcon>
+            <VIcon icon="mdi-folder-search" size="x-large"></VIcon>
           </VAvatar>
         </template>
-        <VCardTitle>扫描目录</VCardTitle>
-        <VCardSubtitle>扫描目录文件到队列</VCardSubtitle>
+        <VCardTitle>{{ t('workflow.scanFile.title') }}</VCardTitle>
+        <VCardSubtitle>{{ t('workflow.scanFile.subtitle') }}</VCardSubtitle>
       </VCardItem>
       <VDivider />
       <VCardText>
         <VRow>
           <VCol cols="12">
-            <VSelect v-model="data.storage" label="存储" :items="storageOptions" outlined dense />
+            <VSelect
+              v-model="data.storage"
+              :label="t('workflow.scanFile.storage')"
+              :items="storageOptions"
+              outlined
+              dense
+            />
           </VCol>
           <VCol cols="12">
-            <VPathField v-model="data.directory" :storage="data.storage" label="目录" clearable />
+            <VPathField
+              v-model="data.directory"
+              :storage="data.storage"
+              :label="t('workflow.scanFile.directory')"
+              clearable
+            />
           </VCol>
         </VRow>
       </VCardText>

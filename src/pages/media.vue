@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import MediaDetailView from '@/views/discover/MediaDetailView.vue'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 路由参数
 const route = useRoute()
 
-// TMDBID
+// TMDB ID
 const mediaid = route.query?.mediaid?.toString()
 
-// 类型
+// 类型：电影、电视剧
 const type = route.query?.type?.toString()
 
 // 标题

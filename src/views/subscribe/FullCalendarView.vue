@@ -9,6 +9,11 @@ import type { MediaInfo, Subscribe, TmdbEpisode } from '@/api/types'
 import api from '@/api'
 import { formatEp, parseDate } from '@/@core/utils/formatters'
 import ProgressDialog from '@/components/dialog/ProgressDialog.vue'
+import { useI18n } from 'vue-i18n'
+import { getCurrentLocale } from '@/plugins/i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 进度框
 const progressDialog = ref(false)
@@ -19,10 +24,13 @@ const loading = ref(false)
 // 已加载过
 const isLoaded = ref(false)
 
+// 获取当前语言
+const currentLocale = getCurrentLocale().split('-')[0]
+
 // 日历属性
 const calendarOptions: Ref<CalendarOptions> = ref({
   height: 'auto',
-  locale: 'zh-cn',
+  locale: currentLocale,
   plugins: [
     dayGridPlugin,
     timeGridPlugin,
@@ -145,7 +153,7 @@ onActivated(() => {
                 width="50"
                 :src="arg.event.extendedProps.posterPath"
                 aspect-ratio="2/3"
-                class="object-cover rounded shadow ring-gray-500"
+                class="object-cover rounded ring-gray-500"
                 cover
               >
                 <template #placeholder>
@@ -160,14 +168,14 @@ onActivated(() => {
                 {{ arg.event.title }}
               </VCardSubtitle>
               <VCardText v-if="arg.event.extendedProps.subtitle" class="pa-0 px-2 break-words">
-                第{{ arg.event.extendedProps.subtitle }}集
+                {{ t('calendar.episode', { number: arg.event.extendedProps.subtitle }) }}
               </VCardText>
             </div>
           </div>
         </VCard>
       </div>
       <div class="md:hidden">
-        <VTooltip :text="`${arg.event.title} 第 ${arg.event.extendedProps.subtitle} 集`">
+        <VTooltip :text="`${arg.event.title} ${t('calendar.episode', { number: arg.event.extendedProps.subtitle })}`">
           <template #activator="{ props }">
             <VImg
               height="60"
@@ -175,7 +183,7 @@ onActivated(() => {
               :src="arg.event.extendedProps.posterPath"
               v-bind="props"
               aspect-ratio="2/3"
-              class="object-cover rounded shadow ring-gray-500"
+              class="object-cover rounded ring-gray-500"
               cover
             >
               <template #placeholder>
@@ -198,7 +206,7 @@ onActivated(() => {
       </div>
     </template>
   </FullCalendar>
-  <ProgressDialog v-if="progressDialog" v-model="progressDialog" text="正在加载 ..." />
+  <ProgressDialog v-if="progressDialog" v-model="progressDialog" :text="t('common.loading') + ' ...'" />
 </template>
 
 <style lang="scss">

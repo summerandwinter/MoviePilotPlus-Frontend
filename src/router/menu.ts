@@ -29,7 +29,7 @@ export const SystemNavMenus = [
     to: '/discover',
     header: '发现',
     admin: false,
-    footer: false,
+    footer: true,
   },
   {
     title: '电影',
@@ -56,7 +56,7 @@ export const SystemNavMenus = [
     icon: 'mdi-state-machine',
     to: '/workflow',
     header: '订阅',
-    admin: false,
+    admin: true,
     footer: false,
   },
   {
@@ -90,7 +90,7 @@ export const SystemNavMenus = [
   },
   {
     title: '插件',
-    icon: 'mdi-apps',
+    icon: 'mdi-puzzle-outline',
     to: '/plugins',
     header: '系统',
     admin: true,
@@ -104,14 +104,14 @@ export const SystemNavMenus = [
   },
   {
     title: '用户管理',
-    icon: 'mdi-account-group',
+    icon: 'mdi-account-group-outline',
     to: '/user',
     header: '系统',
     admin: true,
   },
   {
     title: '设定',
-    icon: 'mdi-cog',
+    icon: 'mdi-cog-outline',
     to: '/setting',
     header: '系统',
     admin: true,
@@ -209,7 +209,7 @@ export const SubscribeMovieTabs = [
   {
     title: '我的订阅',
     tab: 'mysub',
-    icon: 'mdi-heart',
+    icon: 'mdi-bell-check',
   },
   {
     title: '热门订阅',
@@ -223,7 +223,7 @@ export const SubscribeTvTabs = [
   {
     title: '我的订阅',
     tab: 'mysub',
-    icon: 'mdi-heart',
+    icon: 'mdi-bell-check',
   },
   {
     title: '热门订阅',
@@ -247,24 +247,24 @@ export const PluginTabs = [
   {
     title: '插件市场',
     tab: 'market',
-    icon: 'mdi-store',
+    icon: 'mdi-shopping',
   },
 ]
 
 // 发现标签页
 export const DiscoverTabs = [
   {
-    title: 'TheMovieDb',
+    name: 'TheMovieDb',
     tab: 'themoviedb',
     icon: 'themoviedb',
   },
   {
-    title: '豆瓣',
+    name: '豆瓣',
     tab: 'douban',
     icon: 'douban',
   },
   {
-    title: 'Bangumi',
+    name: 'Bangumi',
     tab: 'bangumi',
     icon: 'bangumi',
   },

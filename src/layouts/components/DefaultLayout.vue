@@ -3,18 +3,19 @@ import VerticalNavSectionTitle from '@/@layouts/components/VerticalNavSectionTit
 import VerticalNavLayout from '@layouts/components/VerticalNavLayout.vue'
 import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
 import Footer from '@/layouts/components/Footer.vue'
-import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserNofification from '@/layouts/components/UserNotification.vue'
 import SearchBar from '@/layouts/components/SearchBar.vue'
 import ShortcutBar from '@/layouts/components/ShortcutBar.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 import { useUserStore } from '@/stores'
-import { SystemNavMenus } from '@/router/menu'
+import { getNavMenus } from '@/router/i18n-menu'
 import { NavMenu } from '@/@layouts/types'
 import { useDisplay } from 'vuetify'
+import { useI18n } from 'vue-i18n'
 
 const display = useDisplay()
 const appMode = inject('pwaMode')
+const { t } = useI18n()
 
 // 用户 Store
 const userStore = useUserStore()
@@ -42,7 +43,9 @@ const collectMenus = ref<NavMenu[]>([])
 
 // 根据分类获取菜单列表
 const getMenuList = (header: string) => {
-  return SystemNavMenus.filter((item: NavMenu) => item.header === header && (superUser || !item.admin))
+  // 使用国际化菜单
+  const menus = getNavMenus()
+  return menus.filter((item: NavMenu) => item.header === header && (superUser || !item.admin))
 }
 
 // 返回上一页
@@ -52,12 +55,12 @@ function goBack() {
 
 onMounted(() => {
   // 获取菜单列表
-  startMenus.value = getMenuList('开始')
-  collectMenus.value = getMenuList('采集')
-  discoveryMenus.value = getMenuList('发现')
-  subscribeMenus.value = getMenuList('订阅')
-  organizeMenus.value = getMenuList('整理')
-  systemMenus.value = getMenuList('系统')
+  startMenus.value = getMenuList(t('menu.start'))
+  collectMenus.value = getMenuList(t('menu.collect'))
+  discoveryMenus.value = getMenuList(t('menu.discovery'))
+  subscribeMenus.value = getMenuList(t('menu.subscribe'))
+  organizeMenus.value = getMenuList(t('menu.organize'))
+  systemMenus.value = getMenuList(t('menu.system'))
 })
 </script>
 
@@ -80,8 +83,6 @@ onMounted(() => {
         <VSpacer />
         <!-- 👉 Shortcuts -->
         <ShortcutBar v-if="superUser" />
-        <!-- 👉 Theme -->
-        <NavbarThemeSwitcher />
         <!-- 👉 Notification -->
         <UserNofification />
         <!-- 👉 UserProfile -->
@@ -95,7 +96,7 @@ onMounted(() => {
       <VerticalNavSectionTitle
         v-if="collectMenus.length > 0"
         :item="{
-          heading: '采集',
+          heading: t('menu.collect'),
         }"
       />
       <VerticalNavLink v-for="item in collectMenus" :item="item" />
@@ -103,7 +104,7 @@ onMounted(() => {
       <VerticalNavSectionTitle
         v-if="discoveryMenus.length > 0"
         :item="{
-          heading: '发现',
+          heading: t('menu.discovery'),
         }"
       />
       <VerticalNavLink v-for="item in discoveryMenus" :item="item" />
@@ -111,7 +112,7 @@ onMounted(() => {
       <VerticalNavSectionTitle
         v-if="subscribeMenus.length > 0"
         :item="{
-          heading: '订阅',
+          heading: t('menu.subscribe'),
         }"
       />
       <VerticalNavLink v-for="item in subscribeMenus" :item="item" />
@@ -119,7 +120,7 @@ onMounted(() => {
       <VerticalNavSectionTitle
         v-if="organizeMenus.length > 0"
         :item="{
-          heading: '整理',
+          heading: t('menu.organize'),
         }"
       />
       <VerticalNavLink v-for="item in organizeMenus" :item="item" />
@@ -127,7 +128,7 @@ onMounted(() => {
       <VerticalNavSectionTitle
         v-if="systemMenus.length > 0"
         :item="{
-          heading: '系统',
+          heading: t('menu.system'),
         }"
       />
       <VerticalNavLink v-for="item in systemMenus" :item="item" />

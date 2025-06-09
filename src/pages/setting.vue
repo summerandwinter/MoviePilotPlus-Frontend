@@ -8,39 +8,24 @@ import AccountSettingAbout from '@/views/setting/AccountSettingAbout.vue'
 import AccountSettingSearch from '@/views/setting/AccountSettingSearch.vue'
 import AccountSettingSubscribe from '@/views/setting/AccountSettingSubscribe.vue'
 import AccountSettingSystem from '@/views/setting/AccountSettingSystem.vue'
-import AccountSettingScheduler from '@/views/setting/AccountSettingScheduler.vue'
+import AccountSettingService from '@/views/setting/AccountSettingService.vue'
 import AccountSettingDirectory from '@/views/setting/AccountSettingDirectory.vue'
 import AccountSettingRule from '@/views/setting/AccountSettingRule.vue'
 import AccountSettingVideo from '@/views/setting/AccountSettingVideo.vue'
 
 import { SettingTabs } from '@/router/menu'
+import AccountSettingCache from '@/views/setting/AccountSettingCache.vue'
+import { getSettingTabs } from '@/router/i18n-menu'
 
 const route = useRoute()
 
 const activeTab = ref(route.query.tab)
-
-function jumpTab(tab: string) {
-  router.push('/setting?tab=' + tab)
-}
+const settingTabs = computed(() => getSettingTabs())
 </script>
 
 <template>
   <div>
-    <VTabs v-model="activeTab" show-arrows class="v-tabs-pill">
-      <VTab
-        v-for="item in SettingTabs"
-        :key="item.icon"
-        :value="item.tab"
-        @click="jumpTab(item.tab)"
-        selected-class="v-slide-group-item--active v-tab--selected"
-      >
-        <div class="flex align-center">
-          <VIcon size="20" start :icon="item.icon" />
-          {{ item.title }}
-        </div>
-      </VTab>
-    </VTabs>
-
+    <VHeaderTab :items="settingTabs" v-model="activeTab" />
     <VWindow v-model="activeTab" class="mt-5 disable-tab-transition" :touch="false">
       <!-- 系统 -->
       <VWindowItem value="system">
@@ -107,7 +92,16 @@ function jumpTab(tab: string) {
       <VWindowItem value="scheduler">
         <transition name="fade-slide" appear>
           <div>
-            <AccountSettingScheduler />
+            <AccountSettingService />
+          </div>
+        </transition>
+      </VWindowItem>
+
+      <!-- 缓存 -->
+      <VWindowItem value="cache">
+        <transition name="fade-slide" appear>
+          <div>
+            <AccountSettingCache />
           </div>
         </transition>
       </VWindowItem>

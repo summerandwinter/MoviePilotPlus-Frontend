@@ -1,8 +1,12 @@
 <script lang="ts" setup>
-import type { TransferDirectoryConf } from '@/api/types'
+import type { StorageConf, TransferDirectoryConf } from '@/api/types'
 import api from '@/api'
 import { nextTick } from 'vue'
-import { storageOptions } from '@/api/constants'
+import { useI18n } from 'vue-i18n'
+import { storageRemoteDict } from '@/api/constants'
+
+// 国际化
+const { t } = useI18n()
 
 // 输入参数
 const props = defineProps({
@@ -15,6 +19,10 @@ const props = defineProps({
     type: Object as PropType<{ [key: string]: any }>,
     required: true,
   },
+  storages: {
+    type: Array as PropType<StorageConf[]>,
+    required: true,
+  },
   width: String,
   height: String,
 })
@@ -23,25 +31,43 @@ const props = defineProps({
 const isCollapsed = ref(true)
 
 // 类型下拉字典
-const typeItems = [
-  { title: '全部', value: '' },
-  { title: '电影', value: '电影' },
-  { title: '电视剧', value: '电视剧' },
-]
+const typeItems = computed(() => [
+  { title: t('common.all'), value: '' },
+  { title: t('mediaType.movie'), value: '电影' },
+  { title: t('mediaType.tv'), value: '电视剧' },
+])
+
+// 计算资源存储字典（整理方式为下载器时不能为远程存储）
+const resourceStorageOptions = computed(() => {
+  return props.storages
+    .filter(item => !storageRemoteDict[item.type] || props.directory.monitor_type !== 'downloader')
+    .map(item => ({
+      title: item.name,
+      value: item.type,
+    }))
+})
+
+// 存储字典
+const libraryStorageOptions = computed(() => {
+  return props.storages.map(item => ({
+    title: item.name,
+    value: item.type,
+  }))
+})
 
 // 自动整理方式下拉字典
-const transferSourceItems = [
-  { title: '不整理', value: '' },
-  { title: '下载器监控', value: 'downloader' },
-  { title: '目录监控', value: 'monitor' },
-  { title: '手动整理', value: 'manual' },
-]
+const transferSourceItems = computed(() => [
+  { title: t('directory.noTransfer'), value: '' },
+  { title: t('directory.downloaderMonitor'), value: 'downloader' },
+  { title: t('directory.directoryMonitor'), value: 'monitor' },
+  { title: t('directory.manualTransfer'), value: 'manual' },
+])
 
 // 监控模式下拉字典
-const MonitorModeItems = [
-  { title: '性能模式', value: 'fast' },
-  { title: '兼容模式', value: 'compatibility' },
-]
+const MonitorModeItems = computed(() => [
+  { title: t('directory.performanceMode'), value: 'fast' },
+  { title: t('directory.compatibilityMode'), value: 'compatibility' },
+])
 
 // 整理方式下拉字典
 const transferTypeItems = ref<{ title: string; value: string }[]>([])
@@ -98,23 +124,23 @@ async function loadTransferTypeItems() {
 // 整理方式无数据提示
 const computedNoDataText = computed(() => {
   if (!props.directory.library_storage && !props.directory.storage) {
-    return '请选择储存'
+    return t('directory.pleaseSelectStorage')
   } else if (!props.directory.library_storage) {
-    return '请选择媒体库储存'
+    return t('directory.pleaseSelectLibraryStorage')
   } else if (!props.directory.storage) {
-    return '请选择下载器储存'
+    return t('directory.pleaseSelectDownloadStorage')
   } else {
-    return '选择的存储类型没有支持的整理方式'
+    return t('directory.noSupportedTransferType')
   }
 })
 
 // 覆盖模式下拉字典
-const overwriteModeItems = [
-  { title: '从不', value: 'never' },
-  { title: '总是', value: 'always' },
-  { title: '按文件大小', value: 'size' },
-  { title: '仅保留最新版本', value: 'latest' },
-]
+const overwriteModeItems = computed(() => [
+  { title: t('directory.never'), value: 'never' },
+  { title: t('directory.always'), value: 'always' },
+  { title: t('directory.byFileSize'), value: 'size' },
+  { title: t('directory.keepLatestOnly'), value: 'latest' },
+])
 
 // 定义触发的自定义事件
 const emit = defineEmits(['close', 'changed', 'update:modelValue'])
@@ -126,12 +152,12 @@ function onClose() {
 
 // 根据选中的媒体类型，获取对应的媒体类别
 const getCategories = computed(() => {
-  const default_value = [{ title: '全部', value: '' }]
+  const default_value = [{ title: t('common.all'), value: '' }]
   if (!props.categories || !props.categories[props.directory?.media_type ?? '']) return default_value
   return default_value.concat(props.categories[props.directory.media_type ?? ''])
 })
 
-// 监听 下载储存与媒体库储存 变化，重新加载整理方式下拉字典
+// 监听 资源存储与媒体库储存 变化，重新加载整理方式下拉字典
 watch(
   [() => props.directory.library_storage, () => props.directory.storage],
   ([newLibraryStorage, newStorage], [oldLibraryStorage, oldStorage]) => {
@@ -156,16 +182,26 @@ watch(
     }
   },
 )
+
+// 监听monitor_type变化，如果为downloader则设置为本地
+watch(
+  () => props.directory.monitor_type,
+  newMonitorType => {
+    if (newMonitorType === 'downloader') {
+      props.directory.storage = 'local'
+    }
+  },
+)
 </script>
 
 <template>
   <VCard variant="tonal" :width="props.width" :height="props.height">
-    <DialogCloseBtn @click="onClose" />
+    <VDialogCloseBtn @click="onClose" />
     <VCardItem>
       <VTextField
         v-model="props.directory.name"
         variant="underlined"
-        label="别名"
+        :label="t('directory.alias')"
         class="me-20 text-high-emphasis font-weight-bold"
       />
       <span class="absolute top-3 right-12">
@@ -178,28 +214,28 @@ watch(
       <VForm>
         <VRow>
           <VCol cols="6">
-            <VSelect
+            <VAutocomplete
               v-model="props.directory.media_type"
               variant="underlined"
               :items="typeItems"
-              label="媒体类型"
+              :label="t('directory.mediaType')"
               @update:modelValue="props.directory.media_category = ''"
             />
           </VCol>
           <VCol cols="6">
-            <VSelect
+            <VAutocomplete
               v-model="props.directory.media_category"
               variant="underlined"
               :items="getCategories"
-              label="媒体类别"
+              :label="t('directory.mediaCategory')"
             />
           </VCol>
           <VCol cols="4">
-            <VSelect
+            <VAutocomplete
               v-model="props.directory.storage"
               variant="underlined"
-              :items="storageOptions"
-              label="下载存储/源存储"
+              :items="resourceStorageOptions"
+              :label="t('directory.resourceStorage')"
             />
           </VCol>
           <VCol cols="8">
@@ -207,14 +243,17 @@ watch(
               v-model="props.directory.download_path"
               :storage="props.directory.storage"
               variant="underlined"
-              label="下载目录/源目录"
+              :label="t('directory.resourceDirectory')"
             />
           </VCol>
           <VCol cols="6" v-if="!props.directory.media_type || props.directory.media_type === ''">
-            <VSwitch v-model="props.directory.download_type_folder" label="按类型分类"></VSwitch>
+            <VSwitch v-model="props.directory.download_type_folder" :label="t('directory.sortByType')"></VSwitch>
           </VCol>
           <VCol cols="6" v-if="!props.directory.media_category || props.directory.media_category === ''">
-            <VSwitch v-model="props.directory.download_category_folder" label="按类别分类"></VSwitch>
+            <VSwitch
+              v-model="props.directory.download_category_folder"
+              :label="t('directory.sortByCategory')"
+            ></VSwitch>
           </VCol>
         </VRow>
         <VDivider v-if="$props.directory.monitor_type" class="my-3 bg-primary" />
@@ -224,7 +263,7 @@ watch(
               v-model="props.directory.monitor_type"
               variant="underlined"
               :items="transferSourceItems"
-              label="自动整理"
+              :label="t('directory.autoTransfer')"
             />
           </VCol>
         </VRow>
@@ -234,15 +273,15 @@ watch(
               v-model="props.directory.monitor_mode"
               variant="underlined"
               :items="MonitorModeItems"
-              label="监控模式"
+              :label="t('directory.monitorMode')"
             />
           </VCol>
           <VCol cols="4">
-            <VSelect
+            <VAutocomplete
               v-model="props.directory.library_storage"
               variant="underlined"
-              :items="storageOptions"
-              label="媒体库存储"
+              :items="libraryStorageOptions"
+              :label="t('directory.libraryStorage')"
             />
           </VCol>
           <VCol cols="8">
@@ -250,7 +289,7 @@ watch(
               v-model="props.directory.library_path"
               :storage="props.directory.library_storage"
               variant="underlined"
-              label="媒体库目录"
+              :label="t('directory.libraryDirectory')"
             />
           </VCol>
           <VCol cols="4">
@@ -258,7 +297,7 @@ watch(
               v-model="props.directory.transfer_type"
               variant="underlined"
               :items="transferTypeItems"
-              label="整理方式"
+              :label="t('directory.transferType')"
               :no-data-text="computedNoDataText"
             />
           </VCol>
@@ -267,23 +306,23 @@ watch(
               v-model="props.directory.overwrite_mode"
               variant="underlined"
               :items="overwriteModeItems"
-              label="覆盖模式"
+              :label="t('directory.overwriteMode')"
             />
           </VCol>
           <VCol cols="6" v-if="!props.directory.media_type || props.directory.media_type === ''">
-            <VSwitch v-model="props.directory.library_type_folder" label="按类型分类"></VSwitch>
+            <VSwitch v-model="props.directory.library_type_folder" :label="t('directory.sortByType')"></VSwitch>
           </VCol>
           <VCol cols="6" v-if="!props.directory.media_category || props.directory.media_category === ''">
-            <VSwitch v-model="props.directory.library_category_folder" label="按类别分类"></VSwitch>
+            <VSwitch v-model="props.directory.library_category_folder" :label="t('directory.sortByCategory')"></VSwitch>
           </VCol>
           <VCol cols="6">
-            <VSwitch v-model="props.directory.renaming" label="智能重命名"></VSwitch>
+            <VSwitch v-model="props.directory.renaming" :label="t('directory.smartRename')"></VSwitch>
           </VCol>
           <VCol cols="6">
-            <VSwitch v-model="props.directory.scraping" label="刮削元数据"></VSwitch>
+            <VSwitch v-model="props.directory.scraping" :label="t('directory.scrapingMetadata')"></VSwitch>
           </VCol>
           <VCol cols="6">
-            <VSwitch v-model="props.directory.notify" label="发送通知"></VSwitch>
+            <VSwitch v-model="props.directory.notify" :label="t('directory.sendNotification')"></VSwitch>
           </VCol>
         </VRow>
       </VForm>

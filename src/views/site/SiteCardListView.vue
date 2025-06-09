@@ -6,6 +6,11 @@ import SiteCard from '@/components/cards/SiteCard.vue'
 import NoDataFound from '@/components/NoDataFound.vue'
 import SiteAddEditDialog from '@/components/dialog/SiteAddEditDialog.vue'
 import { useDisplay } from 'vuetify'
+import { useDynamicButton } from '@/composables/useDynamicButton'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // APP
 const display = useDisplay()
@@ -84,11 +89,21 @@ onActivated(() => {
     fetchUserData()
   }
 })
+
+// 使用动态按钮钩子
+useDynamicButton({
+  icon: 'mdi-web-plus',
+  onClick: () => {
+    siteAddDialog.value = true
+  },
+})
 </script>
 
 <template>
-  <LoadingBanner v-if="!isRefreshed" class="mt-12" />
-  <div>
+  <div class="card-list-container">
+    <!-- 页面标题 -->
+    <VPageContentTitle :title="t('navItems.siteManager')" />
+    <LoadingBanner v-if="!isRefreshed" class="mt-12" />
     <draggable
       v-if="siteList.length > 0"
       v-model="siteList"
@@ -96,7 +111,7 @@ onActivated(() => {
       handle=".cursor-move"
       item-key="id"
       tag="div"
-      :component-data="{ 'class': 'grid gap-3 grid-site-card' }"
+      :component-data="{ 'class': 'grid gap-4 grid-site-card px-2' }"
     >
       <template #item="{ element }">
         <SiteCard :site="element" :data="getUserData(element.domain)" @remove="fetchData" @update="fetchData" />
@@ -106,13 +121,13 @@ onActivated(() => {
   <NoDataFound
     v-if="siteList.length === 0 && isRefreshed"
     error-code="404"
-    error-title="没有站点"
-    error-description="已添加并支持的站点将会在这里显示。"
+    :error-title="t('site.noSites')"
+    :error-description="t('site.sitesWillBeShownHere')"
   />
   <!-- 新增站点按钮 -->
   <VFab
-    v-if="isRefreshed"
-    icon="mdi-plus"
+    v-if="isRefreshed && !appMode"
+    icon="mdi-web-plus"
     location="bottom"
     size="x-large"
     fixed

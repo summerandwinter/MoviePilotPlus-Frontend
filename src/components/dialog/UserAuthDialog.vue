@@ -2,6 +2,11 @@
 import { isNullOrEmptyObject } from '@/@core/utils'
 import api from '@/api'
 import { useToast } from 'vue-toast-notification'
+import { useI18n } from 'vue-i18n'
+
+
+// 多语言支持
+const { t } = useI18n()
 
 // 定义事件
 const emit = defineEmits(['done', 'close'])
@@ -89,17 +94,17 @@ async function handleDone() {
 // 认证处理
 async function checkUser() {
   if (!authForm.value.site) {
-    $toast.error('请选择认证站点！')
+    $toast.error(t('dialog.userAuth.selectSiteRequired'))
     return
   }
   if (!authSites.value[authForm.value.site]) {
-    $toast.error('站点配置不存在！')
+    $toast.error(t('dialog.userAuth.siteConfigNotExist'))
     return
   }
   if (formFields.value.length > 0) {
     for (const field of formFields.value) {
       if (!authForm.value.params[field.site.toUpperCase() + '_' + field.key.toUpperCase()]) {
-        $toast.error(`请输入${field.name}！`)
+        $toast.error(t('dialog.userAuth.fieldRequired', { name: field.name }))
         return
       }
     }
@@ -108,13 +113,13 @@ async function checkUser() {
   try {
     const result: { [key: string]: any } = await api.post(`site/auth`, authForm.value)
     if (result.success) {
-      $toast.success('用户认证成功，请重新登录！')
+      $toast.success(t('dialog.userAuth.authSuccess'))
       // 1秒后刷新页面
       setTimeout(() => {
         emit('done')
       }, 1000)
     } else {
-      $toast.error(`认证失败：${result.message}`)
+      $toast.error(t('dialog.userAuth.authFailed', { message: result.message }))
     }
   } catch (e) {
     console.error(e)
@@ -129,9 +134,16 @@ onMounted(async () => {
 </script>
 
 <template>
-  <VDialog width="40rem" max-height="85vh">
-    <VCard title="用户认证" class="rounded-t">
-      <DialogCloseBtn @click="emit('close')" />
+  <VDialog width="40rem" scrollable>
+    <VCard>
+      <VCardItem>
+        <VCardTitle>
+          <VIcon icon="mdi-user-check" class="me-2" />
+          {{ t('dialog.userAuth.title') }}
+        </VCardTitle>
+        <VDialogCloseBtn @click="emit('close')" />
+      </VCardItem>
+      <VDivider />
       <VCardText>
         <VRow>
           <VCol cols="12">
@@ -140,8 +152,9 @@ onMounted(async () => {
               :items="dropdownItems"
               item-value="key"
               item-title="name"
-              label="选择认证站点"
+              :label="t('dialog.userAuth.selectSite')"
               item-props
+              prepend-inner-icon="mdi-web"
             >
             </VSelect>
           </VCol>
@@ -161,15 +174,8 @@ onMounted(async () => {
         </VRow>
       </VCardText>
       <VCardText class="text-center">
-        <VBtn
-          variant="elevated"
-          @click="handleDone"
-          prepend-icon="mdi-check"
-          class="px-5"
-          size="large"
-          :disabled="loading"
-        >
-          开始认证
+        <VBtn @click="handleDone" prepend-icon="mdi-check" class="px-5" size="large" :disabled="loading">
+          {{ t('dialog.userAuth.authBtn') }}
         </VBtn>
       </VCardText>
     </VCard>

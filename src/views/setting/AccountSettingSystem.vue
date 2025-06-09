@@ -1,13 +1,22 @@
 <!-- eslint-disable sonarjs/no-duplicate-string -->
 <script lang="ts" setup>
 import { useToast } from 'vue-toast-notification'
-import { VRow } from 'vuetify/lib/components/index.mjs'
+import { VRow, VSelect } from 'vuetify/lib/components/index.mjs'
 import draggable from 'vuedraggable'
 import api from '@/api'
 import { DownloaderConf, MediaServerConf } from '@/api/types'
 import DownloaderCard from '@/components/cards/DownloaderCard.vue'
 import MediaServerCard from '@/components/cards/MediaServerCard.vue'
 import { copyToClipboard } from '@/@core/utils/navigator'
+import ProgressDialog from '@/components/dialog/ProgressDialog.vue'
+import { useI18n } from 'vue-i18n'
+import { downloaderOptions, mediaServerOptions } from '@/api/constants'
+import { useDisplay } from 'vuetify'
+
+const display = useDisplay()
+
+// 国际化
+const { t } = useI18n()
 
 // 系统设置项
 const SystemSettings = ref<any>({
@@ -20,6 +29,7 @@ const SystemSettings = ref<any>({
     RECOGNIZE_SOURCE: 'themoviedb',
     GITHUB_TOKEN: null,
     OCR_HOST: null,
+    CUSTOMIZE_WALLPAPER_API_URL: null,
   },
   // 高级系统设置
   Advanced: {
@@ -30,12 +40,16 @@ const SystemSettings = ref<any>({
     PLUGIN_STATISTIC_SHARE: true,
     BIG_MEMORY_MODE: false,
     DB_WAL_ENABLE: false,
+    AUTO_UPDATE_RESOURCE: true,
+    MOVIEPILOT_AUTO_UPDATE: false,
     // 媒体
     TMDB_API_DOMAIN: null,
     TMDB_IMAGE_DOMAIN: null,
+    TMDB_LOCALE: null,
     META_CACHE_EXPIRE: 0,
     SCRAP_FOLLOW_TMDB: true,
     FANART_ENABLE: false,
+    TMDB_SCRAP_ORIGINAL_IMAGE: null,
     // 网络
     PROXY_HOST: null,
     GITHUB_PROXY: null,
@@ -43,6 +57,7 @@ const SystemSettings = ref<any>({
     DOH_ENABLE: false,
     DOH_RESOLVERS: null,
     DOH_DOMAINS: null,
+    SECURITY_IMAGE_DOMAINS: [],
     // 日志
     DEBUG: false,
     LOG_LEVEL: 'INFO',
@@ -68,27 +83,49 @@ const downloaders = ref<DownloaderConf[]>([])
 // 提示框
 const $toast = useToast()
 
+// 进度框
+const progressDialog = ref(false)
+
 // 高级设置对话框
 const advancedDialog = ref(false)
 
 const activeTab = ref('system')
+
+// 元数据语言
+const tmdbLanguageItems = [
+  { title: t('setting.system.tmdbLanguage.zhCN'), value: 'zh' },
+  { title: t('setting.system.tmdbLanguage.zhTW'), value: 'zh-TW' },
+  { title: t('setting.system.tmdbLanguage.en'), value: 'en' },
+]
+
+// 日志等级
+const logLevelItems = [
+  { title: t('setting.system.logLevelItems.debug'), value: 'DEBUG' },
+  { title: t('setting.system.logLevelItems.info'), value: 'INFO' },
+  { title: t('setting.system.logLevelItems.warning'), value: 'WARNING' },
+  { title: t('setting.system.logLevelItems.error'), value: 'ERROR' },
+  { title: t('setting.system.logLevelItems.critical'), value: 'CRITICAL' },
+]
+
+// 安全域名添加变量
+const newSecurityDomain = ref('')
+
+// 添加安全域名
+function addSecurityDomain() {
+  if (
+    newSecurityDomain.value &&
+    !SystemSettings.value.Advanced.SECURITY_IMAGE_DOMAINS.includes(newSecurityDomain.value)
+  ) {
+    SystemSettings.value.Advanced.SECURITY_IMAGE_DOMAINS.push(newSecurityDomain.value)
+    newSecurityDomain.value = ''
+  }
+}
 
 // 调用API查询下载器设置
 async function loadDownloaderSetting() {
   try {
     const result: { [key: string]: any } = await api.get('system/setting/Downloaders')
     downloaders.value = result.data?.value ?? []
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-// 重载系统生效配置
-async function reloadSystem() {
-  try {
-    const result: { [key: string]: any } = await api.get('system/reload')
-    if (result.success) $toast.success('系统配置已生效')
-    else $toast.error('重载系统失败！')
   } catch (error) {
     console.log(error)
   }
@@ -104,11 +141,10 @@ async function saveDownloaderSetting() {
       downloaders.value = handleDefaultDownloaders(enabledDownloaders, downloaders.value)
     }
     const result: { [key: string]: any } = await api.post('system/setting/Downloaders', downloaders.value)
-    if (result.success) $toast.success('下载器设置保存成功')
-    else $toast.error('下载器设置保存失败！')
+    if (result.success) $toast.success(t('setting.system.downloaderSaveSuccess'))
+    else $toast.error(t('setting.system.downloaderSaveFailed'))
 
     await loadDownloaderSetting()
-    await reloadSystem()
   } catch (error) {
     console.log(error)
   }
@@ -120,7 +156,7 @@ function handleDefaultDownloaders(enabledDownloaders: any[], downloaders: any[])
   if (enabledDownloaders.length > 0 && !enabledDefaultDownloader) {
     downloaders = downloaders.map(item => {
       if (item === enabledDownloaders[0]) {
-        $toast.info(`未设置默认下载器，已将【${item.name}】作为默认下载器`)
+        $toast.info(t('setting.system.defaultDownloaderNotice', { name: item.name }))
         return { ...item, default: true }
       }
       // 清除其他下载器的默认下载器状态
@@ -144,11 +180,10 @@ async function loadMediaServerSetting() {
 async function saveMediaServerSetting() {
   try {
     const result: { [key: string]: any } = await api.post('system/setting/MediaServers', mediaServers.value)
-    if (result.success) $toast.success('媒体服务器设置保存成功')
-    else $toast.error('媒体服务器设置保存失败！')
+    if (result.success) $toast.success(t('setting.system.mediaServerSaveSuccess'))
+    else $toast.error(t('setting.system.mediaServerSaveFailed'))
 
     await loadMediaServerSetting()
-    await reloadSystem()
   } catch (error) {
     console.log(error)
   }
@@ -178,7 +213,7 @@ async function saveSystemSetting(value: { [key: string]: any }) {
     if (result.success) {
       return true
     } else {
-      $toast.error(`设置保存失败：${result?.message}！`)
+      $toast.error(t('setting.system.saveFailed', { message: result?.message }))
       return false
     }
   } catch (error) {
@@ -190,8 +225,7 @@ async function saveSystemSetting(value: { [key: string]: any }) {
 // 保存基础设置
 async function saveBasicSettings() {
   if (await saveSystemSetting(SystemSettings.value.Basic)) {
-    $toast.success('基础设置保存成功')
-    await reloadSystem()
+    $toast.success(t('setting.system.basicSaveSuccess'))
   }
 }
 
@@ -201,8 +235,7 @@ async function saveAdvancedSettings() {
 
   if (await saveSystemSetting(SystemSettings.value.Advanced)) {
     advancedDialog.value = false
-    $toast.success('高级设置保存成功')
-    await reloadSystem()
+    $toast.success(t('setting.system.advancedSaveSuccess'))
   }
 }
 
@@ -220,19 +253,21 @@ async function copyValue(value: string) {
   try {
     let success
     success = copyToClipboard(value)
-    if (await success) $toast.success('已复制到剪贴板！')
-    else $toast.error(`复制失败：可能是浏览器不支持或被用户阻止！`)
+    if (await success) $toast.success(t('setting.system.copySuccess'))
+    else $toast.error(t('setting.system.copyFailed'))
   } catch (error) {
-    $toast.error('复制失败！')
+    $toast.error(t('setting.system.copyError'))
     console.log(error)
   }
 }
 
 // 登录首页壁纸来源
 const wallpaperItems = [
-  { title: 'TheMovieDB电影海报', value: 'tmdb' },
-  { title: 'Bing每日壁纸', value: 'bing' },
-  { title: '媒体库海报', value: 'mediaserver' },
+  { title: t('setting.system.wallpaperItems.tmdb'), value: 'tmdb' },
+  { title: t('setting.system.wallpaperItems.bing'), value: 'bing' },
+  { title: t('setting.system.wallpaperItems.mediaserver'), value: 'mediaserver' },
+  { title: t('setting.system.wallpaperItems.customize'), value: 'customize' },
+  { title: t('setting.system.wallpaperItems.none'), value: '' },
 ]
 
 // 预设部分Github加速站
@@ -254,14 +289,25 @@ const pipMirrorsItems = [
   'https://mirrors.bfsu.edu.cn/pypi/web/simple', // 北京外国语大学
 ]
 
-// 日志等级
-const logLevelItems = [
-  { title: 'DEBUG - 调试 ', value: 'DEBUG' },
-  { title: 'INFO - 信息 ', value: 'INFO' },
-  { title: 'WARNING - 警告 ', value: 'WARNING' },
-  { title: 'ERROR - 错误 ', value: 'ERROR' },
-  { title: 'CRITICAL - 严重 ', value: 'CRITICAL' },
-]
+// Github加速代理显示处理
+const githubProxyDisplay = computed({
+  get: () => {
+    return SystemSettings.value.Advanced.GITHUB_PROXY || null
+  },
+  set: val => {
+    SystemSettings.value.Advanced.GITHUB_PROXY = val === null ? '' : val
+  },
+})
+
+// PIP加速代理显示处理
+const pipProxyDisplay = computed({
+  get: () => {
+    return SystemSettings.value.Advanced.PIP_PROXY || null
+  },
+  set: val => {
+    SystemSettings.value.Advanced.PIP_PROXY = val === null ? '' : val
+  },
+})
 
 // 创建随机字符串
 function createRandomString() {
@@ -324,6 +370,16 @@ function onMediaServerChange(mediaserver: MediaServerConf, name: string) {
   if (index !== -1) mediaServers.value[index] = mediaserver
 }
 
+// 添加计算属性
+const moviePilotAutoUpdate = computed({
+  get: () => {
+    return ['release', 'dev'].includes(SystemSettings.value.Advanced.MOVIEPILOT_AUTO_UPDATE)
+  },
+  set: val => {
+    SystemSettings.value.Advanced.MOVIEPILOT_AUTO_UPDATE = val ? 'release' : 'false'
+  },
+})
+
 // 加载数据
 onMounted(() => {
   loadDownloaderSetting()
@@ -341,82 +397,127 @@ onDeactivated(() => {
 </script>
 
 <template>
+  <ProgressDialog
+    v-if="progressDialog"
+    v-model="progressDialog"
+    :text="t('setting.system.reloading')"
+    :indeterminate="true"
+  />
+
   <VRow>
     <VCol cols="12">
       <VCard>
         <VCardItem>
-          <VCardTitle>基础设置</VCardTitle>
-          <VCardSubtitle>设置服务器的全局功能。</VCardSubtitle>
+          <VCardTitle>{{ t('setting.system.basicSettings') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.system.basicSettingsDesc') }}</VCardSubtitle>
         </VCardItem>
         <VCardText>
-          <VForm>
+          <VForm @submit.prevent="() => {}">
             <VRow>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="SystemSettings.Basic.APP_DOMAIN"
-                  label="访问域名"
-                  placeholder="格式：http(s)://domain:port"
-                  hint="用于发送通知时，添加快捷跳转地址"
+                  :label="t('setting.system.appDomain')"
+                  :hint="t('setting.system.appDomainHint')"
+                  placeholder="http://localhost:3000"
                   persistent-hint
-                />
-              </VCol>
-              <VCol cols="12" md="3">
-                <VSelect
-                  v-model="SystemSettings.Basic.WALLPAPER"
-                  label="登录首页壁纸"
-                  hint="选择登陆页面背景来源"
-                  persistent-hint
-                  :items="wallpaperItems"
+                  prepend-inner-icon="mdi-web"
                 />
               </VCol>
 
-              <VCol cols="12" md="3">
+              <VCol cols="12" md="6">
+                <VRow>
+                  <VCol cols="12" :md="SystemSettings.Basic.WALLPAPER === 'customize' ? 6 : 12">
+                    <VSelect
+                      v-model="SystemSettings.Basic.WALLPAPER"
+                      :label="t('setting.system.wallpaper')"
+                      :hint="t('setting.system.wallpaperHint')"
+                      persistent-hint
+                      :items="wallpaperItems"
+                      prepend-inner-icon="mdi-image"
+                    />
+                  </VCol>
+
+                  <VCol v-if="SystemSettings.Basic.WALLPAPER === 'customize'" cols="12" md="6">
+                    <VTextField
+                      v-model="SystemSettings.Basic.CUSTOMIZE_WALLPAPER_API_URL"
+                      :label="t('setting.system.customizeWallpaperApi')"
+                      :hint="t('setting.system.customizeWallpaperApiHint')"
+                      :placeholder="t('setting.system.customizeWallpaperApi')"
+                      persistent-hint
+                      :rules="[v => !!v || t('setting.system.customizeWallpaperApiRequired')]"
+                      prepend-inner-icon="mdi-api"
+                    />
+                  </VCol>
+                </VRow>
+              </VCol>
+              <VCol cols="12" md="6">
+                <VSelect
+                  v-model="SystemSettings.Basic.RECOGNIZE_SOURCE"
+                  :label="t('setting.system.recognizeSource')"
+                  :hint="t('setting.system.recognizeSourceHint')"
+                  persistent-hint
+                  :items="[
+                    { title: 'TheMovieDb', value: 'themoviedb' },
+                    { title: '豆瓣', value: 'douban' },
+                  ]"
+                  prepend-inner-icon="mdi-database"
+                />
+              </VCol>
+              <VCol cols="12" md="6">
                 <VTextField
                   v-model="SystemSettings.Basic.MEDIASERVER_SYNC_INTERVAL"
-                  label="媒体服务器同步间隔"
-                  hint="定时同步媒体服务器数据到本地的时间间隔"
+                  :label="t('setting.system.mediaServerSyncInterval')"
+                  :hint="t('setting.system.mediaServerSyncIntervalHint')"
                   persistent-hint
-                  suffix="小时"
+                  :suffix="t('setting.system.hours')"
                   type="number"
                   min="1"
                   :rules="[
-                    (v: any) => !!v || '必选项，请勿留空',
-                    (v: any) => !isNaN(v) || '仅支持输入数字，请勿输入其他字符',
-                    (v: any) => v >= 1 || '间隔不能小于1个小时',
+                    (v: any) => !!v || t('setting.system.required'),
+                    (v: any) => !isNaN(v) || t('setting.system.numbersOnly'),
+                    (v: any) => v >= 1 || t('setting.system.minInterval'),
                   ]"
+                  prepend-inner-icon="mdi-sync"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="SystemSettings.Basic.API_TOKEN"
-                  label="API令牌"
-                  hint="设置外部请求MoviePilot API时使用的token值"
-                  placeholder="不能小于16位字符"
+                  :label="t('setting.system.apiToken')"
+                  :hint="t('setting.system.apiTokenHint')"
+                  :placeholder="t('setting.system.apiTokenMinChars')"
                   persistent-hint
-                  prependInnerIcon="mdi-reload"
-                  :appendInnerIcon="SystemSettings.Basic.API_TOKEN ? 'mdi-content-copy' : ''"
-                  @click:prependInner="createRandomString"
-                  @click:appendInner="copyValue(SystemSettings.Basic.API_TOKEN)"
-                  :rules="[(v: string) => !!v || '必填项；请输入API Token', (v: string) => v.length >= 16 || 'API Token不得低于16位']"
+                  prepend-inner-icon="mdi-key"
+                  :append-inner-icon="SystemSettings.Basic.API_TOKEN ? 'mdi-content-copy' : 'mdi-reload'"
+                  @click:append-inner="
+                    SystemSettings.Basic.API_TOKEN ? copyValue(SystemSettings.Basic.API_TOKEN) : createRandomString()
+                  "
+                  :rules="[
+                    (v: string) => !!v || t('setting.system.apiTokenRequired'),
+                    (v: string) => v.length >= 16 || t('setting.system.apiTokenLength'),
+                  ]"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="SystemSettings.Basic.GITHUB_TOKEN"
-                  label="Github Token"
-                  placeholder="ghp_**** 或 github_pat_****"
-                  hint="用于提高插件等访问Github API时的限流阈值"
+                  :label="t('setting.system.githubToken')"
+                  :placeholder="t('setting.system.githubTokenFormat')"
+                  :hint="t('setting.system.githubTokenHint')"
                   persistent-hint
+                  prepend-inner-icon="mdi-github"
                 >
                 </VTextField>
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="SystemSettings.Basic.OCR_HOST"
-                  label="验证码识别服务器"
+                  :label="t('setting.system.ocrHost')"
                   placeholder="https://movie-pilot.org"
-                  hint="用于站点签到、更新站点Cookie等识别验证码"
+                  :hint="t('setting.system.ocrHostHint')"
                   persistent-hint
+                  prepend-inner-icon="mdi-text-recognition"
                 />
               </VCol>
             </VRow>
@@ -425,7 +526,9 @@ onDeactivated(() => {
         <VCardText>
           <VForm @submit.prevent="() => {}">
             <div class="d-flex flex-wrap gap-4 mt-4">
-              <VBtn type="submit" @click="saveBasicSettings"> 保存 </VBtn>
+              <VBtn type="submit" @click="saveBasicSettings" prepend-icon="mdi-content-save">
+                {{ t('common.save') }}
+              </VBtn>
               <VSpacer />
               <VBtn
                 color="error"
@@ -433,7 +536,7 @@ onDeactivated(() => {
                 prepend-icon="mdi-cog"
                 append-icon="mdi-dots-horizontal"
               >
-                高级设置
+                {{ t('setting.system.advancedSettings') }}
               </VBtn>
             </div>
           </VForm>
@@ -445,8 +548,8 @@ onDeactivated(() => {
     <VCol cols="12">
       <VCard>
         <VCardItem>
-          <VCardTitle>下载器</VCardTitle>
-          <VCardSubtitle>只有默认下载器才会被默认使用。</VCardSubtitle>
+          <VCardTitle>{{ t('setting.system.downloaders') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.system.downloadersDesc') }}</VCardSubtitle>
         </VCardItem>
         <VCardText>
           <draggable
@@ -470,16 +573,18 @@ onDeactivated(() => {
         <VCardText>
           <VForm @submit.prevent="() => {}">
             <div class="d-flex flex-wrap gap-4 mt-4">
-              <VBtn type="submit" @click="saveDownloaderSetting"> 保存 </VBtn>
+              <VBtn type="submit" @click="saveDownloaderSetting" prepend-icon="mdi-content-save">
+                {{ t('common.save') }}
+              </VBtn>
               <VBtn color="success" variant="tonal">
                 <VIcon icon="mdi-plus" />
                 <VMenu activator="parent" close-on-content-click>
                   <VList>
-                    <VListItem variant="plain" @click="addDownloader('qbittorrent')">
-                      <VListItemTitle>Qbittorrent</VListItemTitle>
+                    <VListItem v-for="item in downloaderOptions" @click="addDownloader(item.value)">
+                      <VListItemTitle>{{ item.title }}</VListItemTitle>
                     </VListItem>
-                    <VListItem variant="plain" @click="addDownloader('transmission')">
-                      <VListItemTitle>Transmission</VListItemTitle>
+                    <VListItem @click="addDownloader('custom')">
+                      <VListItemTitle>{{ t('setting.system.custom') }}</VListItemTitle>
                     </VListItem>
                   </VList>
                 </VMenu>
@@ -494,8 +599,8 @@ onDeactivated(() => {
     <VCol cols="12">
       <VCard>
         <VCardItem>
-          <VCardTitle>媒体服务器</VCardTitle>
-          <VCardSubtitle>所有启用的媒体服务器都会被使用。</VCardSubtitle>
+          <VCardTitle>{{ t('setting.system.mediaServers') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.system.mediaServersDesc') }}</VCardSubtitle>
         </VCardItem>
         <VCardText>
           <draggable
@@ -518,19 +623,18 @@ onDeactivated(() => {
         <VCardText>
           <VForm @submit.prevent="() => {}">
             <div class="d-flex flex-wrap gap-4 mt-4">
-              <VBtn type="submit" @click="saveMediaServerSetting"> 保存 </VBtn>
+              <VBtn type="submit" @click="saveMediaServerSetting" prepend-icon="mdi-content-save">
+                {{ t('common.save') }}
+              </VBtn>
               <VBtn color="success" variant="tonal">
                 <VIcon icon="mdi-plus" />
                 <VMenu activator="parent" close-on-content-click>
                   <VList>
-                    <VListItem variant="plain" @click="addMediaServer('emby')">
-                      <VListItemTitle>Emby</VListItemTitle>
+                    <VListItem v-for="item in mediaServerOptions" @click="addMediaServer(item.value)">
+                      <VListItemTitle>{{ item.title }}</VListItemTitle>
                     </VListItem>
-                    <VListItem variant="plain" @click="addMediaServer('jellyfin')">
-                      <VListItemTitle>Jellyfin</VListItemTitle>
-                    </VListItem>
-                    <VListItem variant="plain" @click="addMediaServer('plex')">
-                      <VListItemTitle>Plex</VListItemTitle>
+                    <VListItem @click="addMediaServer('custom')">
+                      <VListItemTitle>{{ t('setting.system.custom') }}</VListItemTitle>
                     </VListItem>
                   </VList>
                 </VMenu>
@@ -541,30 +645,37 @@ onDeactivated(() => {
       </VCard>
     </VCol>
   </VRow>
+
   <!-- 高级系统设置 -->
-  <VDialog v-if="advancedDialog" v-model="advancedDialog" scrollable max-width="60rem" persistent>
+  <VDialog
+    v-if="advancedDialog"
+    v-model="advancedDialog"
+    scrollable
+    max-width="60rem"
+    :fullscreen="!display.mdAndUp.value"
+  >
     <VCard>
       <VCardItem>
-        <DialogCloseBtn @click="advancedDialog = false" />
-        <VCardTitle>高级设置</VCardTitle>
-        <VCardSubtitle>系统进阶设置，特殊情况下才需要调整</VCardSubtitle>
+        <VDialogCloseBtn @click="advancedDialog = false" />
+        <VCardTitle>{{ t('setting.system.advancedSettings') }}</VCardTitle>
+        <VCardSubtitle>{{ t('setting.system.advancedSettingsDesc') }}</VCardSubtitle>
       </VCardItem>
       <VCardText>
         <VTabs v-model="activeTab" show-arrows>
           <VTab value="system">
-            <div>系统</div>
+            <div>{{ t('setting.system.system') }}</div>
           </VTab>
           <VTab value="media">
-            <div>媒体</div>
+            <div>{{ t('setting.system.media') }}</div>
           </VTab>
           <VTab value="network">
-            <div>网络</div>
+            <div>{{ t('setting.system.network') }}</div>
           </VTab>
           <VTab value="log">
-            <div>日志</div>
+            <div>{{ t('setting.system.log') }}</div>
           </VTab>
           <VTab value="dev">
-            <div>实验室</div>
+            <div>{{ t('setting.system.lab') }}</div>
           </VTab>
         </VTabs>
         <VWindow v-model="activeTab" class="mt-5 disable-tab-transition" :touch="false">
@@ -574,48 +685,64 @@ onDeactivated(() => {
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.AUXILIARY_AUTH_ENABLE"
-                    label="用户辅助认证"
-                    hint="允许外部服务进行登录认证以及自动创建用户"
+                    :label="t('setting.system.auxAuthEnable')"
+                    :hint="t('setting.system.auxAuthEnableHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.GLOBAL_IMAGE_CACHE"
-                    label="全局图片缓存"
-                    hint="将媒体图片缓存到本地，提升图片加载速度"
+                    :label="t('setting.system.globalImageCache')"
+                    :hint="t('setting.system.globalImageCacheHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.SUBSCRIBE_STATISTIC_SHARE"
-                    label="分享订阅数据"
-                    hint="分享订阅统计数据到热门订阅，供其他MPer参考"
+                    :label="t('setting.system.subscribeStatisticShare')"
+                    :hint="t('setting.system.subscribeStatisticShareHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.PLUGIN_STATISTIC_SHARE"
-                    label="上报插件安装数据"
-                    hint="上报插件安装数据给服务器，用于统计展示插件安装情况"
+                    :label="t('setting.system.pluginStatisticShare')"
+                    :hint="t('setting.system.pluginStatisticShareHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.BIG_MEMORY_MODE"
-                    label="大内存模式"
-                    hint="使用更大的内存缓存数据，提升系统性能"
+                    :label="t('setting.system.bigMemoryMode')"
+                    :hint="t('setting.system.bigMemoryModeHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.DB_WAL_ENABLE"
-                    label="WAL模式"
-                    hint="可提升读写并发性能，但可能在异常情况下增加数据丢失风险，更改后需重启生效"
+                    :label="t('setting.system.dbWalEnable')"
+                    :hint="t('setting.system.dbWalEnableHint')"
+                    persistent-hint
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VSwitch
+                    v-model="moviePilotAutoUpdate"
+                    :label="t('setting.system.moviePilotAutoUpdate')"
+                    :hint="t('setting.system.moviePilotAutoUpdateHint')"
+                    persistent-hint
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VSwitch
+                    v-model="SystemSettings.Advanced.AUTO_UPDATE_RESOURCE"
+                    :label="t('setting.system.autoUpdateResource')"
+                    :hint="t('setting.system.autoUpdateResourceHint')"
                     persistent-hint
                   />
                 </VCol>
@@ -628,35 +755,52 @@ onDeactivated(() => {
                 <VCol cols="12" md="6">
                   <VCombobox
                     v-model="SystemSettings.Advanced.TMDB_API_DOMAIN"
-                    label="TMDB API服务地址"
-                    placeholder="api.themoviedb.org"
-                    hint="自定义themoviedb API域名或代理地址"
+                    :label="t('setting.system.tmdbApiDomain')"
+                    :placeholder="t('setting.system.tmdbApiDomainPlaceholder')"
+                    :hint="t('setting.system.tmdbApiDomainHint')"
                     persistent-hint
                     :items="['api.themoviedb.org', 'api.tmdb.org']"
-                    :rules="[(v: string) => !!v || '请输入TMDB API域名']"
+                    :rules="[(v: string) => !!v || t('setting.system.tmdbApiDomainRequired')]"
+                    prepend-inner-icon="mdi-api"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VCombobox
                     v-model="SystemSettings.Advanced.TMDB_IMAGE_DOMAIN"
-                    label="TMDB 图片服务地址"
-                    placeholder="image.tmdb.org"
-                    hint="自定义themoviedb图片服务域名或代理地址"
+                    :label="t('setting.system.tmdbImageDomain')"
+                    :placeholder="t('setting.system.tmdbImageDomainPlaceholder')"
+                    :hint="t('setting.system.tmdbImageDomainHint')"
                     persistent-hint
                     :items="['image.tmdb.org', 'static-mdb.v.geilijiasu.com']"
-                    :rules="[(v: string) => !!v || '请输入图片服务域名']"
+                    :rules="[(v: string) => !!v || t('setting.system.tmdbImageDomainRequired')]"
+                    prepend-inner-icon="mdi-image"
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VSelect
+                    v-model="SystemSettings.Advanced.TMDB_LOCALE"
+                    :label="t('setting.system.tmdbLocale')"
+                    :placeholder="t('setting.system.tmdbLocalePlaceholder')"
+                    :hint="t('setting.system.tmdbLocaleHint')"
+                    persistent-hint
+                    :items="tmdbLanguageItems"
+                    prepend-inner-icon="mdi-translate"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VTextField
                     v-model="SystemSettings.Advanced.META_CACHE_EXPIRE"
-                    label="媒体元数据缓存过期时间"
-                    hint="识别元数据本地缓存时间，为 0 时使用内置默认值"
+                    :label="t('setting.system.metaCacheExpire')"
+                    :hint="t('setting.system.metaCacheExpireHint')"
                     persistent-hint
                     min="0"
                     type="number"
-                    suffix="小时"
-                    :rules="[(v: any) => v === 0 || !!v || '请输入元数据缓存时间', (v: any) => v >= 0 || '元数据缓存时间必须大于等于0']"
+                    :suffix="t('setting.system.hour')"
+                    :rules="[
+                      (v: any) => v === 0 || !!v || t('setting.system.metaCacheExpireRequired'),
+                      (v: any) => v >= 0 || t('setting.system.metaCacheExpireMin'),
+                    ]"
+                    prepend-inner-icon="mdi-timer"
                   />
                 </VCol>
               </VRow>
@@ -664,16 +808,24 @@ onDeactivated(() => {
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.SCRAP_FOLLOW_TMDB"
-                    label="跟随TMDB识别整理"
-                    hint="关闭时以整理历史记录为准（如有），避免TMDB数据在订阅中途修改"
+                    :label="t('setting.system.scrapFollowTmdb')"
+                    :hint="t('setting.system.scrapFollowTmdbHint')"
+                    persistent-hint
+                  />
+                </VCol>
+                <VCol cols="12" md="6">
+                  <VSwitch
+                    v-model="SystemSettings.Advanced.TMDB_SCRAP_ORIGINAL_IMAGE"
+                    :label="t('setting.system.scrapOriginalImage')"
+                    :hint="t('setting.system.scrapOriginalImageHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.FANART_ENABLE"
-                    label="Fanart图片数据源"
-                    hint="使用 fanart.tv 的图片数据"
+                    :label="t('setting.system.fanartEnable')"
+                    :hint="t('setting.system.fanartEnableHint')"
                     persistent-hint
                   />
                 </VCol>
@@ -684,23 +836,37 @@ onDeactivated(() => {
             <div>
               <VRow>
                 <VCol cols="12" md="6">
-                  <VCombobox
-                    v-model="SystemSettings.Advanced.GITHUB_PROXY"
-                    label="Github加速代理"
-                    placeholder="http(s)://host/"
-                    hint="使用代理加速Github访问速度"
+                  <VTextField
+                    v-model="SystemSettings.Advanced.PROXY_HOST"
+                    :label="t('setting.system.proxyHost')"
+                    placeholder="http://127.0.0.1:7890"
+                    :hint="t('setting.system.proxyHostHint')"
                     persistent-hint
-                    :items="githubMirrorsItems"
+                    prepend-inner-icon="mdi-server-network"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VCombobox
-                    v-model="SystemSettings.Advanced.PIP_PROXY"
-                    label="PIP加速代理"
-                    placeholder="http(s)://host"
-                    hint="使用代理加速插件等pip库安装速度"
+                    v-model="githubProxyDisplay"
+                    :label="t('setting.system.githubProxy')"
+                    :placeholder="t('setting.system.githubProxyPlaceholder')"
+                    :hint="t('setting.system.githubProxyHint')"
+                    persistent-hint
+                    :items="githubMirrorsItems"
+                    clearable
+                    prepend-inner-icon="mdi-github"
+                  />
+                </VCol>
+                <VCol cols="12">
+                  <VCombobox
+                    v-model="pipProxyDisplay"
+                    :label="t('setting.system.pipProxy')"
+                    :placeholder="t('setting.system.pipProxyPlaceholder')"
+                    :hint="t('setting.system.pipProxyHint')"
                     persistent-hint
                     :items="pipMirrorsItems"
+                    clearable
+                    prepend-inner-icon="mdi-package"
                   />
                 </VCol>
               </VRow>
@@ -708,28 +874,71 @@ onDeactivated(() => {
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.DOH_ENABLE"
-                    label="DNS Over HTTPS"
-                    hint="使用DOH对特定域名进行解析，以防止DNS污染"
+                    :label="t('setting.system.dohEnable')"
+                    :hint="t('setting.system.dohEnableHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" v-show="SystemSettings.Advanced.DOH_ENABLE">
                   <VTextarea
                     v-model="SystemSettings.Advanced.DOH_RESOLVERS"
-                    label="DOH 服务器"
-                    placeholder="https://dns.google/dns-query,1.1.1.1"
-                    hint="DNS解析服务器地址，多个地址使用逗号分隔"
+                    :label="t('setting.system.dohResolvers')"
+                    :placeholder="t('setting.system.dohResolversPlaceholder')"
+                    :hint="t('setting.system.dohResolversHint')"
                     persistent-hint
+                    prepend-inner-icon="mdi-dns"
                   />
                 </VCol>
                 <VCol cols="12" v-show="SystemSettings.Advanced.DOH_ENABLE">
                   <VTextarea
                     v-model="SystemSettings.Advanced.DOH_DOMAINS"
-                    label="DOH 域名"
-                    placeholder="example.com,example2.com"
-                    hint="使用DOH解析的域名，多个域名使用逗号分隔"
+                    :label="t('setting.system.dohDomains')"
+                    :placeholder="t('setting.system.dohDomainsPlaceholder')"
+                    :hint="t('setting.system.dohDomainsHint')"
                     persistent-hint
+                    prepend-inner-icon="mdi-domain"
                   />
+                </VCol>
+              </VRow>
+              <VRow>
+                <VCol cols="12">
+                  <!-- 安全域名 -->
+                  <VCard>
+                    <VCardItem>
+                      <VCardTitle>{{ t('setting.system.securityImageDomains') }}</VCardTitle>
+                      <VCardSubtitle>{{ t('setting.system.securityImageDomainsHint') }}</VCardSubtitle>
+                    </VCardItem>
+                    <VCardText>
+                      <div class="d-flex flex-wrap gap-2 mb-3">
+                        <VChip
+                          v-for="(domain, index) in SystemSettings.Advanced.SECURITY_IMAGE_DOMAINS"
+                          :key="index"
+                          closable
+                          @click:close="SystemSettings.Advanced.SECURITY_IMAGE_DOMAINS.splice(index, 1)"
+                        >
+                          {{ domain }}
+                        </VChip>
+                        <VChip v-if="SystemSettings.Advanced.SECURITY_IMAGE_DOMAINS.length === 0" color="warning">
+                          {{ t('setting.system.noSecurityImageDomains') }}
+                        </VChip>
+                      </div>
+                      <div class="d-flex align-center gap-2">
+                        <VTextField
+                          v-model="newSecurityDomain"
+                          :placeholder="t('setting.system.securityImageDomainAdd')"
+                          hide-details
+                          density="compact"
+                          prepend-inner-icon="mdi-shield-check"
+                        >
+                          <template #append>
+                            <VBtn icon color="primary" @click="addSecurityDomain" :disabled="!newSecurityDomain">
+                              <VIcon icon="mdi-plus" />
+                            </VBtn>
+                          </template>
+                        </VTextField>
+                      </div>
+                    </VCardText>
+                  </VCard>
                 </VCol>
               </VRow>
             </div>
@@ -740,8 +949,8 @@ onDeactivated(() => {
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.DEBUG"
-                    label="调试模式"
-                    hint="启用调试模式后，日志将以DEBUG级别记录，以便排查问题"
+                    :label="t('setting.system.debug')"
+                    :hint="t('setting.system.debugHint')"
                     persistent-hint
                   />
                 </VCol>
@@ -749,41 +958,45 @@ onDeactivated(() => {
                   <VSelect
                     v-if="!SystemSettings.Advanced.DEBUG"
                     v-model="SystemSettings.Advanced.LOG_LEVEL"
-                    label="日志等级"
-                    hint="设置日志记录的级别，用于控制日志输出量"
+                    :label="t('setting.system.logLevel')"
+                    :hint="t('setting.system.logLevelHint')"
                     persistent-hint
                     :items="logLevelItems"
+                    prepend-inner-icon="mdi-format-list-bulleted"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VTextField
                     v-model="SystemSettings.Advanced.LOG_MAX_FILE_SIZE"
-                    label="日志文件最大容量(MB)"
-                    hint="限制单个日志文件的最大容量，超出后将自动分割日志"
+                    :label="t('setting.system.logMaxFileSize')"
+                    :hint="t('setting.system.logMaxFileSizeHint')"
                     persistent-hint
                     min="1"
                     type="number"
-                    suffix="MB"
-                    :rules="[(v: any) => v === 0 || !!v || '日志文件最大大小', (v: any) => v >= 1 || '日志文件最大容量必须大于等于1']"
+                    :suffix="t('setting.system.mb')"
+                    :rules="[(v: any) => v === 0 || !!v || t('setting.system.logMaxFileSizeRequired'), (v: any) => v >= 1 || t('setting.system.logMaxFileSizeMin')]"
+                    prepend-inner-icon="mdi-file-document"
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VTextField
                     v-model="SystemSettings.Advanced.LOG_BACKUP_COUNT"
-                    label="日志文件最大备份数量"
-                    hint="设置每个模块日志文件的最大备份数量，超过后将覆盖旧日志"
+                    :label="t('setting.system.logBackupCount')"
+                    :hint="t('setting.system.logBackupCountHint')"
                     persistent-hint
                     min="1"
                     type="number"
-                    :rules="[(v: any) => v === 0 || !!v || '请输入日志文件最大备份数量', (v: any) => v >= 1 || '日志文件最大备份数量必须大于等于1']"
+                    :rules="[(v: any) => v === 0 || !!v || t('setting.system.logBackupCountRequired'), (v: any) => v >= 1 || t('setting.system.logBackupCountMin')]"
+                    prepend-inner-icon="mdi-backup-restore"
                   />
                 </VCol>
                 <VCol cols="12">
                   <VTextField
                     v-model="SystemSettings.Advanced.LOG_FILE_FORMAT"
-                    label="日志文件格式"
-                    hint="设置日志文件的输出格式，用于自定义日志的显示内容"
+                    :label="t('setting.system.logFileFormat')"
+                    :hint="t('setting.system.logFileFormatHint')"
                     persistent-hint
+                    prepend-inner-icon="mdi-format-text"
                   />
                 </VCol>
               </VRow>
@@ -795,24 +1008,24 @@ onDeactivated(() => {
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.PLUGIN_AUTO_RELOAD"
-                    label="插件热加载"
-                    hint="修改插件文件后自动重新加载，开发插件时使用"
+                    :label="t('setting.system.pluginAutoReload')"
+                    :hint="t('setting.system.pluginAutoReloadHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.ENCODING_DETECTION_PERFORMANCE_MODE"
-                    label="编码探测性能模式"
-                    hint="优先提升探测效率，但可能降低编码探测的准确性"
+                    :label="t('setting.system.encodingDetectionPerformanceMode')"
+                    :hint="t('setting.system.encodingDetectionPerformanceModeHint')"
                     persistent-hint
                   />
                 </VCol>
                 <VCol cols="12" md="6">
                   <VSwitch
                     v-model="SystemSettings.Advanced.TOKENIZED_SEARCH"
-                    label="分词搜索"
-                    hint="提升整理历史记录搜索精度，但可能增加性能开销和意外结果"
+                    :label="t('setting.system.tokenizedSearch')"
+                    :hint="t('setting.system.tokenizedSearchHint')"
                     persistent-hint
                   />
                 </VCol>
@@ -824,14 +1037,8 @@ onDeactivated(() => {
       <VCardActions class="pt-3">
         <VForm @submit.prevent="() => {}">
           <div class="d-flex flex-wrap gap-4 mt-4">
-            <VBtn
-              color="primary"
-              variant="elevated"
-              prepend-icon="mdi-content-save"
-              @click="saveAdvancedSettings"
-              class="px-5"
-            >
-              保存
+            <VBtn color="primary" prepend-icon="mdi-content-save" @click="saveAdvancedSettings" class="px-5">
+              {{ t('common.save') }}
             </VBtn>
           </div>
         </VForm>

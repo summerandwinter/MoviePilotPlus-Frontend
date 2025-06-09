@@ -164,7 +164,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="file-browser-view">
     <FileBrowser
       :storages="storages"
       :tree="false"
@@ -176,3 +176,10 @@ onMounted(() => {
     />
   </div>
 </template>
+
+<style lang="scss" scoped>
+.file-browser-view {
+  position: relative;
+  block-size: 100%;
+}
+</style>

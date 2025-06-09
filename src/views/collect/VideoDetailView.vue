@@ -2,7 +2,7 @@
 import { useToast } from 'vue-toast-notification'
 
 import api from '@/api'
-import { tagOptions, teamOptions, mediaTypeOptions } from '@/api/constants'
+import { tagOptions, teamOptions, mediaCateOptions } from '@/api/constants'
 import type { VideoInfo, CollectCreate, Site } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
@@ -649,7 +649,7 @@ function handleIgnore() {
         </div>
         <div class="mt-6">
           <VChipGroup column v-model="addForm.type">
-            <template v-for="(value, key) in mediaTypeOptions" :key="key">
+            <template v-for="(value, key) in mediaCateOptions" :key="key">
               <VChip :color="addForm.type === key ? 'primary' : ''" filter variant="outlined" :value="key">
                 {{ value }}
               </VChip>

@@ -4,8 +4,19 @@ import { useToast } from 'vue-toast-notification'
 import emby_image from '@images/logos/emby.png'
 import jellyfin_image from '@images/logos/jellyfin.png'
 import plex_image from '@images/logos/plex.png'
+import trimemedia_image from '@images/logos/trimemedia.png'
+import custom_image from '@images/logos/mediaserver.png'
 import api from '@/api'
 import { cloneDeep } from 'lodash-es'
+import { useI18n } from 'vue-i18n'
+import { mediaServerDict } from '@/api/constants'
+import { useDisplay } from 'vuetify'
+
+// 显示器宽度
+const display = useDisplay()
+
+// 获取i18n实例
+const { t } = useI18n()
 
 // 定义输入
 const props = defineProps({
@@ -31,17 +42,17 @@ const emit = defineEmits(['close', 'done', 'change'])
 const infoItems = ref([
   {
     avatar: 'mdi-movie-roll',
-    title: '电影',
+    title: t('mediaType.movie'),
     amount: '0',
   },
   {
     avatar: 'mdi-television-box',
-    title: '电视剧',
+    title: t('mediaType.tv'),
     amount: '0',
   },
   {
     avatar: 'mdi-account',
-    title: '用户',
+    title: t('common.user'),
     amount: '0',
   },
 ])
@@ -49,7 +60,7 @@ const infoItems = ref([
 // 同步媒体库选项
 const librariesOptions = ref<{ title: string; value: string | undefined }[]>([
   {
-    title: '全部',
+    title: t('common.all'),
     value: 'all',
   },
 ])
@@ -80,12 +91,12 @@ function openMediaServerInfoDialog() {
 function saveMediaServerInfo() {
   // 为空不保存，跳出警告框
   if (!mediaServerInfo.value.name) {
-    $toast.error('名称不能为空，请输入后再确定')
+    $toast.error(t('common.nameRequired'))
     return
   }
   // 重名判断
   if (props.mediaservers.some(item => item.name === mediaServerInfo.value.name && item !== props.mediaserver)) {
-    $toast.error(`【${mediaServerInfo.value.name}】已存在，请替换为其他名称`)
+    $toast.error(t('common.nameExists', { name: mediaServerInfo.value.name }))
     return
   }
   // 执行保存
@@ -101,8 +112,12 @@ const getIcon = computed(() => {
       return emby_image
     case 'jellyfin':
       return jellyfin_image
-    default:
+    case 'trimemedia':
+      return trimemedia_image
+    case 'plex':
       return plex_image
+    default:
+      return custom_image
   }
 })
 
@@ -124,17 +139,17 @@ async function loadMediaStatistic() {
       infoItems.value = [
         {
           avatar: 'mdi-movie-roll',
-          title: '电影',
+          title: t('mediaType.movie'),
           amount: res.movie_count.toLocaleString(),
         },
         {
           avatar: 'mdi-television-box',
-          title: '电视剧',
+          title: t('mediaType.tv'),
           amount: res.tv_count.toLocaleString(),
         },
         {
           avatar: 'mdi-account',
-          title: '用户',
+          title: t('common.user'),
           amount: res.user_count.toLocaleString(),
         },
       ]
@@ -157,7 +172,7 @@ async function loadLibrary(server: string) {
       librariesOptions.value = []
     }
     librariesOptions.value.unshift({
-      title: '全部',
+      title: t('common.all'),
       value: 'all',
     })
   } catch (e) {
@@ -172,175 +187,322 @@ onMounted(() => {
 <template>
   <div>
     <VCard variant="tonal" @click="openMediaServerInfoDialog">
-      <DialogCloseBtn @click="onClose" />
+      <VDialogCloseBtn @click="onClose" />
       <VCardText class="flex justify-space-between align-center gap-3">
         <div class="align-self-start flex-1">
           <div class="text-h6 mb-1">{{ mediaserver.name }}</div>
-          <div class="text-sm mt-5 flex flex-wrap">
+          <div v-if="mediaServerDict[mediaserver.type] && mediaserver.enabled" class="text-sm mt-5 flex flex-wrap">
             <span v-for="item in infoItems" :key="item.title" class="me-2 mb-1">
               <VIcon rounded :icon="item.avatar" class="me-1" />{{ item.amount }}
             </span>
+          </div>
+          <div v-else-if="!mediaServerDict[mediaserver.type]" class="text-sm mt-5 flex flex-wrap">
+            <span class="me-2 mb-1">自定义媒体服务器</span>
           </div>
         </div>
         <VImg :src="getIcon" cover class="mt-7 me-3" max-width="3rem" min-width="3rem" />
       </VCardText>
     </VCard>
-    <VDialog v-if="mediaServerInfoDialog" v-model="mediaServerInfoDialog" scrollable max-width="40rem" persistent>
-      <VCard :title="`${props.mediaserver.name} - 配置`" class="rounded-t">
-        <DialogCloseBtn v-model="mediaServerInfoDialog" />
+
+    <VDialog
+      v-if="mediaServerInfoDialog"
+      v-model="mediaServerInfoDialog"
+      scrollable
+      max-width="40rem"
+      :fullscreen="!display.mdAndUp.value"
+    >
+      <VCard>
+        <VCardItem class="py-2">
+          <template #prepend>
+            <VIcon icon="mdi-cog" class="me-2" />
+          </template>
+          <VCardTitle>{{ t('common.config') }}</VCardTitle>
+          <VCardSubtitle>{{ props.mediaserver.name }}</VCardSubtitle>
+        </VCardItem>
+        <VDialogCloseBtn v-model="mediaServerInfoDialog" />
         <VDivider />
         <VCardText>
           <VForm>
             <VRow>
               <VCol cols="12" md="6">
-                <VSwitch v-model="mediaServerInfo.enabled" label="启用媒体服务器" />
+                <VSwitch v-model="mediaServerInfo.enabled" :label="t('mediaserver.enableMediaServer')" />
               </VCol>
             </VRow>
             <VRow v-if="mediaServerInfo.type == 'emby'">
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.name"
-                  label="名称"
-                  placeholder="必填；不可与其他名称重名"
-                  hint="媒体服务器的别名"
+                  :label="t('common.name')"
+                  :placeholder="t('mediaserver.nameRequired')"
+                  :hint="t('mediaserver.serverAlias')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.host"
-                  label="地址"
-                  placeholder="http(s)://ip:port"
-                  hint="服务端地址，格式：http(s)://ip:port"
+                  :label="t('mediaserver.host')"
+                  :placeholder="t('mediaserver.hostPlaceholder')"
+                  :hint="t('mediaserver.hostHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-server"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.play_host"
-                  label="外网播放地址"
-                  placeholder="http(s)://domain:port"
-                  hint="跳转播放页面使用的地址，格式：http(s)://domain:port"
+                  :label="t('mediaserver.playHost')"
+                  :placeholder="t('mediaserver.playHostPlaceholder')"
+                  :hint="t('mediaserver.playHostHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-play-network"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.apikey"
-                  label="API密钥"
-                  hint="Emby设置->高级->API密钥中生成的密钥"
+                  :label="t('mediaserver.apiKey')"
+                  :hint="t('mediaserver.embyApiKeyHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-key"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VAutocomplete
+                  v-model="mediaServerInfo.sync_libraries"
+                  :label="t('mediaserver.syncLibraries')"
+                  :items="librariesOptions"
+                  chips
+                  multiple
+                  clearable
+                  :hint="t('mediaserver.syncLibrariesHint')"
+                  persistent-hint
+                  active
+                  append-inner-icon="mdi-refresh"
+                  prepend-inner-icon="mdi-library"
+                  @click:append-inner="loadLibrary(mediaServerInfo.name)"
                 />
               </VCol>
             </VRow>
-            <VRow v-if="mediaServerInfo.type == 'jellyfin'">
+            <VRow v-else-if="mediaServerInfo.type == 'jellyfin'">
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.name"
-                  label="名称"
-                  placeholder="必填；不可与其他名称重名"
-                  hint="媒体服务器的别名"
+                  :label="t('common.name')"
+                  :placeholder="t('mediaserver.nameRequired')"
+                  :hint="t('mediaserver.serverAlias')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.host"
-                  label="地址"
-                  placeholder="http(s)://ip:port"
-                  hint="服务端地址，格式：http(s)://ip:port"
+                  :label="t('mediaserver.host')"
+                  :placeholder="t('mediaserver.hostPlaceholder')"
+                  :hint="t('mediaserver.hostHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-server"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.play_host"
-                  label="外网播放地址"
-                  placeholder="http(s)://domain:port"
-                  hint="跳转播放页面使用的地址，格式：http(s)://domain:port"
+                  :label="t('mediaserver.playHost')"
+                  :placeholder="t('mediaserver.playHostPlaceholder')"
+                  :hint="t('mediaserver.playHostHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-play-network"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.apikey"
-                  label="API密钥"
-                  hint="Jellyfin设置->高级->API密钥中生成的密钥"
+                  :label="t('mediaserver.apiKey')"
+                  :hint="t('mediaserver.jellyfinApiKeyHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-key"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VAutocomplete
+                  v-model="mediaServerInfo.sync_libraries"
+                  :label="t('mediaserver.syncLibraries')"
+                  :items="librariesOptions"
+                  chips
+                  multiple
+                  clearable
+                  :hint="t('mediaserver.syncLibrariesHint')"
+                  persistent-hint
+                  active
+                  append-inner-icon="mdi-refresh"
+                  prepend-inner-icon="mdi-library"
+                  @click:append-inner="loadLibrary(mediaServerInfo.name)"
                 />
               </VCol>
             </VRow>
-            <VRow v-if="mediaServerInfo.type == 'plex'">
+            <VRow v-else-if="mediaServerInfo.type == 'trimemedia'">
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.name"
-                  label="名称"
-                  placeholder="必填；不可与其他名称重名"
-                  hint="媒体服务器的别名"
+                  :label="t('common.name')"
+                  :placeholder="t('mediaserver.nameRequired')"
+                  :hint="t('mediaserver.serverAlias')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.host"
-                  label="地址"
-                  placeholder="http(s)://ip:port"
-                  hint="服务端地址，格式：http(s)://ip:port"
+                  :label="t('mediaserver.host')"
+                  :placeholder="t('mediaserver.hostPlaceholder')"
+                  :hint="t('mediaserver.hostHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-server"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="mediaServerInfo.config.play_host"
+                  :label="t('mediaserver.playHost')"
+                  :placeholder="t('mediaserver.playHostPlaceholder')"
+                  :hint="t('mediaserver.playHostHint')"
+                  persistent-hint
+                  active
+                  prepend-inner-icon="mdi-play-network"
+                />
+              </VCol>
+              <VCol cols="12" md="6">
+                <VTextField
+                  v-model="mediaServerInfo.config.username"
+                  :label="t('mediaserver.username')"
+                  active
+                  prepend-inner-icon="mdi-account"
+                />
+              </VCol>
+              <VCol cols="12" md="6">
+                <VTextField
+                  type="password"
+                  v-model="mediaServerInfo.config.password"
+                  :label="t('mediaserver.password')"
+                  active
+                  prepend-inner-icon="mdi-lock"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VAutocomplete
+                  v-model="mediaServerInfo.sync_libraries"
+                  :label="t('mediaserver.syncLibraries')"
+                  :items="librariesOptions"
+                  chips
+                  multiple
+                  clearable
+                  :hint="t('mediaserver.syncLibrariesHint')"
+                  persistent-hint
+                  active
+                  append-inner-icon="mdi-refresh"
+                  prepend-inner-icon="mdi-library"
+                  @click:append-inner="loadLibrary(mediaServerInfo.name)"
+                />
+              </VCol>
+            </VRow>
+            <VRow v-else-if="mediaServerInfo.type == 'plex'">
+              <VCol cols="12" md="6">
+                <VTextField
+                  v-model="mediaServerInfo.name"
+                  :label="t('common.name')"
+                  :placeholder="t('mediaserver.nameRequired')"
+                  :hint="t('mediaserver.serverAlias')"
+                  persistent-hint
+                  active
+                  prepend-inner-icon="mdi-label"
+                />
+              </VCol>
+              <VCol cols="12" md="6">
+                <VTextField
+                  v-model="mediaServerInfo.config.host"
+                  :label="t('mediaserver.host')"
+                  :placeholder="t('mediaserver.hostPlaceholder')"
+                  :hint="t('mediaserver.hostHint')"
+                  persistent-hint
+                  active
+                  prepend-inner-icon="mdi-server"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.play_host"
-                  label="外网播放地址"
-                  placeholder="http(s)://domain:port"
-                  hint="跳转播放页面使用的地址，格式：http(s)://domain:port"
+                  :label="t('mediaserver.playHost')"
+                  :placeholder="t('mediaserver.playHostPlaceholder')"
+                  :hint="t('mediaserver.playHostHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-play-network"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="mediaServerInfo.config.token"
-                  label="X-Plex-Token"
-                  hint="浏览器F12->网络，从Plex请求URL中获取的X-Plex-Token"
+                  :label="t('mediaserver.plexToken')"
+                  :hint="t('mediaserver.plexTokenHint')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-key"
                 />
               </VCol>
-            </VRow>
-            <VRow>
               <VCol cols="12">
-                <VSelect
+                <VAutocomplete
                   v-model="mediaServerInfo.sync_libraries"
-                  label="同步媒体库"
+                  :label="t('mediaserver.syncLibraries')"
                   :items="librariesOptions"
                   chips
                   multiple
                   clearable
-                  hint="只有选中的媒体库才会被同步"
+                  :hint="t('mediaserver.syncLibrariesHint')"
                   persistent-hint
                   active
                   append-inner-icon="mdi-refresh"
+                  prepend-inner-icon="mdi-library"
                   @click:append-inner="loadLibrary(mediaServerInfo.name)"
+                />
+              </VCol>
+            </VRow>
+            <VRow v-else>
+              <VCol cols="12" md="6">
+                <VTextField
+                  v-model="mediaServerInfo.type"
+                  :label="t('mediaserver.type')"
+                  :hint="t('mediaserver.customTypeHint')"
+                  persistent-hint
+                  prepend-inner-icon="mdi-cog"
+                />
+              </VCol>
+              <VCol cols="12" md="6">
+                <VTextField
+                  :label="t('common.name')"
+                  :hint="t('mediaserver.nameRequired')"
+                  persistent-hint
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
             </VRow>
           </VForm>
         </VCardText>
         <VCardActions class="pt-3">
-          <VBtn @click="saveMediaServerInfo" variant="elevated" prepend-icon="mdi-content-save" class="px-5">
-            确定
+          <VBtn @click="saveMediaServerInfo" prepend-icon="mdi-content-save" class="px-5">
+            {{ t('common.confirm') }}
           </VBtn>
         </VCardActions>
       </VCard>

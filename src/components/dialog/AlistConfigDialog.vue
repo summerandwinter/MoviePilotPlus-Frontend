@@ -1,5 +1,13 @@
 <script lang="ts" setup>
 import api from '@/api'
+import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
+
+// 显示器宽度
+const display = useDisplay()
+
+// 多语言支持
+const { t } = useI18n()
 
 // 定义输入
 const props = defineProps({
@@ -18,7 +26,40 @@ async function handleDone() {
   emit('done')
 }
 
-// 保存rclone设置
+// 重置配置
+async function handleReset() {
+  try {
+    const result: { [key: string]: any } = await api.get('/storage/reset/alist')
+    if (result.success) {
+      // 重置成功
+      handleDone()
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+// 登录类型
+let loginType = ref('username')
+if (props.conf.token) {
+  loginType = ref('token')
+} else if (props.conf.username) {
+  loginType = ref('username')
+} else {
+  loginType = ref('guest')
+}
+
+// 数据源
+const sourceItems = [
+  {
+    'title': t('dialog.alistConfig.loginTypeOptions.username'),
+    'value': 'username',
+  },
+  { 'title': t('dialog.alistConfig.loginTypeOptions.token'), 'value': 'token' },
+  { 'title': t('dialog.alistConfig.loginTypeOptions.guest'), 'value': 'guest' },
+]
+
+// 保存alist设置
 async function savaAlistConfig() {
   try {
     await api.post(`storage/save/alist`, props.conf)
@@ -29,31 +70,77 @@ async function savaAlistConfig() {
 </script>
 
 <template>
-  <VDialog width="50rem" scrollable max-height="85vh">
-    <VCard title="AList配置" class="rounded-t">
-      <DialogCloseBtn @click="emit('close')" />
+  <VDialog width="50rem" scrollable :fullscreen="!display.mdAndUp.value">
+    <VCard>
+      <VDialogCloseBtn @click="emit('close')" />
+      <VCardItem>
+        <template #prepend>
+          <VIcon icon="mdi-cog-outline" class="me-2" />
+        </template>
+        <VCardTitle>
+          {{ t('dialog.alistConfig.title') }}
+        </VCardTitle>
+      </VCardItem>
+      <VDivider />
       <VCardText>
         <VRow>
           <VCol cols="12">
-            <VTextField v-model="props.conf.url" hint="AList服务地址" label="地址" persistent-hint />
+            <VTextField
+              v-model="props.conf.url"
+              :hint="t('dialog.alistConfig.serverUrl')"
+              :label="t('dialog.alistConfig.serverUrl')"
+              persistent-hint
+              prepend-inner-icon="mdi-server"
+            />
           </VCol>
-          <VCol cols="12" md="6">
-            <VTextField v-model="props.conf.username" hint="AList登录用户名" label="用户名" persistent-hint />
+          <VCol cols="12" md="4">
+            <VSelect
+              v-model="loginType"
+              :items="sourceItems"
+              :label="t('dialog.alistConfig.loginType')"
+              :hint="t('dialog.alistConfig.loginType')"
+              persistent-hint
+              prepend-inner-icon="mdi-login"
+            />
           </VCol>
-          <VCol cols="12" md="6">
+          <VCol cols="12" md="4" v-if="loginType == 'username'">
+            <VTextField
+              v-model="props.conf.username"
+              :hint="t('dialog.alistConfig.username')"
+              :label="t('dialog.alistConfig.username')"
+              persistent-hint
+              prepend-inner-icon="mdi-account"
+            />
+          </VCol>
+          <VCol cols="12" md="4" v-if="loginType == 'username'">
             <VTextField
               type="password"
               v-model="props.conf.password"
-              hint="AList登录密码"
-              label="密码"
+              :hint="t('dialog.alistConfig.password')"
+              :label="t('dialog.alistConfig.password')"
               persistent-hint
+              prepend-inner-icon="mdi-lock"
+            />
+          </VCol>
+          <VCol cols="12" md="8" v-if="loginType == 'token'">
+            <VTextField
+              v-model="props.conf.token"
+              :hint="t('dialog.alistConfig.loginTypeOptions.token')"
+              :label="t('dialog.alistConfig.loginTypeOptions.token')"
+              persistent-hint
+              prepend-inner-icon="mdi-key"
             />
           </VCol>
         </VRow>
       </VCardText>
       <VCardActions>
+        <VBtn color="error" @click="handleReset" prepend-icon="mdi-restore" class="px-5 me-3">
+          {{ t('dialog.alistConfig.reset') }}
+        </VBtn>
         <VSpacer />
-        <VBtn variant="elevated" @click="handleDone" prepend-icon="mdi-check" class="px-5 me-3"> 完成 </VBtn>
+        <VBtn @click="handleDone" prepend-icon="mdi-check" class="px-5 me-3">
+          {{ t('dialog.alistConfig.complete') }}
+        </VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

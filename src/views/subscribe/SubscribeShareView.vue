@@ -3,6 +3,16 @@ import api from '@/api'
 import type { SubscribeShare } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import SubscribeShareCard from '@/components/cards/SubscribeShareCard.vue'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
+
+// 定义输入参数
+const props = defineProps({
+  // 过滤关键字
+  keyword: String,
+})
 
 // 判断是否有滚动条
 function hasScroll() {
@@ -14,6 +24,9 @@ const apipath = 'subscribe/shares'
 
 // 当前页码
 const page = ref(1)
+
+// 搜索关键字
+const keyword = ref(props.keyword)
 
 // 是否加载中
 const loading = ref(false)
@@ -30,6 +43,7 @@ function getParams() {
   let params = {
     page: page.value,
     count: 30,
+    name: keyword.value,
   }
   return params
 }
@@ -105,11 +119,12 @@ function removeData(id: number) {
 </script>
 
 <template>
+  <VPageContentTitle v-if="keyword" :title="`${t('common.search')}：${keyword}`" />
   <LoadingBanner v-if="!isRefreshed" class="mt-12" />
-  <VInfiniteScroll mode="intersect" side="end" :items="dataList" class="overflow-hidden" @load="fetchData">
+  <VInfiniteScroll mode="intersect" side="end" :items="dataList" class="overflow-visible px-2" @load="fetchData">
     <template #loading />
     <template #empty />
-    <div v-if="dataList.length > 0" class="grid gap-4 grid-subscribe-card mx-3" tabindex="0">
+    <div v-if="dataList.length > 0" class="grid gap-4 grid-subscribe-card" tabindex="0">
       <div v-for="data in dataList" :key="data.id">
         <SubscribeShareCard :media="data" @delete="removeData(data.id || 0)" />
       </div>
@@ -117,8 +132,8 @@ function removeData(id: number) {
     <NoDataFound
       v-if="dataList.length === 0 && isRefreshed"
       error-code="404"
-      error-title="没有数据"
-      error-description="未获取到共享订阅数据，未开启数据分享或服务器无法连接。"
+      :error-title="t('common.noData')"
+      :error-description="keyword ? t('common.noContent') : t('subscribe.noShareData')"
     />
   </VInfiniteScroll>
 </template>

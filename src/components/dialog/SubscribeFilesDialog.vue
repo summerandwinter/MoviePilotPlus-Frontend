@@ -2,6 +2,10 @@
 import api from '@/api'
 import { SubscrbieInfo } from '@/api/types'
 import { useDisplay } from 'vuetify'
+import { useI18n } from 'vue-i18n'
+
+// i18n
+const { t } = useI18n()
 
 // 显示器宽度
 const display = useDisplay()
@@ -19,25 +23,31 @@ const emit = defineEmits(['close'])
 // 订阅文件信息
 const subScribeInfo = ref<SubscrbieInfo>()
 
+// 是否加载中
+const loading = ref(false)
+
 // 下载文件表头
 const downloadHeaders = [
-  { title: '集', key: 'episode_number', sortable: true },
-  { title: '种子', key: 'torrent_title', sortable: true },
-  { title: '文件', key: 'file_path', sortable: true },
+  { title: t('dialog.subscribeFiles.episodeColumn'), key: 'episode_number', sortable: true },
+  { title: t('dialog.subscribeFiles.torrentColumn'), key: 'torrent_title', sortable: true },
+  { title: t('dialog.subscribeFiles.fileColumn'), key: 'file_path', sortable: true },
 ]
 
 // 媒体库文件表头
 const libraryHeaders = [
-  { title: '集', key: 'episode_number', sortable: true },
-  { title: '文件', key: 'file_path', sortable: true },
+  { title: t('dialog.subscribeFiles.episodeColumn'), key: 'episode_number', sortable: true },
+  { title: t('dialog.subscribeFiles.fileColumn'), key: 'file_path', sortable: true },
 ]
 
 // 调用API查询订阅文件信息
 async function loadSubscribeFilesInfo() {
   try {
+    loading.value = true
     subScribeInfo.value = await api.get(`subscribe/files/${props.subid}`)
   } catch (e) {
     console.log(e)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -76,11 +86,12 @@ onBeforeMount(() => {
 </script>
 <template>
   <VDialog scrollable max-width="80rem" :fullscreen="!display.mdAndUp.value">
-    <VCard class="rounded-t">
+    <VCard>
       <VCardItem class="my-2">
-        <DialogCloseBtn @click="emit('close')" />
+        <VDialogCloseBtn @click="emit('close')" />
       </VCardItem>
-      <VCardText>
+      <LoadingBanner v-if="loading" />
+      <VCardText v-else>
         <div class="media-page">
           <div class="media-header">
             <div class="media-poster">
@@ -102,7 +113,7 @@ onBeforeMount(() => {
                   {{ subScribeInfo?.subscribe?.name }}
                 </div>
                 <div v-if="subScribeInfo?.subscribe?.season" class="text-lg align-self-center align-self-lg-end ms-3">
-                  第 {{ subScribeInfo?.subscribe?.season }} 季
+                  {{ t('dialog.subscribeFiles.season', { number: subScribeInfo?.subscribe?.season }) }}
                 </div>
               </h1>
               <div>{{ subScribeInfo?.subscribe?.year }}</div>
@@ -119,13 +130,13 @@ onBeforeMount(() => {
             <VTab value="download" selected-class="v-slide-group-item--active v-tab--selected">
               <div>
                 <VIcon size="20" start icon="mdi-download" />
-                下载文件
+                {{ t('dialog.subscribeFiles.downloadTab') }}
               </div>
             </VTab>
             <VTab value="library" selected-class="v-slide-group-item--active v-tab--selected">
               <div>
                 <VIcon size="20" start icon="mdi-filmstrip-box-multiple" />
-                媒体库文件
+                {{ t('dialog.subscribeFiles.libraryTab') }}
               </div>
             </VTab>
           </VTabs>
@@ -143,9 +154,9 @@ onBeforeMount(() => {
                     return-object
                     fixed-header
                     hover
-                    items-per-page-text="每页条数"
-                    page-text="{0}-{1} 共 {2} 条"
-                    loading-text="加载中..."
+                    :items-per-page-text="t('dialog.subscribeFiles.itemsPerPage')"
+                    :page-text="t('dialog.subscribeFiles.pageText')"
+                    :loading-text="t('dialog.subscribeFiles.loadingText')"
                   >
                     <template #item.episode_number="{ item }">
                       <div class="text-high-emphasis pt-1">{{ item.episode_number }}. {{ item.title }}</div>
@@ -158,7 +169,7 @@ onBeforeMount(() => {
                     <template #item.file_path="{ item }">
                       <div class="text-xs" v-for="file in item.download">{{ file.file_path }}</div>
                     </template>
-                    <template #no-data> 没有数据 </template>
+                    <template #no-data> {{ t('dialog.subscribeFiles.noData') }} </template>
                   </VDataTable>
                 </div>
               </transition>
@@ -176,9 +187,9 @@ onBeforeMount(() => {
                     return-object
                     fixed-header
                     hover
-                    items-per-page-text="每页条数"
-                    page-text="{0}-{1} 共 {2} 条"
-                    loading-text="加载中..."
+                    :items-per-page-text="t('dialog.subscribeFiles.itemsPerPage')"
+                    :page-text="t('dialog.subscribeFiles.pageText')"
+                    :loading-text="t('dialog.subscribeFiles.loadingText')"
                   >
                     <template #item.episode_number="{ item }">
                       <div class="text-high-emphasis pt-1">{{ item.episode_number }}. {{ item.title }}</div>
@@ -186,7 +197,7 @@ onBeforeMount(() => {
                     <template #item.file_path="{ item }">
                       <div class="text-xs" v-for="file in item.library">{{ file.file_path }}</div>
                     </template>
-                    <template #no-data> 没有数据 </template>
+                    <template #no-data> {{ t('dialog.subscribeFiles.noData') }} </template>
                   </VDataTable>
                 </div>
               </transition>
@@ -198,7 +209,7 @@ onBeforeMount(() => {
   </VDialog>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .vue-media-back {
   background-image: linear-gradient(
       180deg,
@@ -237,7 +248,7 @@ onBeforeMount(() => {
 .media-overview {
   display: flex;
   flex-direction: column;
-  padding-block: 1rem 1rem;
+  padding-block: 1rem;
 }
 
 @media (width >= 1024px) {

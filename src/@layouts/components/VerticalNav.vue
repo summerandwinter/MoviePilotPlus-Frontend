@@ -59,9 +59,6 @@ function handleNavScroll(evt: Event) {
         </RouterLink>
       </slot>
     </div>
-    <slot name="before-nav-items">
-      <div class="vertical-nav-items-shadow" />
-    </slot>
     <slot name="nav-items" :update-is-vertical-nav-scrolled="updateIsVerticalNavScrolled">
       <PerfectScrollbar
         tag="ul"

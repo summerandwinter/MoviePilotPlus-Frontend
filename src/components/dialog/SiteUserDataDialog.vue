@@ -4,6 +4,10 @@ import api from '@/api'
 import { useDisplay, useTheme } from 'vuetify'
 import { formatFileSize } from '@/@core/utils/formatters'
 import ProgressDialog from '@/components/dialog/ProgressDialog.vue'
+import { useI18n } from 'vue-i18n'
+
+// 多语言支持
+const { t } = useI18n()
 
 // 显示器宽度
 const display = useDisplay()
@@ -36,11 +40,11 @@ const siteData = computed(() => siteDatas.value[siteDatas.value.length - 1])
 const historySeries = computed(() => {
   return [
     {
-      name: '上传量',
+      name: t('dialog.siteUserData.uploadTitle'),
       data: siteDatas.value.map(item => Math.round((item.upload ?? 0) / 1024 / 1024 / 1024)),
     },
     {
-      name: '下载量',
+      name: t('dialog.siteUserData.downloadTitle'),
       data: siteDatas.value.map(item => Math.round((item.download ?? 0) / 1024 / 1024 / 1024)),
     },
   ]
@@ -54,6 +58,8 @@ const historyChartOptions = computed(() => {
       parentHeightOffset: 0,
       toolbar: { show: false },
       animations: { enabled: true },
+      background: currentTheme.value.surface, // 新增背景色同步
+      foreColor: currentTheme.value.onSurface, // 新增文字颜色同步
       dataLabels: {
         enabled: true,
       },
@@ -61,12 +67,19 @@ const historyChartOptions = computed(() => {
         autoScaleYaxis: true,
       },
     },
+    theme: {
+      mode: vuetifyTheme.global.current.value.dark ? 'dark' : 'light', // 同步主题模式
+    },
     tooltip: {
       enabled: true,
       tooltip: {
         x: {
           format: 'dd MMM yyyy',
         },
+      },
+      style: {
+        background: currentTheme.value.background, // 提示框背景色同步
+        color: currentTheme.value.onBackground, // 文字颜色同步
       },
     },
     grid: {
@@ -126,7 +139,7 @@ const historyChartOptions = computed(() => {
 const seedingSeries = computed(() => {
   return [
     {
-      name: '体积',
+      name: t('dialog.siteUserData.volumeTitle'),
       data: siteData.value?.seeding_info?.map(item => [item[0] ?? 0, Math.round((item[1] ?? 0) / 1024 / 1024 / 1024)]),
     },
   ]
@@ -140,16 +153,25 @@ const seedingChartOptions = computed(() => {
       parentHeightOffset: 0,
       toolbar: { show: false },
       animations: { enabled: true },
+      background: currentTheme.value.surface, // 新增背景色同步
+      foreColor: currentTheme.value.onSurface, // 新增文字颜色同步
       zoom: {
         autoScaleYaxis: true,
       },
+    },
+    theme: {
+      mode: vuetifyTheme.global.current.value.dark ? 'dark' : 'light', // 同步主题模式
     },
     tooltip: {
       enabled: true,
       x: {
         formatter: function (val: number) {
-          return '数量：' + val.toLocaleString()
+          return t('dialog.siteUserData.countTitle') + val.toLocaleString()
         },
+      },
+      style: {
+        background: currentTheme.value.background, // 提示框背景色同步
+        color: currentTheme.value.onBackground, // 文字颜色同步
       },
     },
     grid: {
@@ -170,7 +192,7 @@ const seedingChartOptions = computed(() => {
         },
       },
       title: {
-        text: '数量',
+        text: t('dialog.siteUserData.countTitle'),
       },
       tickAmount: 10,
     },
@@ -261,13 +283,13 @@ onBeforeMount(async () => {
 
 <template>
   <VDialog scrollable eager max-width="80rem" :fullscreen="!display.mdAndUp.value">
-    <VCard class="rounded-t">
+    <VCard>
       <VCardItem>
         <VCardTitle
-          >{{ `数据 - ${props.site?.name}` }}
+          >{{ t('dialog.siteUserData.title') }} - {{ props.site?.name }}
           <IconBtn @click.stop="refreshSiteData" color="info"><VIcon icon="mdi-refresh" /></IconBtn>
         </VCardTitle>
-        <DialogCloseBtn @click="emit('close')" />
+        <VDialogCloseBtn @click="emit('close')" />
       </VCardItem>
       <VDivider />
       <VCardText class="pt-5">
@@ -277,10 +299,10 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">用户等级</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.userLevel') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
-                      {{ siteData?.user_level || '无' }}
+                      {{ siteData?.user_level || t('dialog.siteUserData.noData') }}
                     </h5>
                   </div>
                   <VAvatar variant="tonal" size="42" rounded>
@@ -295,8 +317,8 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">积分</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.bonus') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ siteData?.bonus?.toLocaleString() }}
                       <span class="text-base font-weight-regular" :class="getDiffClass(diffData?.bonus)">
@@ -317,7 +339,7 @@ onBeforeMount(async () => {
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
                   <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">分享率</span>
+                    <span class="text-base">{{ t('dialog.siteUserData.ratio') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ siteData?.ratio }}
                       <span class="text-base font-weight-regular" :class="getDiffClass(diffData?.ratio)">
@@ -337,8 +359,8 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">总上传量</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.uploadTotal') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ formatFileSize(siteData?.upload || 0) }}
                       <span class="text-base font-weight-regular" :class="getDiffClass(diffData?.upload)">
@@ -358,8 +380,8 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">总下载量</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.downloadTotal') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ formatFileSize(siteData?.download || 0) }}
                       <span class="text-base font-weight-regular" :class="getDiffClass(diffData?.download)">
@@ -379,8 +401,8 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">总做种数</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.seedingCount') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ siteData?.seeding?.toLocaleString() }}
                       <span class="text-base font-weight-regular" :class="getDiffClass(diffData?.seeding)">
@@ -400,8 +422,8 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">总做种体积</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.seedingSize') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ formatFileSize(siteData?.seeding_size || 0) }}
                       <span class="text-base font-weight-regular" :class="getDiffClass(diffData?.seeding_size)">
@@ -421,8 +443,8 @@ onBeforeMount(async () => {
             <VCard>
               <VCardText class="d-flex align-center">
                 <div class="d-flex justify-space-between" style="inline-size: 100%">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base">加入时间</span>
+                  <div class="d-flex flex-column gap-y-1 overflow-hidden">
+                    <span class="text-base">{{ t('dialog.siteUserData.joinTime') }}</span>
                     <h5 class="text-h5 d-flex align-center gap-2 text-wrap">
                       {{ siteData?.join_at?.split(' ')[0] }}
                     </h5>
@@ -437,7 +459,7 @@ onBeforeMount(async () => {
         </VRow>
         <VRow>
           <VCol>
-            <VCard title="历史流量">
+            <VCard :title="t('dialog.siteUserData.trafficHistory')">
               <VCardText>
                 <VApexChart type="line" :options="historyChartOptions" :series="historySeries" :height="300" />
               </VCardText>
@@ -446,7 +468,7 @@ onBeforeMount(async () => {
         </VRow>
         <VRow>
           <VCol>
-            <VCard title="做种分布">
+            <VCard :title="t('dialog.siteUserData.seedingDistribution')">
               <VCardText>
                 <VApexChart type="scatter" :options="seedingChartOptions" :series="seedingSeries" :height="300" />
               </VCardText>
@@ -456,6 +478,6 @@ onBeforeMount(async () => {
       </VCardText>
     </VCard>
     <!-- 进度框 -->
-    <ProgressDialog v-if="progressDialog" v-model="progressDialog" text="正在刷新站点数据..." />
+    <ProgressDialog v-if="progressDialog" v-model="progressDialog" :text="t('dialog.siteUserData.refreshing')" />
   </VDialog>
 </template>

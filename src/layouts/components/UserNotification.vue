@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { formatDateDifference } from '@core/utils/formatters'
 import { SystemNotification } from '@/api/types'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 是否有新消息
 const hasNewMessage = ref(false)
@@ -24,7 +27,6 @@ function startSSEMessager() {
         const noti: SystemNotification = JSON.parse(event.data)
         notificationList.value.unshift(noti)
         hasNewMessage.value = true
-        // TODO 在顶部显示消息汽泡
       }
     })
   }, 3000)
@@ -40,8 +42,16 @@ onBeforeUnmount(() => {
   if (eventSource) eventSource.close()
 })
 </script>
+
 <template>
-  <VMenu v-model="appsMenu" width="400" transition="scale-transition" close-on-content-click>
+  <VMenu
+    v-model="appsMenu"
+    width="400"
+    transition="scale-transition"
+    close-on-content-click
+    class="notification-menu"
+    scrim
+  >
     <!-- Menu Activator -->
     <template #activator="{ props }">
       <VBadge v-if="hasNewMessage" dot color="error" :offset-x="5" :offset-y="5" v-bind="props">
@@ -55,10 +65,10 @@ onBeforeUnmount(() => {
     </template>
     <!-- Menu Content -->
     <VCard>
-      <VCardItem class="border-b">
-        <VCardTitle>通知</VCardTitle>
+      <VCardItem class="py-3">
+        <VCardTitle>{{ t('notification.center') }}</VCardTitle>
         <template #append>
-          <VTooltip text="设为已读">
+          <VTooltip :text="t('notification.markRead')">
             <template #activator="{ props }">
               <IconBtn
                 v-bind="props"
@@ -69,33 +79,48 @@ onBeforeUnmount(() => {
                   }
                 "
               >
-                <VIcon icon="mdi-email-mark-as-unread" />
+                <VIcon icon="mdi-email-check-outline" size="20" />
               </IconBtn>
             </template>
           </VTooltip>
         </template>
       </VCardItem>
-      <VList lines="two" v-if="notificationList.length > 0" max-height="600">
-        <VListItem v-for="(item, i) in notificationList" :key="i">
-          <template #prepend>
-            <VAvatar rounded>
-              <VIcon v-if="item.type === 'user'" icon="mdi-account-alert" size="large"></VIcon>
-              <VIcon v-else-if="item.type === 'plugin'" icon="mdi-robot-happy" size="large"></VIcon>
-              <VIcon v-else icon="mdi-laptop" size="large"></VIcon>
-            </VAvatar>
-          </template>
-          <VListItemTitle class="overflow-visiable break-words whitespace-break-spaces">
-            {{ item.title }}
-          </VListItemTitle>
-          <VListItemSubtitle class="mt-2">{{ item.text }}</VListItemSubtitle>
-          <VListItemSubtitle class="mt-2">{{ formatDateDifference(item.date) }}</VListItemSubtitle>
-        </VListItem>
-      </VList>
-      <VList v-else>
-        <VListItem>
-          <VListItemTitle class="text-center">暂无通知</VListItemTitle>
-        </VListItem>
-      </VList>
+      <VDivider />
+      <div class="notification-list-container">
+        <div v-if="notificationList.length > 0" class="h-full overflow-y-auto">
+          <VListItem v-for="(item, i) in notificationList" :key="i" lines="two" class="mb-1">
+            <template #prepend>
+              <VAvatar rounded>
+                <VIcon v-if="item.type === 'user'" icon="mdi-account-alert" size="large"></VIcon>
+                <VIcon v-else-if="item.type === 'plugin'" icon="mdi-robot" size="large"></VIcon>
+                <VIcon v-else icon="mdi-laptop" size="large"></VIcon>
+              </VAvatar>
+            </template>
+            <div>
+              <div class="text-body-1 text-high-emphasis break-words whitespace-break-spaces">
+                {{ item.title }}
+              </div>
+              <div class="text-caption mt-1.5">
+                {{ item.text }}
+              </div>
+              <div class="text-sm text-primary mt-1.5">
+                {{ formatDateDifference(item.date) }}
+              </div>
+            </div>
+          </VListItem>
+        </div>
+        <div v-else class="py-8 text-center">
+          <VIcon icon="mdi-bell-sleep-outline" size="40" class="mb-3" />
+          <div>{{ t('notification.empty') }}</div>
+        </div>
+      </div>
     </VCard>
   </VMenu>
 </template>
+
+<style scoped>
+.notification-list-container {
+  overflow: hidden;
+  max-block-size: 50vh;
+}
+</style>

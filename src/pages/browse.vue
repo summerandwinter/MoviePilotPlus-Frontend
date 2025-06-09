@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import MediaCardListView from '@/views/discover/MediaCardListView.vue'
 import PersonCardListView from '@/views/discover/PersonCardListView.vue'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 输入参数
 const props = defineProps({
@@ -16,7 +20,7 @@ let title = route.query?.title?.toString()
 
 // 类型
 const type = route.query?.type?.toString()
-if (type === 'person') title = '演员：' + title
+if (type === 'person') title = t('browse.actor') + ': ' + title
 
 // 计算API路径
 function getApiPath(paths: string[] | string) {
@@ -27,17 +31,9 @@ function getApiPath(paths: string[] | string) {
 
 <template>
   <div>
-    <div v-if="title" class="mt-3 md:flex md:items-center md:justify-between">
-      <div class="min-w-0 flex-1 mx-0">
-        <h2
-          class="mb-4 ms-3 truncate text-2xl font-bold leading-7 text-gray-100 sm:overflow-visible sm:text-4xl sm:leading-9 md:mb-0"
-          data-testid="page-header"
-        >
-          <span class="text-moviepilot">{{ title }}</span>
-        </h2>
-      </div>
-    </div>
+    <VPageContentTitle :title="title" />
     <PersonCardListView v-if="type === 'person'" :apipath="getApiPath(props.paths || '')" :params="route.query" />
     <MediaCardListView v-else :apipath="getApiPath(props.paths || '')" :params="route.query" />
+    <VScrollToTopBtn />
   </div>
 </template>

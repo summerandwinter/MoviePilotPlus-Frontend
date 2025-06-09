@@ -2,6 +2,10 @@
 import type { Message } from '@/api/types'
 import MessageCard from '@/components/cards/MessageCard.vue'
 import api from '@/api'
+import { useI18n } from 'vue-i18n'
+
+// 国际化
+const { t } = useI18n()
 
 // 定义事件
 const emit = defineEmits(['scroll'])
@@ -35,7 +39,9 @@ function startSSEMessager() {
       const object = JSON.parse(message)
       if (compareTime(object.date, lastTime.value) <= 0) return
       messages.value.push(object)
-      emit('scroll')
+      nextTick(() => {
+        emit('scroll')
+      })
     }
   })
 }
@@ -91,6 +97,13 @@ function compareTime(time1: string, time2: string) {
   return new Date(time1.replaceAll(/-/g, '/')).getTime() - new Date(time2.replaceAll(/-/g, '/')).getTime()
 }
 
+onMounted(() => {
+  // 组件挂载后触发一次滚动事件
+  nextTick(() => {
+    emit('scroll')
+  })
+})
+
 onBeforeUnmount(() => {
   if (eventSource) eventSource.close()
 })
@@ -101,19 +114,19 @@ onBeforeUnmount(() => {
     :mode="!isLoaded ? 'intersect' : 'manual'"
     side="start"
     :items="messages"
-    class="overflow-hidden"
+    class="overflow-visible message-scroll h-full"
     @load="loadMessages"
-    load-more-text="加载更多 ..."
+    :load-more-text="t('message.loadMore') + ' ...'"
   >
     <template #loading>
       <LoadingBanner />
     </template>
-    <template #empty> 没有更多数据 </template>
+    <template #empty> {{ t('message.noMoreData') }} </template>
     <div>
       <div
         v-for="(msg, index) in messages"
         :key="index"
-        class="chat-group d-flex mb-8"
+        class="chat-group d-flex mt-5 mb-8"
         :class="msg.action == 1 ? 'flex-row align-start' : 'flex-row-reverse align-end'"
       >
         <div class="d-inline-flex flex-column" :class="msg.action == 1 ? 'align-start' : 'align-end'">
@@ -123,3 +136,9 @@ onBeforeUnmount(() => {
     </div>
   </VInfiniteScroll>
 </template>
+
+<style scoped>
+.message-scroll {
+  overflow-y: auto !important;
+}
+</style>

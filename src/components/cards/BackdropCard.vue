@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import type { MediaServerPlayItem } from '@/api/types'
-
 // 输入参数
 const props = defineProps({
   media: Object as PropType<MediaServerPlayItem>,
@@ -29,7 +28,7 @@ const getImgUrl = computed(() => {
 </script>
 
 <template>
-  <VHover v-bind="props">
+  <VHover>
     <template #default="hover">
       <VCard
         v-bind="hover.props"
@@ -37,7 +36,7 @@ const getImgUrl = computed(() => {
         :width="props.width"
         class="ring-gray-500"
         :class="{
-          'transition transform-cpu duration-300 scale-105 shadow-lg': hover.isHovering,
+          'transition transform-cpu duration-300 -translate-y-1': hover.isHovering,
           'ring-1': imageLoaded,
         }"
         @click="goPlay"

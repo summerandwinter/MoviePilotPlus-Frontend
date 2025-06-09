@@ -8,14 +8,17 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ConfirmDialog: typeof import('./src/@core/components/ConfirmDialog.vue')['default']
     DialogCloseBtn: typeof import('./src/@core/components/DialogCloseBtn.vue')['default']
     ErrorHeader: typeof import('./src/@core/components/ErrorHeader.vue')['default']
     ExistIcon: typeof import('./src/@core/components/ExistIcon.vue')['default']
     IgnoreIcon: typeof import('./src/@core/components/IgnoreIcon.vue')['default']
     LoadingBanner: typeof import('./src/@core/components/LoadingBanner.vue')['default']
     MoreBtn: typeof import('./src/@core/components/MoreBtn.vue')['default']
+    PageContentTitle: typeof import('./src/@core/components/PageContentTitle.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScrollToTopBtn: typeof import('./src/@core/components/ScrollToTopBtn.vue')['default']
     StatIcon: typeof import('./src/@core/components/StatIcon.vue')['default']
     ThemeSwitcher: typeof import('./src/@core/components/ThemeSwitcher.vue')['default']
   }

@@ -6,7 +6,17 @@ import { useToast } from 'vue-toast-notification'
 import type { DownloaderInfo } from '@/api/types'
 import qbittorrent_image from '@images/logos/qbittorrent.png'
 import transmission_image from '@images/logos/transmission.png'
+import custom_image from '@images/logos/downloader.png'
 import { cloneDeep } from 'lodash-es'
+import { useI18n } from 'vue-i18n'
+import { downloaderDict } from '@/api/constants'
+import { useDisplay } from 'vuetify'
+
+// 显示器宽度
+const display = useDisplay()
+
+// 获取i18n实例
+const { t } = useI18n()
 
 // 定义输入
 const props = defineProps({
@@ -91,12 +101,12 @@ function openDownloaderInfoDialog() {
 function saveDownloaderInfo() {
   // 为空不保存，跳出警告框
   if (!downloaderInfo.value.name) {
-    $toast.error('名称不能为空，请输入后再确定')
+    $toast.error(t('downloader.nameRequired'))
     return
   }
   // 重名判断
   if (props.downloaders.some(item => item.name === downloaderInfo.value.name && item !== props.downloader)) {
-    $toast.error(`【${downloaderInfo.value.name}】已存在，请替换为其他名称`)
+    $toast.error(t('downloader.nameDuplicate'))
     return
   }
   // 默认下载器去重
@@ -104,7 +114,7 @@ function saveDownloaderInfo() {
     props.downloaders.forEach(item => {
       if (item.default && item !== props.downloader) {
         item.default = false
-        $toast.info(`存在默认下载器【${item.name}】，已替换成【${downloaderInfo.value.name}】`)
+        $toast.info(t('downloader.defaultChanged'))
       }
     })
   }
@@ -122,7 +132,7 @@ const getIcon = computed(() => {
     case 'transmission':
       return transmission_image
     default:
-      return qbittorrent_image
+      return custom_image
   }
 })
 
@@ -143,94 +153,126 @@ onUnmounted(() => {
 </script>
 <template>
   <div>
-    <VCard variant="tonal" @click="openDownloaderInfoDialog">
-      <DialogCloseBtn @click="onClose" />
-      <span class="absolute top-3 right-12">
-        <IconBtn>
-          <VIcon class="cursor-move" icon="mdi-drag" />
-        </IconBtn>
-      </span>
-      <VCardText class="flex justify-space-between align-center gap-4">
-        <div class="align-self-start flex-1">
-          <div class="flex items-center">
-            <VBadge
-              v-if="props.downloader.default && props.downloader.enabled"
-              dot
-              inline
-              color="success"
-              class="me-1"
-            />
-            <span class="text-h6">{{ downloader.name }}</span>
+    <VHover v-slot="hover">
+      <VCard
+        v-bind="hover.props"
+        variant="tonal"
+        @click="openDownloaderInfoDialog"
+        :class="{ 'transition transform-cpu duration-300 -translate-y-1': hover.isHovering }"
+      >
+        <VDialogCloseBtn @click="onClose" />
+        <span class="absolute top-3 right-12">
+          <IconBtn>
+            <VIcon class="cursor-move" icon="mdi-drag" />
+          </IconBtn>
+        </span>
+        <VCardText class="flex justify-space-between align-center gap-4">
+          <div class="align-self-start flex-1">
+            <div class="flex items-center">
+              <VBadge
+                v-if="props.downloader.default && props.downloader.enabled"
+                dot
+                inline
+                color="success"
+                class="me-1"
+              />
+              <span class="text-h6">{{ downloader.name }}</span>
+            </div>
+            <div v-if="downloaderDict[downloader.type] && props.downloader.enabled" class="mt-1 flex flex-wrap text-sm">
+              <span class="me-2">{{ `↑ ${formatFileSize(upload_rate, 1)}/s ` }}</span>
+              <span>{{ `↓ ${formatFileSize(download_rate, 1)}/s` }}</span>
+            </div>
+            <div v-else-if="!downloaderDict[downloader.type]" class="mt-1 flex flex-wrap text-sm">
+              <span class="me-2">自定义下载器</span>
+            </div>
           </div>
-          <div class="mt-1 flex flex-wrap text-sm" v-if="props.downloader.enabled">
-            <span class="me-2">{{ `↑ ${formatFileSize(upload_rate, 1)}/s ` }}</span>
-            <span>{{ `↓ ${formatFileSize(download_rate, 1)}/s` }}</span>
+          <div class="h-20">
+            <VImg :src="getIcon" cover class="mt-7 me-3" max-width="3rem" min-width="3rem" />
           </div>
-        </div>
-        <div class="h-20">
-          <VImg :src="getIcon" cover class="mt-7 me-3" max-width="3rem" min-width="3rem" />
-        </div>
-      </VCardText>
-    </VCard>
-    <VDialog v-if="downloaderInfoDialog" v-model="downloaderInfoDialog" scrollable max-width="40rem" persistent>
-      <VCard :title="`${props.downloader.name} - 配置`" class="rounded-t">
-        <DialogCloseBtn v-model="downloaderInfoDialog" />
+        </VCardText>
+      </VCard>
+    </VHover>
+
+    <VDialog
+      v-if="downloaderInfoDialog"
+      v-model="downloaderInfoDialog"
+      scrollable
+      max-width="40rem"
+      :fullscreen="!display.mdAndUp.value"
+    >
+      <VCard>
+        <VCardItem class="py-2">
+          <template #prepend>
+            <VIcon icon="mdi-download" class="me-2" />
+          </template>
+          <VCardTitle>{{ t('common.config') }}</VCardTitle>
+          <VCardSubtitle>{{ props.downloader.name }}</VCardSubtitle>
+        </VCardItem>
+        <VDialogCloseBtn v-model="downloaderInfoDialog" />
         <VDivider />
         <VCardText>
           <VForm>
             <VRow>
               <VCol cols="12" md="6">
-                <VSwitch v-model="downloaderInfo.enabled" label="启用下载器" />
+                <VSwitch v-model="downloaderInfo.enabled" :label="t('downloader.enabled')" />
               </VCol>
               <VCol cols="12" md="6">
-                <VSwitch v-model="downloaderInfo.default" label="默认下载器" :disabled="!downloaderInfo.enabled" />
+                <VSwitch
+                  v-model="downloaderInfo.default"
+                  :label="t('downloader.default')"
+                  :disabled="!downloaderInfo.enabled"
+                />
               </VCol>
             </VRow>
             <VRow v-if="downloaderInfo.type == 'qbittorrent'">
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.name"
-                  label="名称"
-                  placeholder="必填；不可与其他名称重名"
-                  hint="下载器的别名"
+                  :label="t('downloader.name')"
+                  :placeholder="t('downloader.nameRequired')"
+                  :hint="t('downloader.name')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.config.host"
-                  label="地址"
+                  :label="t('downloader.host')"
                   placeholder="http(s)://ip:port"
-                  hint="服务端地址，格式：http(s)://ip:port"
+                  :hint="t('downloader.host')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-server"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.config.username"
-                  label="用户名"
-                  hint="登录使用的用户名"
+                  :label="t('downloader.username')"
+                  :hint="t('downloader.username')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-account"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.config.password"
                   type="password"
-                  label="密码"
-                  hint="登录使用的密码"
+                  :label="t('downloader.password')"
+                  :hint="t('downloader.password')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-lock"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch
                   v-model="downloaderInfo.config.category"
-                  label="自动分类管理"
-                  hint="由下载器自动管理分类和下载目录"
+                  :label="t('downloader.category')"
+                  :hint="t('downloader.category')"
                   persistent-hint
                   active
                 />
@@ -238,8 +280,8 @@ onUnmounted(() => {
               <VCol cols="12" md="6">
                 <VSwitch
                   v-model="downloaderInfo.config.sequentail"
-                  label="顺序下载"
-                  hint="按顺序依次下载文件"
+                  :label="t('downloader.sequentail')"
+                  :hint="t('downloader.sequentail')"
                   persistent-hint
                   active
                 />
@@ -247,8 +289,8 @@ onUnmounted(() => {
               <VCol cols="12" md="6">
                 <VSwitch
                   v-model="downloaderInfo.config.force_resume"
-                  label="强制继续"
-                  hint="强制继续、强制上传模式"
+                  :label="t('downloader.force_resume')"
+                  :hint="t('downloader.force_resume')"
                   persistent-hint
                   active
                 />
@@ -256,59 +298,85 @@ onUnmounted(() => {
               <VCol cols="12" md="6">
                 <VSwitch
                   v-model="downloaderInfo.config.first_last_piece"
-                  label="优先首尾文件"
-                  hint="优先下载首尾文件块"
+                  :label="t('downloader.first_last_piece')"
+                  :hint="t('downloader.first_last_piece')"
                   persistent-hint
                   active
                 />
               </VCol>
             </VRow>
-            <VRow v-if="downloaderInfo.type == 'transmission'">
+            <VRow v-else-if="downloaderInfo.type == 'transmission'">
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.name"
-                  label="名称"
-                  placeholder="必填；不可与其他名称重名"
-                  hint="下载器的别名"
+                  :label="t('downloader.name')"
+                  :placeholder="t('downloader.nameRequired')"
+                  :hint="t('downloader.name')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.config.host"
-                  label="地址"
+                  :label="t('downloader.host')"
                   placeholder="http(s)://ip:port"
-                  hint="服务端地址，格式：http(s)://ip:port"
+                  :hint="t('downloader.host')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-server"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.config.username"
-                  label="用户名"
-                  hint="登录使用的用户名"
+                  :label="t('downloader.username')"
+                  :hint="t('downloader.username')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-account"
                 />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField
                   v-model="downloaderInfo.config.password"
                   type="password"
-                  label="密码"
-                  hint="登录使用的密码"
+                  :label="t('downloader.password')"
+                  :hint="t('downloader.password')"
                   persistent-hint
                   active
+                  prepend-inner-icon="mdi-lock"
+                />
+              </VCol>
+            </VRow>
+            <VRow v-else>
+              <VCol cols="12" md="6">
+                <VTextField
+                  v-model="downloaderInfo.type"
+                  :label="t('downloader.type')"
+                  :hint="t('downloader.customTypeHint')"
+                  persistent-hint
+                  active
+                  prepend-inner-icon="mdi-cog"
+                />
+              </VCol>
+              <VCol cols="12" md="6">
+                <VTextField
+                  v-model="downloaderInfo.name"
+                  :label="t('downloader.name')"
+                  :hint="t('downloader.nameRequired')"
+                  persistent-hint
+                  active
+                  prepend-inner-icon="mdi-label"
                 />
               </VCol>
             </VRow>
           </VForm>
         </VCardText>
         <VCardActions class="pt-3">
-          <VBtn @click="saveDownloaderInfo" variant="elevated" prepend-icon="mdi-content-save" class="px-5">
-            确定
+          <VBtn @click="saveDownloaderInfo" prepend-icon="mdi-content-save" class="px-5">
+            {{ t('common.save') }}
           </VBtn>
         </VCardActions>
       </VCard>

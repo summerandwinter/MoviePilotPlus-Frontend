@@ -5,11 +5,41 @@ console.log('props: ', props)
 </script>
 
 <template>
-  <div class="ms-1">
-    <span class="slider-title" v-if="props?.link_to === 'disabled'">{{ props?.title }}</span>
-    <RouterLink v-else :to="props?.linkurl ? props?.linkurl : ''" class="slider-title">
-      <span>{{ props?.title }}</span>
-      <VIcon icon="mdi-arrow-right-circle-outline" class="ms-1" />
-    </RouterLink>
+  <div class="title-wrapper">
+    <div class="title-section">
+      <div class="title-badge"></div>
+      <h3 class="title-text">{{ props?.title }}</h3>
+    </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  inline-size: 100%;
+}
+
+.title-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.title-badge {
+  border-radius: 2px;
+  background-color: rgb(var(--v-theme-primary));
+  block-size: 16px;
+  inline-size: 3px;
+  margin-inline-end: 8px;
+}
+
+.title-text {
+  padding: 0;
+  margin: 0;
+  color: rgba(var(--v-theme-on-background), 0.95);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+</style>
