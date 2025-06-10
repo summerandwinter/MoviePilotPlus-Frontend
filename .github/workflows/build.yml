@@ -48,9 +48,10 @@ jobs:
           tag_name: ${{ env.frontend_version }}
           delete_release: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          
+      - name: Check dist.zip
+        run: ls -lh dist.zip    
       - name: Generate Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.frontend_version }}
           name: ${{ env.frontend_version }}
@@ -60,4 +61,5 @@ jobs:
           files: |
             dist.zip
         env:
+          ACTIONS_STEP_DEBUG: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
