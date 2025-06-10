@@ -6,6 +6,7 @@ import type { Collect, CollectCreate, DownloadTask, SiteSeed, Progress } from '@
 import NoDataFound from '@/components/NoDataFound.vue'
 import TaskCard from '@/components/cards/TaskCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
+import TaskCardSlideView from '@/views/collect/TaskCardSlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { seedStatus } from '@/api/constants'
 import { formatSeason } from '@/@core/utils/formatters'
@@ -248,12 +249,7 @@ const getBackdropUrl: Ref<string> = computed(() => {
     return `${import.meta.env.VITE_API_BASE_URL}system/cache/image?url=${encodeURIComponent(url)}`
   return url
 })
-function removeTask(id: number) {
-  const index = taskList.value.findIndex(item => item.id === id)
-  if (index !== -1) {
-    taskList.value.splice(index, 1)
-  }
-}
+
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
 }
@@ -332,16 +328,21 @@ onBeforeUnmount(() => {
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-                  }}</span>
+              }}</span>
               </div>
             </span>
           </div>
           <h1 class="d-flex flex-column flex-lg-row align-baseline justify-center justify-lg-start">
             <div class="align-self-center align-self-lg-end">
-              {{ collectDetail.name }}
+              {{ collectDetail.cn_title }}
+            </div>
+            <div v-if="collectDetail.en_title" class="text-lg align-self-center align-self-lg-end">
+              （{{ collectDetail.en_title }}）
             </div>
           </h1>
-
+          <span class="media-attributes">
+            <span v-if="collectDetail.name">{{ collectDetail.name }}</span>
+          </span>
         </div>
         <div class="media-actions">
 
@@ -479,14 +480,9 @@ onBeforeUnmount(() => {
 
 
       </div>
+
       <div v-if="taskList && taskList.length > 0">
-        <SlideView>
-          <template #content>
-            <template v-for="data in taskList" :key="data.id">
-              <TaskCard :info="data" :progress="progress" height="11rem" width="20rem" @remove="removeTask" />
-            </template>
-          </template>
-        </SlideView>
+        <TaskCardSlideView title="剧集列表" :taskList="taskList" :progress="progress" height="11rem" width="20rem" />
       </div>
 
     </div>
