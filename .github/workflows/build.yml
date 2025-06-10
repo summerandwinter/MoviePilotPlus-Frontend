@@ -41,15 +41,15 @@ jobs:
           yarn build
           echo "$frontend_version" > dist/version.txt
           zip -r dist.zip dist
-          
+
       - name: Delete Release
         uses: dev-drprasad/delete-tag-and-release@v1.1
+        continue-on-error: true
         with:
           tag_name: ${{ env.frontend_version }}
           delete_release: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check dist.zip
-        run: ls -lh dist.zip    
+
       - name: Generate Release
         uses: softprops/action-gh-release@v2
         with:
@@ -61,5 +61,4 @@ jobs:
           files: |
             dist.zip
         env:
-          ACTIONS_STEP_DEBUG: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
