@@ -182,37 +182,28 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-100">
+  <div>
 
-    <VListItem @click.stop="goDetail()"
-      class="pa-3 mb-2 rounded torrent-item transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-      :class="'border-start border-success border-3 opacity-85'">
-      <div
-        class="discount-banner text-white px-2 py-1 text-sm font-weight-bold rounded-bl-lg bg-green-600 border-green-600">
+    <VListItem @click.stop="goDetail()" class="mb-2" variant="flat">
+      <VChip variant="outlined" size="small"
+        class="bg-green-600 border-green-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold">
         {{ getCollectStatus(task?.status) }}
-      </div>
-      <template v-slot:prepend>
-        <div class="d-flex flex-column align-center pr-3">
-          <VImg v-if="getCoverUrl" :src="getCoverUrl" :alt="task?.name" class="rounded mb-1" width="110"
-            aspect-ratio="9/16" cover />
-        </div>
+      </VChip>
+
+      <template #prepend>
+        <VListItemMedia class="pr-2">
+          <VImg :src="getCoverUrl" :width="70" aspect-ratio="9/16" cover />
+        </VListItemMedia>
+
       </template>
-      <VListItemTitle>
-        <div class="d-flex flex-row flex-wrap align-center mb-2">
-          <span class="text-h6 font-weight-bold me-2">{{ task?.cn_title }}</span>
-          <VChip class="chip-season rounded-sm font-weight-bold" variant="elevated" size="small">
-            ↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}
-          </VChip>
-        </div>
+      <VListItemTitle class="break-words overflow-visible whitespace-break-spaces">
+        {{ task?.name }}
 
-        <div class="text-subtitle-2 font-weight-medium mb-2" :title="task?.name">
-          {{ task?.name }}
-        </div>
-
-        <div class="text-body-2 text-medium-emphasis mb-2" :title="task?.sub_title || '暂无描述'">
-          {{ task?.sub_title || '暂无描述' }}
-        </div>
-        <div class="d-flex flex-wrap gap-1 mb-2">
+        <span class="text-green-700 ms-2 text-sm">↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}</span>
+      </VListItemTitle>
+      <VListItemSubtitle class="mt-1 d-flex align-start">
+        <div class="text-wrap" style="flex-grow: 1;">
+          {{ task?.sub_title }}
           <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.resolution }}
           </VChip>
@@ -221,14 +212,14 @@ onUnmounted(() => {
             {{ tag }}
           </VChip>
         </div>
-
-      </VListItemTitle>
-
+      </VListItemSubtitle>
       <div class="pt-2">
-        <div ref="chipContainer">
+        <div class="p-3" ref="chipContainer">
           <!-- 显示可见范围内的chip -->
+
           <VChip class="mr-1 mb-1" color="success" variant="outlined" size="small"
             @click.stop="showAddSiteSeddoDialog()">
+
             添加
           </VChip>
           <template v-for="(item, index) in siteSeedList.slice(0, visibleCount)" :key="index">
@@ -292,87 +283,3 @@ onUnmounted(() => {
     @done="addSiteSeedSuccess" @error="addSiteSeedError" @close="showAddSiteSedd = false" />
   <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
 </template>
-<style scoped>
-.discount-banner {
-  position: absolute;
-  z-index: 3;
-  inset-block-start: 0;
-  inset-inline-end: 0;
-}
-
-.torrent-item {
-  border: 1px solid transparent;
-}
-
-.torrent-item:hover {
-  border-color: rgba(var(--v-theme-primary), 0.3);
-}
-
-.chip-season {
-  background-color: #3f51b5;
-  color: white;
-}
-
-.chip-edition {
-  background-color: #f44336;
-  color: white;
-}
-
-.chip-resolution {
-  background-color: #7b1fa2;
-  color: white;
-}
-
-.chip-codec {
-  background-color: #ff9800;
-  color: white;
-}
-
-.chip-team {
-  background-color: #00897b;
-  color: white;
-}
-
-.chip-label {
-  background-color: #5c6bc0;
-  color: white;
-}
-
-.chip-hr {
-  background-color: #212121;
-  color: white;
-}
-
-.chip-expire {
-  background-color: #7e57c2;
-  color: white;
-}
-
-/* 优惠标签样式 */
-.bg-success {
-  background-color: #4caf50;
-}
-
-.bg-orange {
-  background-color: #ff5722;
-}
-
-.bg-purple {
-  background-color: #9c27b0;
-}
-
-.chip-free {
-  background-color: #4caf50;
-  color: white;
-}
-
-.chip-discount {
-  background-color: #ff5722;
-  color: white;
-}
-
-.chip-bonus {
-  background-color: #9c27b0;
-  color: white;
-}
-</style>

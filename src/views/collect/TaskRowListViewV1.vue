@@ -230,187 +230,23 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="torrent-view">
-    <!-- 资源列表容器 -->
-    <VCard class="resource-list-container">
-      <!-- 无结果时显示 -->
-      <div v-if="dataList.length === 0" class="no-results">
-        <VIcon icon="mdi-file-search-outline" size="64" color="grey-lighten-1" />
-        <div class="text-h6 text-grey mt-4">暂无数据</div>
-      </div>
-      <!-- 资源列表 -->
-      <VInfiniteScroll v-else mode="intersect" side="end" :items="dataList" class="resource-list overflow-visible">
-        <template #loading />
-        <template #empty />
-        <div v-for="(item, index) in dataList" :key="item.id">
-          <TaskItem :task="item" :key="item.id" @remove="remove" />
-          <VDivider v-if="index < dataList.length - 1" class="my-2" />
-        </div>
-      </VInfiniteScroll>
-    </VCard>
+  <div>
+    <VRow>
+      <VCol>
+        <VList v-if="dataList.length === 0" lines="three" class="rounded p-0 shadow-lg">
+          <VListItem>
+            <VListItemTitle>没有符合当前过滤条件的资源。</VListItemTitle>
+          </VListItem>
+        </VList>
+        <VList v-else lines="three" class="rounded p-0 torrent-list-vscroll shadow-lg">
+          <VVirtualScroll :items="dataList" :style="listStyle">
+            <template #default="{ item }">
+              <TaskItem :task="item" :key="item.id" @remove="remove" />
+            </template>
+          </VVirtualScroll>
+        </VList>
+      </VCol>
+      
+    </VRow>
   </div>
 </template>
-<style scoped>
-.torrent-view {
-  position: relative;
-  block-size: 100%;
-}
-
-.search-header {
-  position: sticky;
-  z-index: 10;
-  backdrop-filter: blur(10px);
-  inset-block-start: 0;
-}
-
-.search-header-mobile {
-  position: sticky;
-  z-index: 10;
-  backdrop-filter: blur(10px);
-  inset-block-start: 0;
-}
-
-.view-header {
-  overflow: hidden;
-}
-
-.search-count {
-  font-weight: 500;
-}
-
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.filter-divider {
-  background-color: rgba(var(--v-theme-on-surface), 0.12);
-  block-size: 24px;
-  inline-size: 1px;
-  margin-block: 0;
-  margin-inline: 8px;
-}
-
-.filter-btn {
-  min-inline-size: 0;
-  transition: transform 0.2s;
-}
-
-.filter-btn:hover {
-  transform: translateY(-2px);
-}
-
-.filter-menu-content {
-  max-block-size: 50vh;
-  overflow-y: auto;
-}
-
-.filter-options {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.filter-chip {
-  border: 1px solid rgba(var(--v-theme-primary), 0.2);
-  margin: 4px;
-  background-color: rgba(var(--v-theme-primary), 0.1) !important;
-  color: rgba(var(--v-theme-on-surface), 0.9) !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.filter-chip:hover {
-  background-color: rgba(var(--v-theme-primary), 0.15) !important;
-  transform: translateY(-2px);
-}
-
-.filter-chip.v-chip--selected {
-  background-color: rgba(var(--v-theme-primary), 0.85) !important;
-  box-shadow: 0 2px 4px rgba(var(--v-theme-primary), 0.3);
-  color: rgb(var(--v-theme-on-primary)) !important;
-  font-weight: 600;
-}
-
-.filter-tag {
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.filter-tag:hover {
-  transform: translateY(-2px);
-}
-
-.selected-filters {
-  overflow: hidden;
-  background-color: rgba(var(--v-theme-surface-variant), 0.08);
-  padding-block: 8px;
-  padding-inline: 12px;
-}
-
-.resource-list-container {
-  padding: 8px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 12px;
-}
-
-.resource-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.no-results {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-block-size: 300px;
-}
-
-.filter-buttons-grid {
-  display: grid;
-  gap: 4px;
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.filter-btn-mobile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 8px;
-  background-color: rgba(var(--v-theme-surface), 0.5);
-  block-size: auto;
-  min-block-size: 48px;
-  padding-block: 4px;
-  padding-inline: 0;
-}
-
-.filter-icon {
-  font-size: 18px;
-  margin-block-end: 2px;
-}
-
-.filter-label {
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.mobile-sort-select {
-  max-inline-size: 130px;
-  min-inline-size: 80px;
-}
-
-.all-filters-grid {
-  display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.filter-section {
-  background-color: rgba(var(--v-theme-surface-variant), 0.08);
-}
-</style>
