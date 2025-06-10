@@ -51,7 +51,7 @@ jobs:
       - name: Check dist.zip
         run: ls -lh dist.zip    
       - name: Generate Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.frontend_version }}
           name: ${{ env.frontend_version }}
