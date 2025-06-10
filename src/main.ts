@@ -103,7 +103,7 @@ initializeApp().then(() => {
   // 5. 注册其他插件
   app
     .use(PerfectScrollbarPlugin)
-    app.use(useRichText)
+    .use(useRichText)
     .use(ToastPlugin, {
       position: 'bottom-right',
     })
