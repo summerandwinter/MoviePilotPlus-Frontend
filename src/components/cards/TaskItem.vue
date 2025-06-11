@@ -192,7 +192,7 @@ onUnmounted(() => {
         {{ getCollectStatus(task?.status) }}
       </div>
       <template v-slot:prepend>
-        <div class="d-flex flex-column align-center pr-3">
+        <div class="d-none d-sm-flex flex-column align-center pr-3">
           <VImg v-if="getCoverUrl" :src="getCoverUrl" :alt="task?.name" class="rounded mb-1" width="110"
             aspect-ratio="9/16" cover />
         </div>
@@ -205,8 +205,8 @@ onUnmounted(() => {
           </VChip>
         </div>
 
-        <div class="text-subtitle-2 font-weight-medium mb-2" :title="task?.name">
-          {{ task?.name }}
+        <div class="text-subtitle-2 font-weight-bold text-black mb-2 font-title" :title="task?.name">
+          {{ task?.title }}
         </div>
 
         <div class="text-body-2 text-medium-emphasis mb-2" :title="task?.sub_title || '暂无描述'">
