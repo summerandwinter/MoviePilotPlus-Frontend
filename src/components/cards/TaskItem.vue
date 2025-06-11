@@ -205,8 +205,8 @@ onUnmounted(() => {
           </VChip>
         </div>
 
-        <div class="text-subtitle-2 font-weight-bold text-black mb-2 font-title" :title="task?.name">
-          {{ task?.title }}
+        <div class="text-subtitle-2 font-weight-bold text-black mb-2 font-title" :title="task?.title || task?.name">
+          {{ task?.title || task?.name }}
         </div>
 
         <div class="text-body-2 text-medium-emphasis mb-2" :title="task?.sub_title || '暂无描述'">
