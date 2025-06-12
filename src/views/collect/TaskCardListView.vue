@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { cloneDeepWith } from 'lodash-es'
+import { cloneDeepWith, throttle } from 'lodash-es'
 import type { DownloadTask, Progress } from '@/api/types'
 import TaskCard from '@/components/cards/TaskCard.vue'
 
@@ -63,7 +63,7 @@ let dataList: DownloadTask[]
 // 显示用的数据列表
 const displayDataList = ref<Array<DownloadTask>>([])
 
-const progress = ref<Array<Progress>>([])
+const progress = shallowRef<Record<number, Progress>>({});
 
 // 对季过滤选项进行排序
 const sortSeasonFilterOptions = computed(() => {
@@ -195,11 +195,14 @@ function startSSEMessager() {
   // 延迟 3 秒启动 SSE，避免相关认证信息尚未写入 Cookie 导致 403
   setTimeout(() => {
     eventSource = new EventSource(`${import.meta.env.VITE_API_BASE_URL}task/progress`)
-    eventSource.addEventListener('message', event => {
-      if (event.data) {
-        progress.value = JSON.parse(event.data)
-      }
-    })
+    eventSource.addEventListener('message', throttle(event => {
+      // 为 curr 参数显式指定类型，避免隐式 any 类型
+      const updates = JSON.parse(event.data).reduce((acc: Record<number, Progress>, curr: { task_id: number } & Progress) => {
+        acc[curr.task_id] = curr;
+        return acc;
+      }, {});
+      progress.value = { ...progress.value, ...updates };
+    }, 500));
   }, 3000)
 }
 
@@ -250,8 +253,8 @@ function loadMore({ done }: { done: any }) {
     <template #loading />
     <template #empty />
     <div class="grid gap-3 grid-downloading-card">
-      <TaskCard v-for="item in displayDataList" :key="`${item.id}`" :info="item" :progress="progress"
-        @remove="remove" />
+      <TaskCard v-for="item in displayDataList" :key="`${item.id}`" :info="item" v-memo="[progress[item.id]]"
+        :progress="progress[item.id]" @remove="remove" />
     </div>
   </VInfiniteScroll>
 </template>

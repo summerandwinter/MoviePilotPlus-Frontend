@@ -16,8 +16,8 @@ const props = defineProps({
     required: true,
   },
   progress: {
-    type: Array as PropType<Progress[]>,
-    default: () => []
+    type: Object as PropType<Progress>,
+    default: () => { },
   },
   width: String,
   height: String,
@@ -27,12 +27,8 @@ const showProgressInfo = ref(false)
 
 // 进度条
 function getPercentage() {
-  if (!props.progress?.length) return 0
-  for (const progress of props.progress) {
-    if (Number(progress.task_id) === props.info?.id) {
-      return progress.percent ?? 0
-    }
-  }
+  if (!props.progress) return 0
+  return props.progress.percent ?? 0
   return 0
 }
 // 来源角标字典
@@ -44,11 +40,8 @@ function showProgressInfoDialog() {
 }
 // 速度
 function getSpeedText() {
-  if (props.progress?.length) {
-    for (const progress of props.progress) {
-      if (Number(progress.task_id) === props.info?.id)
-        return `${formatFileSize(progress?.downloaded_size || 0)} / ${formatFileSize(progress?.total_size || 0)}  ↓ ${formatFileSize(progress?.speed)}/s`
-    }
+  if (props.progress) {
+    return `${formatFileSize(props.progress?.downloaded_size || 0)} / ${formatFileSize(props.progress?.total_size || 0)}  ↓ ${formatFileSize(props.progress?.speed)}/s`
   }
   return `${formatFileSize(props.info?.downloaded_size || 0)} / ${formatFileSize(props.info?.total_size || 0)}  ↓ ${formatFileSize(props.info?.speed)}/s`
 }
@@ -64,12 +57,10 @@ function getChipColor() {
   }
 }
 function getSatus() {
-  if (props.progress?.length) {
-    for (const progress of props.progress) {
-      if (Number(progress.task_id) === props.info?.id) {
-        return downloadStatus[progress.state as keyof typeof downloadStatus]
-      }
-    }
+  console.log('props.progress: ', props.progress)
+  if (props.progress) {
+    console.log('downloadStatus:', downloadStatus[props.progress.state as keyof typeof downloadStatus])
+    return downloadStatus[props.progress.state as keyof typeof downloadStatus]
   }
   return downloadStatus[props.info.status as keyof typeof downloadStatus]
 }
@@ -148,6 +139,7 @@ async function deleteDownload() {
   }
 }
 const taskCardRef = ref<HTMLElement | null>(null)
+
 </script>
 
 <template>

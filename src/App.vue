@@ -164,7 +164,7 @@ onMounted(async () => {
   show.value = false
 
   // 加载背景图片
-  await loadBackgroundImages()
+  // await loadBackgroundImages()
 
   // 移除加载动画
   ensureRenderComplete(() => {
@@ -179,7 +179,7 @@ onMounted(async () => {
   // 添加页面可见性变化监听
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      loadBackgroundImages()
+      //loadBackgroundImages()
     }
   })
 
@@ -187,16 +187,16 @@ onMounted(async () => {
   window.addEventListener('pageshow', event => {
     // persisted属性为true表示页面是从bfcache中恢复的
     if (event.persisted) {
-      loadBackgroundImages()
+      //loadBackgroundImages()
     }
   })
 })
 
 onUnmounted(() => {
   // 移除页面可见性监听
-  document.removeEventListener('visibilitychange', () => {})
+  document.removeEventListener('visibilitychange', () => { })
   // 移除PWA的页面恢复事件监听
-  window.removeEventListener('pageshow', () => {})
+  window.removeEventListener('pageshow', () => { })
 
   // 清除轮换定时器
   if (backgroundRotationTimer) {
@@ -210,13 +210,8 @@ onUnmounted(() => {
   <div class="app-wrapper">
     <!-- 透明主题背景 -->
     <div v-if="backgroundImages.length > 0 && (isTransparentTheme || !isLogin)" class="background-container">
-      <div
-        v-for="(imageUrl, index) in backgroundImages"
-        :key="`bg-${index}-${loginStateKey}`"
-        class="background-image"
-        :class="{ 'active': index === activeImageIndex }"
-        :style="{ 'backgroundImage': `url(${imageUrl})` }"
-      ></div>
+      <div v-for="(imageUrl, index) in backgroundImages" :key="`bg-${index}-${loginStateKey}`" class="background-image"
+        :class="{ 'active': index === activeImageIndex }" :style="{ 'backgroundImage': `url(${imageUrl})` }"></div>
       <!-- 全局磨砂层 -->
       <div v-if="isLogin && isTransparentTheme" class="global-blur-layer"></div>
     </div>

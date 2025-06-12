@@ -59,7 +59,6 @@ const isSubscribed = ref(false)
 // 是否已加载完成
 const isRefreshed = ref(false)
 
-const progress = ref<Array<Progress>>([])
 
 // 采集任务添加表单
 const addForm = ref<CollectCreate>({
@@ -84,21 +83,7 @@ const addForm = ref<CollectCreate>({
   episode_list: [],
   site_list: []
 })
-// 事件源
-let eventSource: EventSource | null = null
-// SSE持续接收消息
-function startSSEMessager() {
-  // 延迟 3 秒启动 SSE，避免相关认证信息尚未写入 Cookie 导致 403
-  setTimeout(() => {
-    eventSource = new EventSource(`${import.meta.env.VITE_API_BASE_URL}task/progress`)
-    eventSource.addEventListener('message', event => {
-      if (event.data) {
-        progress.value = JSON.parse(event.data)
-        console.log(progress.value)
-      }
-    })
-  }, 3000)
-}
+
 function getCollectStatus(status: string | undefined) {
   return collectStatus[status as keyof typeof collectStatus]
 }
@@ -294,12 +279,10 @@ function getIcon(operation: string) {
 onBeforeMount(async () => {
   getDetail()
   getSiteSeedList()
-  startSSEMessager()
 })
 
 // 页面卸载时，关闭事件源
 onBeforeUnmount(() => {
-  if (eventSource) eventSource.close()
 })
 </script>
 
@@ -328,7 +311,7 @@ onBeforeUnmount(() => {
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-              }}</span>
+                  }}</span>
               </div>
             </span>
           </div>
@@ -482,7 +465,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="taskList && taskList.length > 0">
-        <TaskCardSlideView title="剧集列表" :taskList="taskList" :progress="progress" height="11rem" width="20rem" />
+        <TaskCardSlideView title="剧集列表" :taskList="taskList" height="11rem" width="20rem" />
       </div>
 
     </div>
