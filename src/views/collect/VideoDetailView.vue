@@ -11,7 +11,7 @@ import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import router from '@/router'
 import { useUserStore } from '@/stores'
-import { urlBase64ToUint8Array } from '@/@core/utils/navigator'
+import { add } from 'lodash-es'
 
 // 输入参数
 const mediaProps = defineProps({
@@ -75,6 +75,7 @@ const addForm = ref<CollectCreate>({
   year: "",
   type: mediaProps.type ?? "",
   overview: "",
+  season: 1,
   cate: "",
   site: "",
   cover: "",
@@ -154,6 +155,7 @@ async function getPtgen(url: string) {
     addForm.value.cn_title = ptgen.value.cn_title || mediaDetail.value.title
     addForm.value.sub_title = ptgen.value.sub_title
     addForm.value.imdb_id = ptgen.value.imdb_id || ''
+    addForm.value.season = ptgen.value.season || 1
     // 处理可能为 null 的情况，确保赋值给 addForm.value.overview 的是 string 类型
     addForm.value.overview = ptgen.value.description || mediaDetail.value.overview || ''
     isLoading.value = false
@@ -664,9 +666,13 @@ function handleIgnore() {
               <v-col cols="2">
                 <v-text-field label="已选" readonly :model-value="selectedCount" variant="plain"></v-text-field>
               </v-col>
-              <v-col cols="8">
+              <v-col cols="2">
                 <v-text-field label="总剧集" placeholder="未获取到，请手动输入" variant="plain"
                   v-model="addForm.episodes_all"></v-text-field>
+              </v-col>
+              <v-col cols="2">
+                <v-text-field label="季数" placeholder="未获取到，请手动输入" variant="plain"
+                  v-model="addForm.season"></v-text-field>
               </v-col>
             </v-row>
           </div>

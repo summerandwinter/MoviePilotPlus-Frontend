@@ -2,15 +2,12 @@
 import { useToast } from 'vue-toast-notification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
+import { tagOptions } from '@/api/constants'
 import type { Collect, CollectCreate, DownloadTask, SiteSeed, Progress } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
-import TaskCard from '@/components/cards/TaskCard.vue'
-import SlideView from '@/components/slide/SlideView.vue'
 import TaskCardSlideView from '@/views/collect/TaskCardSlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { seedStatus } from '@/api/constants'
-import { formatSeason } from '@/@core/utils/formatters'
-import router from '@/router'
 import VideoMediaInfoDialog from '@/components/dialog/VideoMediaInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
@@ -19,7 +16,6 @@ import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 import CollectOperationDialog from '@/components/dialog/CollectOperationDialog.vue'
 
 
-import { isNullOrEmptyObject } from '@/@core/utils'
 import { useUserStore } from '@/stores'
 
 // 输入参数
@@ -67,6 +63,10 @@ const addForm = ref<CollectCreate>({
   douban_id: "",
   imdb_id: "",
   cn_title: "",
+  en_title: "",
+  sub_title: "",
+  original_title: "",
+  season: 1,
   year: "",
   overview: "",
   type: "",
@@ -93,13 +93,18 @@ async function getDetail() {
     collectDetail.value = await api.get(`collect/${collectProps.id}`)
     taskList.value = await api.get(`collect/task/${collectProps.id}`)
 
-
+    addForm.value.tags = JSON.parse(collectDetail.value?.tags) ?? []
     addForm.value.douban_id = collectDetail.value.douban_id ?? ''
-    addForm.value.cn_title = collectDetail.value.title ?? ''
+    addForm.value.imdb_id = collectDetail.value.imdb_id ?? ''
+    addForm.value.sub_title = collectDetail.value.sub_title ?? ''
+    addForm.value.overview = collectDetail.value.overview ?? ''
+    addForm.value.cn_title = collectDetail.value.cn_title ?? ''
+    addForm.value.en_title = collectDetail.value.en_title ?? ''
     addForm.value.year = collectDetail.value.year ?? ''
-
-
-    isRefreshed.value = true
+    // 等待 tags 更新完 watch 事件触发以后再设置加载完成，避免触发更新标签
+    setTimeout(() => {
+      isRefreshed.value = true
+    }, 500)
   }
 }
 
@@ -234,7 +239,6 @@ const getBackdropUrl: Ref<string> = computed(() => {
     return `${import.meta.env.VITE_API_BASE_URL}system/cache/image?url=${encodeURIComponent(url)}`
   return url
 })
-
 function getSeedStatus(status: string) {
   return seedStatus[status as keyof typeof seedStatus]
 }
@@ -284,6 +288,37 @@ onBeforeMount(async () => {
 // 页面卸载时，关闭事件源
 onBeforeUnmount(() => {
 })
+
+const updateTagsDebounced = useDebounceFn(async (newTags) => {
+  try {
+    await api.put(`collect/`, {
+      id: collectDetail.value.id,
+      tags: newTags
+    })
+  } catch (error) {
+    console.error('标签更新失败:', error)
+  }
+}, 500);
+
+async function updateCollect(field: string) {
+  try {
+    await api.put(`collect/`, {
+      id: collectDetail.value.id,
+      [field]: addForm.value[field as keyof typeof addForm.value]
+    })
+    $toast.success(`更新 ${field} 成功！`)
+  } catch (error) {
+    console.error(`${field} 更新失败:`, error)
+  }
+}
+
+watch(() => addForm.value.tags,
+  (newTags, oldTags) => {
+    if (!isRefreshed.value || JSON.stringify(newTags) === JSON.stringify(oldTags)) return;
+    updateTagsDebounced(newTags);
+  },
+  { deep: true, immediate: false }
+)
 </script>
 
 <template>
@@ -441,9 +476,17 @@ onBeforeUnmount(() => {
               </v-col>
             </v-row>
           </div>
-
           <div class="mt-6">
-            <VChipGroup class="p-3" column>
+            <VChipGroup column v-model="addForm.tags" multiple>
+              <template v-for="(value, key) in tagOptions" :key="key">
+                <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
+                  {{ value }}
+                </VChip>
+              </template>
+            </VChipGroup>
+          </div>
+          <div class="mt-6">
+            <VChipGroup column>
               <VChip v-for="(item, index) in siteSeedList" :key="index" @click.stop="showSiteSeedInfoDialog(item)">
                 <template #append>
                   <VBadge color="primary" :content="getSeedStatus(item.status)" inline size="small" />
@@ -463,7 +506,42 @@ onBeforeUnmount(() => {
 
 
       </div>
-
+      <div class="mt-6">
+        <v-row>
+          <v-col cols="6" md="6">
+            <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" label="豆瓣ID" variant="plain" persistent-hint
+              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('douban_id')">
+            </VTextField>
+          </v-col>
+          <v-col cols="6" md="6">
+            <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" label="IMDB ID" variant="plain"
+              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('imdb_id')">
+            </VTextField>
+          </v-col>
+        </v-row>
+      </div>
+      <div class="mt-6">
+        <v-row>
+          <v-col cols="12" md="12">
+            <VTextarea v-model="addForm.sub_title" placeholder="请手动输入副标题" label="副标题" rows="3" variant="plain"
+              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('sub_title')">
+            </VTextarea>
+          </v-col>
+        </v-row>
+      </div>
+      <div class="mt-6">
+        <v-row>
+          <v-col cols="12" md="12">
+            <VTextarea v-model="addForm.overview" placeholder="请手动输入简介" label="简介" rows="3" variant="plain"
+              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('overview')">
+            </VTextarea>
+          </v-col>
+        </v-row>
+      </div>
       <div v-if="taskList && taskList.length > 0">
         <TaskCardSlideView title="剧集列表" :taskList="taskList" height="11rem" width="20rem" />
       </div>

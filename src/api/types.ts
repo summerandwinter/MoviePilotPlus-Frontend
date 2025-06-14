@@ -1381,6 +1381,8 @@ export interface PtgenInfo {
   en_title: string
   
   year: string
+
+  season: number
   
   sub_title: string
   
@@ -1551,6 +1553,7 @@ export interface Collect {
   id: number
   // 副标题
   sub_title: string
+  overview: string
   // 站点
   site: string | null
   // 字幕语言
@@ -1603,6 +1606,8 @@ export interface CollectCreate {
   douban_id: string
   // IMDB ID
   imdb_id: string
+  // 季数
+  season: number
   overview: string
   // 中文标题
   cn_title: string
