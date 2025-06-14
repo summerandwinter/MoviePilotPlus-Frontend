@@ -1,4 +1,3 @@
-import { de, ex } from '@fullcalendar/core/internal-common'
 
 // 订阅
 export interface Subscribe {
@@ -1375,7 +1374,22 @@ export interface VideoDefinition {
   bandwidth: number
   audiobbandwidth: number
 }
-
+export interface PtgenInfo {
+  
+  cn_title: string
+  
+  en_title: string
+  
+  year: string
+  
+  sub_title: string
+  
+  douban_id: string
+  
+  imdb_id: string | null
+  
+  description: string
+}
 // 视频信息
 export interface VideoInfo {
   // 来源
@@ -1592,6 +1606,9 @@ export interface CollectCreate {
   overview: string
   // 中文标题
   cn_title: string
+  en_title: string
+  original_title: string
+  sub_title: string
   // 年份
   year: string
   // 媒体类型

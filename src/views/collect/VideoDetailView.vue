@@ -3,7 +3,7 @@ import { useToast } from 'vue-toast-notification'
 
 import api from '@/api'
 import { tagOptions, teamOptions, mediaCateOptions } from '@/api/constants'
-import type { VideoInfo, CollectCreate, Site } from '@/api/types'
+import type { VideoInfo, CollectCreate, Site, PtgenInfo } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
@@ -11,6 +11,7 @@ import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import router from '@/router'
 import { useUserStore } from '@/stores'
+import { urlBase64ToUint8Array } from '@/@core/utils/navigator'
 
 // 输入参数
 const mediaProps = defineProps({
@@ -41,6 +42,8 @@ const mediaDetail = ref<VideoInfo>({} as VideoInfo)
 // 站点列表
 const siteList = ref<Site[]>([])
 
+const ptgen = ref<PtgenInfo>({} as PtgenInfo)
+
 
 // 选中的剧集数量
 const selectedCount = computed(() => {
@@ -56,6 +59,7 @@ const selectedCount = computed(() => {
 
 // 是否已加载完成
 const isRefreshed = ref(false)
+const isLoading = ref(true)
 
 
 // 采集任务添加表单
@@ -65,6 +69,9 @@ const addForm = ref<CollectCreate>({
   douban_id: "",
   imdb_id: "",
   cn_title: "",
+  en_title: "",
+  sub_title: "",
+  original_title: "",
   year: "",
   type: mediaProps.type ?? "",
   overview: "",
@@ -107,8 +114,8 @@ async function getMediaDetail() {
     // addForm 赋值
     addForm.value.cid = mediaProps.mediaid
     addForm.value.douban_id = mediaDetail.value.douban_id ?? ''
-    addForm.value.cn_title = mediaDetail.value.title ?? ''
-    addForm.value.year = mediaDetail.value.year ?? ''
+    addForm.value.original_title = mediaDetail.value.title ?? ''
+    addForm.value.year = mediaDetail.value.douban_info?.year ?? mediaDetail.value.year ?? ''
     addForm.value.type = mediaProps.type ?? ''
     addForm.value.cate = mediaProps.cate ?? ''
     addForm.value.site = mediaProps.source ?? ''
@@ -121,6 +128,39 @@ async function getMediaDetail() {
       ? Math.max(Number(mediaDetail.value.episode_all), episodeListLength)  // 取较大值
       : episodeListLength  // 无episode_all时使用列表长度
     isRefreshed.value = true
+    const douban_url = `https://movie.douban.com/subject/${mediaDetail.value.douban_id}/`
+    getPtgen(douban_url)
+  }
+}
+
+function onClickDouban() {
+  if (addForm.value.douban_id) {
+    isLoading.value = true
+    const url = `https://movie.douban.com/subject/${addForm.value.douban_id}/`
+    getPtgen(url)
+  }
+}
+function onClickImdb() {
+  if (addForm.value.imdb_id) {
+    isLoading.value = true
+    const url = `https://www.imdb.com/title/${addForm.value.imdb_id}/`
+    getPtgen(url)
+  }
+}
+async function getPtgen(url: string) {
+  try {
+    ptgen.value = await api.get('collect/ptgen/info?url=' + url) as PtgenInfo
+    addForm.value.en_title = ptgen.value.en_title
+    addForm.value.cn_title = ptgen.value.cn_title || mediaDetail.value.title
+    addForm.value.sub_title = ptgen.value.sub_title
+    addForm.value.imdb_id = ptgen.value.imdb_id || ''
+    // 处理可能为 null 的情况，确保赋值给 addForm.value.overview 的是 string 类型
+    addForm.value.overview = ptgen.value.description || mediaDetail.value.overview || ''
+    isLoading.value = false
+    update_subtitle()
+  } catch (error) {
+    isLoading.value = false
+    console.error(error)
   }
 }
 
@@ -215,6 +255,15 @@ function validateForm() {
   }
   if (!addForm.value.defn) {
     errors.push('请选择清晰度！')
+  }
+  if (!addForm.value.cn_title) {
+    errors.push('中文标题不能为空！')
+  }
+  if (!addForm.value.en_title) {
+    errors.push('英文标题不能为空！')
+  }
+  if (!addForm.value.sub_title) {
+    errors.push('副标题不能为空！')
   }
   if (!mediaDetail.value.episode_list?.some(e => e.selected)) {
     errors.push('请至少选择一集！')
@@ -343,6 +392,50 @@ onBeforeMount(() => {
   getMediaDetail()
   getSites()
 })
+function update_subtitle() {
+  let name = ''
+  if (addForm.value.episodes_all > 1) {
+    if (addForm.value.episodes_all == selectedCount.value) {
+      name = `全${addForm.value.episodes_all}集`
+    } else if (selectedCount.value == 1) {
+      name = `第${addForm.value.episode_list[0] ? addForm.value.episode_list[0].episode : 1}集`
+    } else {
+      const selectedEpisodes = mediaDetail.value.episode_list?.filter(ep => ep.selected) || []
+      const episodes = selectedEpisodes
+        .map(e => e.episode)
+        .sort((a, b) => a - b);
+
+      let isConsecutive = true;
+      for (let i = 1; i < episodes.length; i++) {
+        if (episodes[i] - episodes[i - 1] !== 1) {
+          isConsecutive = false;
+          break;
+        }
+      }
+
+      if (isConsecutive) {
+        name = `第${episodes[0]}集-第${episodes[episodes.length - 1]}集`;
+      } else {
+        name = episodes.map(e => `第${e}集`).join('、');
+      }
+    }
+  }
+  if (name && ptgen.value.sub_title) {
+    const subTitleParts = ptgen.value.sub_title.split(' | ')
+    subTitleParts.splice(1, 0, name) // 在第二位插入name
+    addForm.value.sub_title = subTitleParts.join(' | ')
+  } else {
+    addForm.value.sub_title = ptgen.value.sub_title
+  }
+}
+watch(() => [
+  addForm.value.episodes_all,
+  mediaDetail.value.episode_list?.map(ep => ep.episode),
+  selectedCount
+], () => {
+  update_subtitle()
+}, { deep: true, immediate: true })
+
 // 自动设置选中剧集的自增编号，未选中的清空
 function autoSetEpisodeNumbers() {
   const allEpisodes = mediaDetail.value.episode_list || []
@@ -585,9 +678,10 @@ function handleIgnore() {
           <!-- 调整列宽设置为cols="6"，确保小屏幕也能并排显示 -->
           <v-row>
             <!-- 豆瓣ID输入框 -->
-            <v-col cols="6" md="6">
+            <v-col cols="12" md="12">
               <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" :hint="doubanHint" label="豆瓣 ID"
-                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact">
+                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact"
+                append-inner-icon="mdi-magnify" @click:append-inner="onClickDouban">
                 <!-- 修复图标绑定逻辑：根据douban_id是否存在动态显示图标 -->
                 <template #prepend-inner v-if="addForm.douban_id">
                   <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg"
@@ -596,15 +690,65 @@ function handleIgnore() {
               </VTextField>
             </v-col>
             <!-- IMDB ID输入框 -->
-            <v-col cols="6" md="6">
+            <v-col cols="12" md="12">
               <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" hint="如：tt1878011" label="IMDB ID"
-                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact">
+                variant="outlined" :loading="isLoading" persistent-hint class="max-w-sm mt-1" density="compact"
+                append-inner-icon="mdi-magnify" @click:append-inner="onClickImdb">
                 <template #prepend-inner v-if="addForm.imdb_id">
                   <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg"
                     @click="addForm.imdb_id && openImdbDetail(addForm.imdb_id)" />
                 </template>
               </VTextField>
 
+            </v-col>
+          </v-row>
+        </div>
+      </div>
+      <div class="media-overview-bottom">
+        <div class="mt-6">
+          <v-row>
+            <!-- 豆瓣ID输入框 -->
+            <v-col cols="6" md="6">
+              <VTextField v-model="addForm.cn_title" placeholder="请手动输入中文标题" hint="如：肖申克的救赎" label="中文标题"
+                variant="outlined" :loading="isLoading" persistent-hint class="max-w-sm mt-1" density="compact">
+                <!-- 修复图标绑定逻辑：根据douban_id是否存在动态显示图标 -->
+                <template #prepend-inner>
+                  <VIcon icon="mdi-home-map-marker" class="cursor-pointer text-lg" />
+                </template>
+              </VTextField>
+            </v-col>
+            <!-- IMDB ID输入框 -->
+            <v-col cols="6" md="6">
+              <VTextField v-model="addForm.en_title" :loading="isLoading" placeholder="请手动输入英文标题"
+                hint="如：The Shawshank Redemption" label="英文标题" variant="outlined" persistent-hint class="max-w-sm mt-1"
+                density="compact">
+                <template #prepend-inner>
+                  <VIcon icon="mdi-earth" class="cursor-pointer text-lg" />
+                </template>
+              </VTextField>
+
+            </v-col>
+          </v-row>
+        </div>
+        <div class="mt-6">
+          <v-row>
+            <!-- 豆瓣ID输入框 -->
+            <v-col cols="12" md="12">
+              <VTextarea v-model="addForm.sub_title" :loading="isLoading" placeholder="请手动输入副标题"
+                hint="根据豆瓣信息自动生成，可以手动修正" label="副标题" rows="3" variant="outlined" persistent-hint class="max-w mt-1"
+                density="compact">
+              </VTextarea>
+            </v-col>
+          </v-row>
+        </div>
+        <div class="mt-6">
+          <v-row>
+            <!-- 豆瓣ID输入框 -->
+            <v-col cols="12" md="12">
+              <VTextarea v-model="addForm.overview" :loading="isLoading" placeholder="请手动输入简介"
+                hint="如果豆瓣信息里面有简介信息取豆瓣信息，否则从视频网站获取" label="简介" rows="4" variant="outlined" persistent-hint
+                class="max-w mt-1" density="compact">
+              </VTextarea>
             </v-col>
           </v-row>
         </div>
