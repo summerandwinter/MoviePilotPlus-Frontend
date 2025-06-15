@@ -4,7 +4,7 @@ import { useToast } from 'vue-toast-notification'
 import api from '@/api'
 import { tagOptions, teamOptions, mediaCateOptions } from '@/api/constants'
 import type { VideoInfo, CollectCreate, Site, PtgenInfo } from '@/api/types'
-import NoDataFound from '@/components/NoDataFound.vue'
+import GroupTile from '@/components/GroupTitle.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
 import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
@@ -129,8 +129,13 @@ async function getMediaDetail() {
       ? Math.max(Number(mediaDetail.value.episode_all), episodeListLength)  // 取较大值
       : episodeListLength  // 无episode_all时使用列表长度
     isRefreshed.value = true
-    const douban_url = `https://movie.douban.com/subject/${mediaDetail.value.douban_id}/`
-    getPtgen(douban_url)
+    if (mediaDetail.value.douban_id) {
+      const douban_url = `https://movie.douban.com/subject/${mediaDetail.value.douban_id}/`
+      getPtgen(douban_url)
+    } else {
+      isLoading.value = false
+    }
+
   }
 }
 
@@ -246,6 +251,22 @@ async function addCollect() {
     console.error(error)
   }
   doneNProgress()
+}
+function fill_subtile(sub_tile: string, title: string) {
+  if (!sub_tile) return sub_tile
+  if (!title) return sub_tile
+  // 分割标题和其他信息
+  const [originalTitle, ...restParts] = sub_tile.split('|').map(p => p.trim());
+  // 检查原标题是否包含新标题
+  if (!originalTitle.includes(title)) {
+    // 合并新旧标题
+    const mergedTitle = `${title}/${originalTitle}`;
+    // 重组完整sub_title
+    return [mergedTitle, ...restParts].join(' | ');
+  }
+
+  // 保持原标题格式不变
+  return sub_tile;
 }
 // 表单校验
 function validateForm() {
@@ -429,6 +450,8 @@ function update_subtitle() {
   } else {
     addForm.value.sub_title = ptgen.value.sub_title
   }
+  // 插入原始标题
+  addForm.value.sub_title = fill_subtile(addForm.value.sub_title, mediaDetail.value.title)
 }
 watch(() => [
   addForm.value.episodes_all,
@@ -777,6 +800,7 @@ function handleIgnore() {
           </v-row>
         </div>
         <div class="mt-6">
+          <GroupTile title="清晰度" />
           <VChipGroup column v-model="addForm.defn">
             <template v-for="definition in mediaDetail.definition_list" :key="definition.name">
               <VChip v-if="definition.sname" :color="addForm.defn === definition.name ? 'primary' : ''" filter
@@ -788,6 +812,7 @@ function handleIgnore() {
         </div>
 
         <div class="mt-6">
+          <GroupTile title="制作组" />
           <VChipGroup column v-model="addForm.team">
             <template v-for="(teamOption, index) in teamOptions" :key="index">
               <VChip :color="addForm.team === teamOption.team ? 'primary' : ''" filter variant="outlined"
@@ -798,6 +823,7 @@ function handleIgnore() {
           </VChipGroup>
         </div>
         <div class="mt-6">
+          <GroupTile title="命名类型" />
           <VChipGroup column v-model="addForm.type">
             <template v-for="(value, key) in mediaCateOptions" :key="key">
               <VChip :color="addForm.type === key ? 'primary' : ''" filter variant="outlined" :value="key">
@@ -807,6 +833,7 @@ function handleIgnore() {
           </VChipGroup>
         </div>
         <div class="mt-6">
+          <GroupTile title="标签" />
           <VChipGroup column v-model="addForm.tags" multiple>
             <template v-for="(value, key) in tagOptions" :key="key">
               <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
@@ -816,6 +843,7 @@ function handleIgnore() {
           </VChipGroup>
         </div>
         <div class="mt-6">
+          <GroupTile title="站点" />
           <VChipGroup column v-model="addForm.site_list" multiple>
             <template v-for="(site, index) in siteList" :key="index">
               <VChip :color="addForm.site_list.includes(site.name) ? 'primary' : ''" filter variant="outlined"
@@ -846,8 +874,6 @@ function handleIgnore() {
   <!-- 站点资源弹窗 -->
   <SiteSearchDialog v-if="resourceDialog" v-model="resourceDialog" :site="getSelectedSite()"
     :keyword="mediaProps?.title" @close="onSiteResourceDone" />
-  <NoDataFound v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
-    error-code="500" error-title="出错啦！" error-description="未识别到媒体信息。" />
 </template>
 
 <style lang="scss">

@@ -101,6 +101,8 @@ async function getDetail() {
     addForm.value.cn_title = collectDetail.value.cn_title ?? ''
     addForm.value.en_title = collectDetail.value.en_title ?? ''
     addForm.value.year = collectDetail.value.year ?? ''
+    addForm.value.season = collectDetail.value.season ?? 1
+    addForm.value.episodes_all = collectDetail.value.episodes_all ?? 1
     // 等待 tags 更新完 watch 事件触发以后再设置加载完成，避免触发更新标签
     setTimeout(() => {
       isRefreshed.value = true
@@ -346,7 +348,7 @@ watch(() => addForm.value.tags,
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-                  }}</span>
+              }}</span>
               </div>
             </span>
           </div>
@@ -509,6 +511,22 @@ watch(() => addForm.value.tags,
       <div class="mt-6">
         <v-row>
           <v-col cols="6" md="6">
+            <VTextField v-model="addForm.episodes_all" placeholder="请手动输入总集数" label="总集数" variant="plain"
+              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('episodes_all')">
+            </VTextField>
+          </v-col>
+          <v-col cols="6" md="6">
+            <VTextField v-model="addForm.season" placeholder="请手动输入季数" label="季数" variant="plain" persistent-hint
+              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('season')">
+            </VTextField>
+          </v-col>
+        </v-row>
+      </div>
+      <div class="mt-6">
+        <v-row>
+          <v-col cols="6" md="6">
             <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" label="豆瓣ID" variant="plain" persistent-hint
               class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
               @click:append-inner="updateCollect('douban_id')">
@@ -518,6 +536,22 @@ watch(() => addForm.value.tags,
             <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" label="IMDB ID" variant="plain"
               persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
               @click:append-inner="updateCollect('imdb_id')">
+            </VTextField>
+          </v-col>
+        </v-row>
+      </div>
+      <div class="mt-6">
+        <v-row>
+          <v-col cols="6" md="6">
+            <VTextField v-model="addForm.cn_title" placeholder="请手动输入中文标题" label="中文标题" variant="plain" persistent-hint
+              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('cn_title')">
+            </VTextField>
+          </v-col>
+          <v-col cols="6" md="6">
+            <VTextField v-model="addForm.en_title" placeholder="请手动输入英文标题" label="英文标题" variant="plain" persistent-hint
+              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
+              @click:append-inner="updateCollect('en_title')">
             </VTextField>
           </v-col>
         </v-row>
