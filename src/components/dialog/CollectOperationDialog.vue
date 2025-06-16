@@ -7,10 +7,7 @@ const progress = ref<Array<CollectProgress>>([])
 // 输入参数
 const props = defineProps({
   operation: String,
-  collect: {
-    type: Object as () => Collect,
-    default: () => ({})
-  }
+  collect_id: Number
 })
 // 提示框
 const $toast = useToast()
@@ -33,6 +30,8 @@ function getIcon() {
       return 'mdi-rename-box'
     case 'torrent_create':
       return 'mdi-chevron-double-right'
+    case 'auto_update':
+      return 'mdi-chevron-double-right'
     default:
       return 'mdi-arrow-down-bold-circle'
   }
@@ -51,6 +50,8 @@ function getTitle() {
       return '重命名媒体文件'
     case 'torrent_create':
       return '创建种子文件'
+    case 'auto_update':
+      return '自动更新采集任务信息'
     default:
       return '操作'
   }
@@ -69,29 +70,32 @@ function getText() {
       return '推送重命名媒体文件事件，稍后可以在详情中查看采集结果'
     case 'torrent_create':
       return '推送创建种子文件事件，稍后可以在详情中查看采集结果'
+    case 'auto_update':
+      return '推送自动更新采集任务信息事件，稍后可以在详情中查看采集结果'
     default:
       return '异步操作，请稍后查看结果'
   }
 }
 async function handleSubmit() {
   let result: { [key: string]: any }
-   result = await api.get(`collect/${props?.operation}/${props?.collect.id}`, {
-      params: {
-        next_step: next_step.value,
-        skip_if_exists: skip_if_exists.value,
-      }})
-   const title = getTitle()
- if (result && result.success) {
-      // 添加下载成功
-      $toast.success(`${title}事件发送成功！`)
-      // 下载成功，返回链接
-      emit('close')
-    } else {
-      // 添加下载失败
-      $toast.error(`${title}事件发送失败：${result?.message}！`)
-      // 下载失败，返回错误原因
-      emit('close')
+  result = await api.get(`collect/${props?.operation}/${props?.collect_id}`, {
+    params: {
+      next_step: next_step.value,
+      skip_if_exists: skip_if_exists.value,
     }
+  })
+  const title = getTitle()
+  if (result && result.success) {
+    // 添加下载成功
+    $toast.success(`${title}事件发送成功！`)
+    // 下载成功，返回链接
+    emit('close')
+  } else {
+    // 添加下载失败
+    $toast.error(`${title}事件发送失败：${result?.message}！`)
+    // 下载失败，返回错误原因
+    emit('close')
+  }
 }
 onMounted(() => {
 
@@ -99,36 +103,25 @@ onMounted(() => {
 </script>
 <template>
   <VDialog width="auto" transition="dialog-bottom-transition">
-    <VCard max-width="400"
-        :prepend-icon="getIcon()"
-        :text="getText()"
-        :title="getTitle()">
-        <div class="mb-6 ml-5">
-          <v-row>
-            <v-col cols="6">
-              <v-switch v-model="next_step" label="继续后续任务" hide-details>
-              </v-switch>
-            </v-col>
-            <v-col cols="6">
-              <v-switch v-model="skip_if_exists" label="已存在跳过" hide-details>
-              </v-switch>
-            </v-col>
-          </v-row>
-        </div>
-        
-        <template v-slot:actions>
-          <v-spacer></v-spacer>
-          <VBtn
-            class="ms-auto"
-            text="取消"
-            @click="emit('close')"
-          ></VBtn>
-          <VBtn
-            class="ms-auto"
-            text="确定"
-            @click="handleSubmit"
-          ></VBtn>
-        </template>
+    <VCard max-width="400" :prepend-icon="getIcon()" :text="getText()" :title="getTitle()">
+      <div class="mb-6 ml-5">
+        <v-row>
+          <v-col cols="6">
+            <v-switch v-model="next_step" label="继续后续任务" hide-details>
+            </v-switch>
+          </v-col>
+          <v-col cols="6">
+            <v-switch v-model="skip_if_exists" label="已存在跳过" hide-details>
+            </v-switch>
+          </v-col>
+        </v-row>
+      </div>
+
+      <template v-slot:actions>
+        <v-spacer></v-spacer>
+        <VBtn class="ms-auto" text="取消" @click="emit('close')"></VBtn>
+        <VBtn class="ms-auto" text="确定" @click="handleSubmit"></VBtn>
+      </template>
     </VCard>
   </VDialog>
 </template>

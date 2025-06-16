@@ -276,6 +276,8 @@ function getIcon(operation: string) {
       return 'mdi-rename-box'
     case 'torrent_create':
       return 'mdi-chevron-double-right'
+    case 'auto_update':
+      return 'mdi-refresh'
     default:
       return 'mdi-arrow-down-bold-circle'
   }
@@ -390,7 +392,13 @@ watch(() => addForm.value.tags,
         <div class="media-overview-left">
           <div class="tagline">
             <div class="media-actions">
-
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('auto_update')">
+                <template #prepend>
+                  <VIcon :icon="getIcon('auto_update')" />
+                </template>
+                更新
+              </VBtn>
               <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
                 @click.stop="showCollectOperationDialog('start_download_by_collect')">
                 <template #prepend>
@@ -592,7 +600,7 @@ watch(() => addForm.value.tags,
     <AddSiteSeedDialog v-if="showAddSiteSedd" v-model="showAddSiteSedd" :collect="collectDetail"
       :siteSeedList="siteSeedList" @done="addSiteSeedSuccess" @error="addSiteSeedError"
       @close="showAddSiteSedd = false" />
-    <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect="collectDetail"
+    <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="collectDetail.id"
       :operation="operationType" @close="showCollectOperation = false" />
 
   </div>

@@ -8,6 +8,7 @@ import { useToast } from 'vue-toast-notification'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
+import CollectOperationDialog from '@/components/dialog/CollectOperationDialog.vue'
 const $toast = useToast()
 
 // 定义触发的自定义事件
@@ -18,6 +19,8 @@ const showDescInfo = ref(false)
 const seedInfo = ref<SiteSeed>({} as SiteSeed)
 // 从 provide 中获取全局设置
 const globalSettings: any = inject('globalSettings')
+const showCollectOperation = ref(false)
+const operationType = ref('')
 // 输入参数
 const props = defineProps({
   task: Object as PropType<Collect>,
@@ -77,6 +80,11 @@ function showAddSiteSeddoDialog() {
 }
 function showDescInfoDialog() {
   showDescInfo.value = true
+}
+function showCollectOperationDialog(operation: string) {
+  console.log('showCollectOperationDialog')
+  operationType.value = operation
+  showCollectOperation.value = true
 }
 function getTags() {
   if (!props.task?.tags)
@@ -273,6 +281,12 @@ onUnmounted(() => {
                   </template>
                   <VListItemTitle>查看详情</VListItemTitle>
                 </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('auto_update')">
+                  <template #prepend>
+                    <VIcon icon="mdi-information" />
+                  </template>
+                  <VListItemTitle>更新信息</VListItemTitle>
+                </VListItem>
                 <VListItem variant="plain" @click="deleteCollect(task?.id)">
                   <template #prepend>
                     <VIcon icon="mdi-delete" />
@@ -291,6 +305,8 @@ onUnmounted(() => {
   <AddSiteSeedDialog v-if="showAddSiteSedd" v-model="showAddSiteSedd" :collect="task" :siteSeedList="siteSeedList"
     @done="addSiteSeedSuccess" @error="addSiteSeedError" @close="showAddSiteSedd = false" />
   <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
+  <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="task?.id"
+    :operation="operationType" @close="showCollectOperation = false" />
 </template>
 <style scoped>
 .discount-banner {
