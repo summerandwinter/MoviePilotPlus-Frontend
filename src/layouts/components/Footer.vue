@@ -3,6 +3,8 @@ import { getNavMenus } from '@/router/i18n-menu'
 import { useDisplay } from 'vuetify'
 import { NavMenu } from '@/@layouts/types'
 import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores'
+import { filterMenusByPermission } from '@/utils/permission'
 
 const display = useDisplay()
 const appMode = inject('pwaMode') && display.mdAndDown.value
@@ -13,8 +15,33 @@ const isEnglish = computed(() => locale.value === 'en-US')
 
 const route = useRoute()
 
+// 用户Store
+const userStore = useUserStore()
+
+// 获取用户权限信息
+const userPermissions = computed(() => {
+  // 确保用户已认证且信息已加载
+  if (!userStore || userStore.userID === -1) {
+    return {
+      is_superuser: false,
+      discovery: false,
+      search: false,
+      subscribe: false,
+      manage: false,
+    }
+  }
+
+  return {
+    is_superuser: userStore.superUser,
+    ...userStore.permissions,
+  }
+})
+
 // 获取导航菜单
-const navMenus = computed(() => getNavMenus())
+const navMenus = computed(() => {
+  const allMenus = getNavMenus()
+  return filterMenusByPermission(allMenus, userPermissions.value)
+})
 
 // 根据当前路径获取匹配的菜单路径
 function getMenuPathFromRoute(path: string): string {
@@ -27,7 +54,42 @@ const currentMenu = ref<string>(getMenuPathFromRoute(route.path))
 
 // 过滤出底部菜单项
 const footerMenus = computed(() => {
-  return navMenus.value.filter((menu: NavMenu) => menu.footer === true)
+  // 获取所有有权限的菜单
+  const allAuthorizedMenus = navMenus.value
+
+  // 优先获取有 footer: true 属性的菜单
+  const footerMenusWithProperty = allAuthorizedMenus.filter((menu: NavMenu) => menu.footer === true)
+
+  // 设置期望的底部菜单数量（不包括"更多"按钮）
+  // 一般来说，底部导航栏显示 3-4 个主要功能比较合适
+  const expectedFooterMenuCount = 3
+
+  // 如果有 footer 属性的菜单已经足够，优先显示它们
+  if (footerMenusWithProperty.length >= expectedFooterMenuCount) {
+    return footerMenusWithProperty.slice(0, expectedFooterMenuCount)
+  }
+
+  // 如果不够，从没有 footer 属性或 footer 为 false 的菜单中补充
+  // 优先选择一些常用的功能菜单
+  const nonFooterMenus = allAuthorizedMenus.filter(
+    (menu: NavMenu) =>
+      menu.footer !== true &&
+      // 排除已经在 footerMenusWithProperty 中的菜单
+      !footerMenusWithProperty.some(footerMenu => footerMenu.to === menu.to),
+  )
+
+  // 计算还需要多少个菜单
+  const needCount = expectedFooterMenuCount - footerMenusWithProperty.length
+
+  // 合并菜单：优先显示有 footer 属性的，然后按菜单定义顺序添加其他菜单
+  let finalMenus = [...footerMenusWithProperty, ...nonFooterMenus.slice(0, needCount)]
+
+  // 确保至少有一个菜单显示，如果都没有权限，则显示第一个有权限的菜单
+  if (finalMenus.length === 0 && allAuthorizedMenus.length > 0) {
+    finalMenus = [allAuthorizedMenus[0]]
+  }
+
+  return finalMenus
 })
 
 // 监听路由变化来更新currentMenu
@@ -117,7 +179,7 @@ const showDynamicButton = computed(() => {
               :value="menu.to"
             >
               <div class="btn-content">
-                <VIcon :icon="menu.icon" :size="isEnglish ? 32 : 24"></VIcon>
+                <VIcon :icon="menu.icon" size="32"></VIcon>
                 <span v-if="!isEnglish" class="text-xs">{{ menu.title }}</span>
               </div>
             </VBtn>
@@ -134,8 +196,8 @@ const showDynamicButton = computed(() => {
               value="/apps"
             >
               <div class="btn-content">
-                <VIcon icon="mdi-dots-horizontal" :size="isEnglish ? 32 : 24"></VIcon>
-                <span v-if="!isEnglish" class="btn-text">{{ t('nav.more') }}</span>
+                <VIcon icon="mdi-dots-horizontal" size="32"></VIcon>
+                <span v-if="!isEnglish" class="text-xs">{{ t('nav.more') }}</span>
               </div>
             </VBtn>
           </VBtnToggle>
@@ -153,7 +215,7 @@ const showDynamicButton = computed(() => {
               rounded="pill"
               class="footer-nav-btn"
             >
-              <VIcon color="secondary" :icon="dynamicButton?.icon || 'mdi-plus'" size="24"></VIcon>
+              <VIcon color="secondary" :icon="dynamicButton?.icon || 'mdi-plus'" size="28"></VIcon>
             </VBtn>
           </VCardText>
         </VCard>
@@ -191,12 +253,17 @@ const showDynamicButton = computed(() => {
   &.shift-left {
     transform: translateX(0);
   }
+
+  .v-btn-toggle {
+    block-size: auto;
+    min-block-size: 56px;
+  }
 }
 
 .footer-card-content {
   position: relative;
-  padding-block: 6px;
-  padding-inline: 8px;
+  padding-block: 4px;
+  padding-inline: 6px;
 }
 
 .footer-btn-group {
@@ -212,8 +279,11 @@ const showDynamicButton = computed(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  flex-grow: 0;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
   background-color: transparent;
+  block-size: 48px;
 
   &.v-btn--active {
     background-color: transparent;
@@ -229,12 +299,8 @@ const showDynamicButton = computed(() => {
 
     span {
       overflow: hidden;
-      font-size: 0.75rem;
-      max-inline-size: 100%;
-      scale: var(--text-scale, 1);
       text-overflow: ellipsis;
       transform-origin: center;
-      transition: scale 0.2s ease;
       white-space: nowrap;
     }
   }
@@ -252,9 +318,9 @@ const showDynamicButton = computed(() => {
 
   .footer-nav-btn {
     padding: 0;
-    block-size: 36px;
-    inline-size: 36px;
-    min-inline-size: 36px;
+    block-size: 40px;
+    inline-size: 40px;
+    min-inline-size: 40px;
 
     .btn-content {
       margin: 0;

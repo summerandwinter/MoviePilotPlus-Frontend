@@ -9,6 +9,7 @@ import api from '@/api'
 import { useDisplay } from 'vuetify'
 import { getQueryValue } from '@/@core/utils'
 import { useI18n } from 'vue-i18n'
+import { clearAppBadge } from '@/utils/badge'
 
 // 国际化
 const { t } = useI18n()
@@ -103,9 +104,38 @@ function openDialog(dialogRef: any) {
   dialogRef.value = true
 }
 
-// 滚动到底部
+// 打开消息弹窗并清除徽章
+async function openMessageDialog() {
+  messageDialog.value = true
+  // 延迟清除徽章，确保对话框已经打开
+  setTimeout(async () => {
+    await clearAppBadge()
+  }, 500)
+}
+
+// 智能滚动到底部（只有用户在底部附近时才滚动）
 function scrollMessageToEnd() {
   // 使用更长的延迟确保DOM已更新
+  setTimeout(() => {
+    try {
+      const cardText = document.querySelector('.v-dialog .v-card-text')
+      if (cardText) {
+        const { scrollTop, scrollHeight, clientHeight } = cardText
+        // 计算距离底部的距离
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+        // 如果用户距离底部小于1/3屏幕高度，认为用户在底部附近，执行自动滚动
+        if (distanceFromBottom <= clientHeight / 3) {
+          cardText.scrollTop = cardText.scrollHeight
+        }
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }, 500) // 增加延迟时间
+}
+
+// 强制滚动到底部（用于发送消息后）
+function forceScrollToEnd() {
   setTimeout(() => {
     try {
       const cardText = document.querySelector('.v-dialog .v-card-text')
@@ -115,7 +145,7 @@ function scrollMessageToEnd() {
     } catch (error) {
       console.error(error)
     }
-  }, 500) // 增加延迟时间
+  }, 500)
 }
 
 // 拼接全部日志url
@@ -131,15 +161,25 @@ async function sendMessage() {
       await api.post(`message/web?text=${user_message.value}`)
       user_message.value = ''
       sendButtonDisabled.value = false
-      scrollMessageToEnd()
+      forceScrollToEnd() // 发送消息后强制滚动到底部
     } catch (error) {
       console.error(error)
     }
   }
 }
 
+// 供外部调用的打开消息弹窗方法
+function openMessageDialogFromExternal() {
+  openMessageDialog()
+}
+
+// 暴露方法给父组件
+defineExpose({
+  openMessageDialog: openMessageDialogFromExternal,
+})
+
 onMounted(() => {
-  scrollMessageToEnd()
+  forceScrollToEnd() // 初始化时强制滚动到底部
   const shortcut = getQueryValue('shortcut')
   if (shortcut) {
     const found = shortcuts.find(item => item.dialog === shortcut)
@@ -187,7 +227,7 @@ onMounted(() => {
               flat
               class="pa-2 d-flex align-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 border h-full"
               hover
-              @click="openDialog(item.dialogRef)"
+              @click="item.dialog === 'message' ? openMessageDialog() : openDialog(item.dialogRef)"
             >
               <VAvatar variant="text" size="48" rounded="lg">
                 <VIcon color="primary" :icon="item.icon" size="24" />

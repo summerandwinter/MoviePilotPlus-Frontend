@@ -12,6 +12,8 @@ import { getNavMenus } from '@/router/i18n-menu'
 import { NavMenu } from '@/@layouts/types'
 import { useDisplay } from 'vuetify'
 import { useI18n } from 'vue-i18n'
+import { filterMenusByPermission } from '@/utils/permission'
+import { onUnreadMessage } from '@/utils/badge'
 
 const display = useDisplay()
 const appMode = inject('pwaMode')
@@ -20,8 +22,17 @@ const { t } = useI18n()
 // 用户 Store
 const userStore = useUserStore()
 
-// 是否超级用户
-let superUser = userStore.superUser
+// 响应式的超级用户状态
+const superUser = computed(() => userStore.superUser)
+
+// ShortcutBar 引用
+const shortcutBarRef = ref<InstanceType<typeof ShortcutBar> | null>(null)
+
+// 获取用户权限信息
+const userPermissions = computed(() => ({
+  is_superuser: userStore.superUser,
+  ...userStore.permissions,
+}))
 
 // 开始菜单项
 const startMenus = ref<NavMenu[]>([])
@@ -45,12 +56,25 @@ const collectMenus = ref<NavMenu[]>([])
 const getMenuList = (header: string) => {
   // 使用国际化菜单
   const menus = getNavMenus()
-  return menus.filter((item: NavMenu) => item.header === header && (superUser || !item.admin))
+  const filteredMenus = filterMenusByPermission(menus, userPermissions.value)
+  return filteredMenus.filter((item: NavMenu) => item.header === header)
 }
 
 // 返回上一页
 function goBack() {
   history.back()
+}
+
+// 处理未读消息事件
+function handleUnreadMessage(count: number) {
+  if (superUser.value && count > 0) {
+    // 延迟一点时间确保组件已渲染
+    setTimeout(() => {
+      if (shortcutBarRef.value && typeof shortcutBarRef.value.openMessageDialog === 'function') {
+        shortcutBarRef.value.openMessageDialog()
+      }
+    }, 500)
+  }
 }
 
 onMounted(() => {
@@ -61,6 +85,14 @@ onMounted(() => {
   subscribeMenus.value = getMenuList(t('menu.subscribe'))
   organizeMenus.value = getMenuList(t('menu.organize'))
   systemMenus.value = getMenuList(t('menu.system'))
+
+  // 监听全局未读消息事件
+  const unsubscribe = onUnreadMessage(handleUnreadMessage)
+
+  // 组件卸载时清理监听
+  onBeforeUnmount(() => {
+    unsubscribe()
+  })
 })
 </script>
 
@@ -82,7 +114,7 @@ onMounted(() => {
         <!-- 👉 Spacer -->
         <VSpacer />
         <!-- 👉 Shortcuts -->
-        <ShortcutBar v-if="superUser" />
+        <ShortcutBar v-if="superUser" ref="shortcutBarRef" />
         <!-- 👉 Notification -->
         <UserNofification />
         <!-- 👉 UserProfile -->

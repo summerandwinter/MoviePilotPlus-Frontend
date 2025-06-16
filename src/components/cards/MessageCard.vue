@@ -10,6 +10,9 @@ const props = defineProps({
   height: String,
 })
 
+// 定义事件
+const emit = defineEmits(['imageload'])
+
 // 图片是否加载完成
 const isImageLoaded = ref(false)
 
@@ -19,6 +22,7 @@ const imageLoadError = ref(false)
 // 图片加载完成
 async function imageLoaded() {
   isImageLoaded.value = true
+  emit('imageload')
 }
 
 // 链接打开新窗口
@@ -55,7 +59,13 @@ function replaceNewLine(value: string) {
         position="top"
         @load="imageLoaded"
         @error="imageLoadError = true"
-      />
+      >
+        <template #placeholder>
+          <div class="w-full h-full">
+            <VSkeletonLoader class="object-cover aspect-w-2 aspect-h-3" />
+          </div>
+        </template>
+      </VImg>
     </div>
     <div
       v-if="

@@ -63,6 +63,7 @@ function logout() {
 
   // 清除登录状态信息
   authStore.logout()
+  userStore.reset()
   // 重定向到登录页面或其他适当的页面
   router.push('/login')
 }
@@ -373,7 +374,7 @@ onUnmounted(() => {
           </template>
           <div>
             <span class="text-primary text-sm font-medium d-block">
-              {{ superUser ? t('user.admin') : t('user.normalUser') }}
+              {{ superUser ? t('user.admin') : t('user.normal') }}
             </span>
             <span class="text-high-emphasis text-lg font-weight-bold">
               {{ userName }}
