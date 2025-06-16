@@ -28,7 +28,7 @@ async function getProgressInfo() {
 }
 async function getSeedInfo() {
   try {
-    siteSeed.value = await api.get(`collect/seed/detail//${props?.seed.id}`)
+    siteSeed.value = await api.get(`collect/seed/detail/${props?.seed.id}`)
   } catch (error) {
     console.error(error)
   }
@@ -77,7 +77,7 @@ async function handleSubmit(id: number) {
   try {
     // 请求API
     const action = getAction()
-    
+
     const result: { [key: string]: any } = await api.get('collect/' + action + '/' + props?.seed.id)
     // 添加采集任务状态
     if (result.success) {
@@ -134,22 +134,15 @@ onMounted(() => {
         </VToolbar>
       </div>
       <VCardText class="d-flex flex-row  justify-center ">
-        <v-sheet
-          class="d-flex align-center justify-center flex-wrap mx-auto px-4"
-          elevation="0"
-          > 
+        <v-sheet class="d-flex align-center justify-center flex-wrap mx-auto px-4" elevation="0">
           <VTimeline align="start">
-            <VTimelineItem
-              :dot-color="item.success?'success':'error'"
-              size="small"
-              v-for="(item, index) in progress"
-            >
+            <VTimelineItem :dot-color="item.success ? 'success' : 'error'" size="small" v-for="(item, index) in progress">
               <div class="d-flex">
-                <strong class="me-4">{{item.created_at}}</strong>
+                <strong class="me-4">{{ item.created_at }}</strong>
                 <div>
-                  <strong>{{item.name}}</strong>
+                  <strong>{{ item.name }}</strong>
                   <div class="text-caption" v-if="!item.success">
-                    {{item.error_msg}}
+                    {{ item.error_msg }}
                   </div>
                 </div>
               </div>
@@ -158,27 +151,12 @@ onMounted(() => {
         </v-sheet>
       </VCardText>
       <VCardItem class="text-center mt-10">
-        <VBtn
-          variant="elevated"
-          v-if="!hideHandleBtn()"
-          @click="handleSubmit"
-          :disabled="loading"
-          color="success"
-          :prepend-icon="getBtnIcon()"
-          class="px-5"
-          size="small"
-        >
-          {{getActionName()}}
+        <VBtn variant="elevated" v-if="!hideHandleBtn()" @click="handleSubmit" :disabled="loading" color="success"
+          :prepend-icon="getBtnIcon()" class="px-5" size="small">
+          {{ getActionName() }}
         </VBtn>
-        <VBtn
-          variant="elevated"
-          @click="deleteSeed"
-          :disabled="loading"
-          color="error"
-          prepend-icon="mdi-delete"
-          class="px-5 ml-5"
-          size="small"
-        >
+        <VBtn variant="elevated" @click="deleteSeed" :disabled="loading" color="error" prepend-icon="mdi-delete"
+          class="px-5 ml-5" size="small">
           删除
         </VBtn>
       </VCardItem>
