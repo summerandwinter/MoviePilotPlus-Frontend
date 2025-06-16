@@ -54,7 +54,7 @@ function getActionName() {
   } else if (!siteSeed.value?.torrent_seeded) {
     return '发布'
   } else {
-    return '发布'
+    return '更新'
   }
 }
 function getAction() {
@@ -65,7 +65,7 @@ function getAction() {
   } else if (!siteSeed.value?.torrent_seeded) {
     return 'torrent_seed'
   } else {
-    return 'torrent_publish'
+    return 'torrent_update'
   }
 }
 function hideHandleBtn() {
@@ -135,8 +135,9 @@ onMounted(() => {
       </div>
       <VCardText class="d-flex flex-row  justify-center ">
         <v-sheet class="d-flex align-center justify-center flex-wrap mx-auto px-4" elevation="0">
-          <VTimeline align="start">
-            <VTimelineItem :dot-color="item.success ? 'success' : 'error'" size="small" v-for="(item, index) in progress">
+          <VTimeline align="start" side="end">
+            <VTimelineItem :dot-color="item.success ? 'success' : 'error'" size="small"
+              v-for="(item, index) in progress">
               <div class="d-flex">
                 <strong class="me-4">{{ item.created_at }}</strong>
                 <div>
@@ -151,8 +152,8 @@ onMounted(() => {
         </v-sheet>
       </VCardText>
       <VCardItem class="text-center mt-10">
-        <VBtn variant="elevated" v-if="!hideHandleBtn()" @click="handleSubmit" :disabled="loading" color="success"
-          :prepend-icon="getBtnIcon()" class="px-5" size="small">
+        <VBtn variant="elevated" @click="handleSubmit" :disabled="loading" color="success" :prepend-icon="getBtnIcon()"
+          class="px-5" size="small">
           {{ getActionName() }}
         </VBtn>
         <VBtn variant="elevated" @click="deleteSeed" :disabled="loading" color="error" prepend-icon="mdi-delete"
