@@ -5,6 +5,7 @@ import api from '@/api'
 import { tagOptions } from '@/api/constants'
 import type { Collect, CollectCreate, DownloadTask, SiteSeed, Progress } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
+import GroupTile from '@/components/GroupTitle.vue'
 import TaskCardSlideView from '@/views/collect/TaskCardSlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { seedStatus } from '@/api/constants'
@@ -45,6 +46,17 @@ const showProgressInfo = ref(false)
 const showSiteSeedInfo = ref(false)
 const showAddSiteSedd = ref(false)
 const showCollectOperation = ref(false)
+
+const showSaveIcons = ref({
+  en_title: false,
+  cn_title: false,
+  overview: false,
+  douban_id: false,
+  imdb_id: false,
+  season: false,
+  sub_title: false,
+  episodes_all: false
+});
 const operationType = ref('')
 // 本地是否存在，存在则包括Item信息
 const existsItemId = ref('1')
@@ -109,7 +121,20 @@ async function getDetail() {
     }, 500)
   }
 }
-
+// 跳转播放页面
+async function handlePlay() {
+  // 获取播放链接地址
+  try {
+    if (collectDetail.value.cid) {
+      // 打开链接地址
+      window.open(`https://v.qq.com/x/cover/${collectDetail.value.cid}.html`, '_blank')
+    } else {
+      $toast.error(`获取播放链接失败！`)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
 async function getSiteSeedList() {
   try {
     siteSeedList.value = await api.get(`collect/seed/${collectProps.id}`)
@@ -386,6 +411,12 @@ watch(() => addForm.value.tags,
             </template>
             进度
           </VBtn>
+          <VBtn class="ms-2 mb-2" color="green" @click="handlePlay()">
+            <template #prepend>
+              <VIcon icon="mdi-play" />
+            </template>
+            在线播放
+          </VBtn>
         </div>
       </div>
       <div class="media-overview">
@@ -487,15 +518,6 @@ watch(() => addForm.value.tags,
             </v-row>
           </div>
           <div class="mt-6">
-            <VChipGroup column v-model="addForm.tags" multiple>
-              <template v-for="(value, key) in tagOptions" :key="key">
-                <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
-                  {{ value }}
-                </VChip>
-              </template>
-            </VChipGroup>
-          </div>
-          <div class="mt-6">
             <VChipGroup column>
               <VChip v-for="(item, index) in siteSeedList" :key="index" @click.stop="showSiteSeedInfoDialog(item)">
                 <template #append>
@@ -513,21 +535,46 @@ watch(() => addForm.value.tags,
 
           </div>
         </div>
-
-
+        <div class="mt-6">
+          <GroupTile title="标签信息" />
+          <VChipGroup column v-model="addForm.tags" multiple>
+            <template v-for="(value, key) in tagOptions" :key="key">
+              <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
+                {{ value }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
       </div>
       <div class="mt-6">
+        <GroupTile title="基本信息" />
         <v-row>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.episodes_all" placeholder="请手动输入总集数" label="总集数" variant="plain"
-              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('episodes_all')">
+              persistent-hint class="max-w mt-1 input-style" density="compact"
+              @focus="showSaveIcons.episodes_all = true" @blur="showSaveIcons.episodes_all = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.episodes_all" icon="mdi-content-save"
+                      @click="updateCollect('episodes_all')" class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextField>
           </v-col>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.season" placeholder="请手动输入季数" label="季数" variant="plain" persistent-hint
-              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('season')">
+              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.season = true"
+              @blur="showSaveIcons.season = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.season" icon="mdi-content-save" @click="updateCollect('season')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextField>
           </v-col>
         </v-row>
@@ -536,14 +583,30 @@ watch(() => addForm.value.tags,
         <v-row>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" label="豆瓣ID" variant="plain" persistent-hint
-              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('douban_id')">
+              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.douban_id = true"
+              @blur="showSaveIcons.douban_id = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.douban_id" icon="mdi-content-save" @click="updateCollect('douban_id')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextField>
           </v-col>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" label="IMDB ID" variant="plain"
-              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('imdb_id')">
+              persistent-hint class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.imdb_id = true"
+              @blur="showSaveIcons.imdb_id = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.imdb_id" icon="mdi-content-save" @click="updateCollect('imdb_id')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextField>
           </v-col>
         </v-row>
@@ -552,14 +615,30 @@ watch(() => addForm.value.tags,
         <v-row>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.cn_title" placeholder="请手动输入中文标题" label="中文标题" variant="plain" persistent-hint
-              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('cn_title')">
+              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.cn_title = true"
+              @blur="showSaveIcons.cn_title = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.cn_title" icon="mdi-content-save" @click="updateCollect('cn_title')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextField>
           </v-col>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.en_title" placeholder="请手动输入英文标题" label="英文标题" variant="plain" persistent-hint
-              class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('en_title')">
+              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.en_title = true"
+              @blur="showSaveIcons.en_title = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.en_title" icon="mdi-content-save" @click="updateCollect('en_title')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextField>
           </v-col>
         </v-row>
@@ -568,8 +647,16 @@ watch(() => addForm.value.tags,
         <v-row>
           <v-col cols="12" md="12">
             <VTextarea v-model="addForm.sub_title" placeholder="请手动输入副标题" label="副标题" rows="3" variant="plain"
-              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('sub_title')">
+              persistent-hint class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.sub_title = true"
+              @blur="showSaveIcons.sub_title = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.sub_title" icon="mdi-content-save" @click="updateCollect('sub_title')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextarea>
           </v-col>
         </v-row>
@@ -578,8 +665,16 @@ watch(() => addForm.value.tags,
         <v-row>
           <v-col cols="12" md="12">
             <VTextarea v-model="addForm.overview" placeholder="请手动输入简介" label="简介" rows="3" variant="plain"
-              persistent-hint class="max-w mt-1" density="compact" append-inner-icon="mdi-content-save"
-              @click:append-inner="updateCollect('overview')">
+              persistent-hint class="max-w mt-1 relative input-style" density="compact"
+              @focus="showSaveIcons.overview = true" @blur="showSaveIcons.overview = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.overview" icon="mdi-content-save" @click="updateCollect('overview')"
+                      class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
             </VTextarea>
           </v-col>
         </v-row>
@@ -872,5 +967,36 @@ a.crew-name {
     font-size: 1.5rem;
     line-height: 2rem;
   }
+}
+
+
+.relative {
+  position: relative;
+}
+
+.absolute-icon-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 60px;
+  display: flex;
+  align-items: flex-start;
+  background: linear-gradient(90deg, transparent 0%, var(--v-theme-background) 70%);
+  z-index: 2;
+}
+</style>
+
+<style scoped>
+.save-icon {
+  position: absolute;
+  right: 2px;
+  top: 6px;
+  z-index: 3;
+}
+
+.input-style {
+  font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-size: 14px;
 }
 </style>
