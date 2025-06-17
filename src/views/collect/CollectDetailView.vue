@@ -375,7 +375,7 @@ watch(() => addForm.value.tags,
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-              }}</span>
+                  }}</span>
               </div>
             </span>
           </div>
@@ -535,16 +535,16 @@ watch(() => addForm.value.tags,
 
           </div>
         </div>
-        <div class="mt-6">
-          <GroupTile title="标签信息" />
-          <VChipGroup column v-model="addForm.tags" multiple>
-            <template v-for="(value, key) in tagOptions" :key="key">
-              <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
-                {{ value }}
-              </VChip>
-            </template>
-          </VChipGroup>
-        </div>
+      </div>
+      <div class="mt-6">
+        <GroupTile title="标签信息" />
+        <VChipGroup column v-model="addForm.tags" multiple>
+          <template v-for="(value, key) in tagOptions" :key="key">
+            <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
+              {{ value }}
+            </VChip>
+          </template>
+        </VChipGroup>
       </div>
       <div class="mt-6">
         <GroupTile title="基本信息" />

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
+import { useConfirm } from '@/composables/useConfirm'
 import router from '@/router'
 import type { Collect, SiteSeed } from '@/api/types'
 import api from '@/api'
@@ -10,7 +11,8 @@ import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 import CollectOperationDialog from '@/components/dialog/CollectOperationDialog.vue'
 const $toast = useToast()
-
+// 确认框
+const createConfirm = useConfirm()
 // 定义触发的自定义事件
 const emit = defineEmits(['remove'])
 const showAddSiteSedd = ref(false)
@@ -124,6 +126,12 @@ async function deleteCollect(collect_id: number | undefined) {
   try {
     if (!collect_id)
       return
+    const isConfirmed = await createConfirm({
+      title: '确认',
+      content: '确认删除采集任务？',
+    })
+
+    if (!isConfirmed) return
     await api.delete(`collect/${collect_id}`, {
       params: {
         'delete_file': true,
@@ -137,6 +145,7 @@ async function deleteCollect(collect_id: number | undefined) {
     console.error(error)
   }
 }
+
 // 控制是否展开所有chip
 const showAll = ref(false)
 
@@ -172,6 +181,26 @@ const handleResize = () => {
   recalculateVisible()
 }
 
+function getIcon(operation: string) {
+  switch (operation) {
+    case 'start_download_by_collect':
+      return 'mdi-arrow-down-bold-circle'
+    case 'metadata_by_collect':
+      return 'mdi-camcorder-box'
+    case 'screenshot_by_collect':
+      return 'mdi-camera'
+    case 'collect_desc_by_collect':
+      return 'mdi-format-text'
+    case 'collect_move':
+      return 'mdi-rename-box'
+    case 'torrent_create':
+      return 'mdi-chevron-double-right'
+    case 'auto_update':
+      return 'mdi-refresh'
+    default:
+      return 'mdi-arrow-down-bold-circle'
+  }
+}
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   // 初始加载时计算一次
@@ -267,8 +296,6 @@ onUnmounted(() => {
         </div>
       </div>
 
-
-
       <template #append>
         <div class="me-n3">
           <IconBtn>
@@ -281,15 +308,52 @@ onUnmounted(() => {
                   </template>
                   <VListItemTitle>查看详情</VListItemTitle>
                 </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('start_download_by_collect')">
+                  <template #prepend>
+                    <VIcon :icon="getIcon('start_download_by_collect')" />
+                  </template>
+                  <VListItemTitle>下载</VListItemTitle>
+                </VListItem>
                 <VListItem variant="plain" @click="showCollectOperationDialog('auto_update')">
                   <template #prepend>
-                    <VIcon icon="mdi-information" />
+                    <VIcon :icon="getIcon('auto_update')" />
                   </template>
                   <VListItemTitle>更新信息</VListItemTitle>
                 </VListItem>
-                <VListItem variant="plain" @click="deleteCollect(task?.id)">
+                <VListItem variant="plain" @click="showCollectOperationDialog('metadata_by_collect')">
                   <template #prepend>
-                    <VIcon icon="mdi-delete" />
+                    <VIcon :icon="getIcon('metadata_by_collect')" />
+                  </template>
+                  <VListItemTitle>采集媒体信息</VListItemTitle>
+                </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('screenshot_by_collect')">
+                  <template #prepend>
+                    <VIcon :icon="getIcon('screenshot_by_collect')" />
+                  </template>
+                  <VListItemTitle>截图</VListItemTitle>
+                </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('collect_desc_by_collect')">
+                  <template #prepend>
+                    <VIcon :icon="getIcon('collect_desc_by_collect')" />
+                  </template>
+                  <VListItemTitle>采集简介</VListItemTitle>
+                </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('collect_move')">
+                  <template #prepend>
+                    <VIcon :icon="getIcon('collect_move')" />
+                  </template>
+                  <VListItemTitle>重命名</VListItemTitle>
+                </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('torrent_create')">
+                  <template #prepend>
+                    <VIcon :icon="getIcon('torrent_create')" />
+                  </template>
+                  <VListItemTitle>制种</VListItemTitle>
+                </VListItem>
+
+                <VListItem variant="plain" @click="deleteCollect(task?.id)" class="bg-error-container">
+                  <template #prepend>
+                    <VIcon icon="mdi-delete" color="error" />
                   </template>
                   <VListItemTitle>删除任务</VListItemTitle>
                 </VListItem>
