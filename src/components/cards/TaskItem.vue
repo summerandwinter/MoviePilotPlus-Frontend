@@ -197,6 +197,8 @@ function getIcon(operation: string) {
       return 'mdi-chevron-double-right'
     case 'auto_update':
       return 'mdi-refresh'
+    case 'remake_torrent':
+      return 'mdi-transfer'
     default:
       return 'mdi-arrow-down-bold-circle'
   }
@@ -350,6 +352,12 @@ onUnmounted(() => {
                   </template>
                   <VListItemTitle>制种</VListItemTitle>
                 </VListItem>
+                <VListItem variant="plain" @click="showCollectOperationDialog('remake_torrent')">
+                  <template #prepend>
+                    <VIcon :icon="getIcon('remake_torrent')" />
+                  </template>
+                  <VListItemTitle>转种</VListItemTitle>
+                </VListItem>
 
                 <VListItem variant="plain" @click="deleteCollect(task?.id)" class="bg-error-container">
                   <template #prepend>
@@ -370,7 +378,7 @@ onUnmounted(() => {
     @done="addSiteSeedSuccess" @error="addSiteSeedError" @close="showAddSiteSedd = false" />
   <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
   <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="task?.id"
-    :operation="operationType" @close="showCollectOperation = false" />
+    :operation="operationType" @close="showCollectOperation = false" with="600" />
 </template>
 <style scoped>
 .discount-banner {

@@ -2,6 +2,7 @@
 
 import { useToast } from 'vue-toast-notification'
 import api from '@/api'
+import { teamOptions } from '@/api/constants'
 import { CollectProgress, Collect } from '@/api/types'
 const progress = ref<Array<CollectProgress>>([])
 // 输入参数
@@ -15,7 +16,15 @@ const $toast = useToast()
 const emit = defineEmits(['close'])
 const next_step = ref(false)
 const skip_if_exists = ref(false)
+const delete_old_file = ref(false)
 
+const team = ref('')
+
+function getCopyright() {
+  if (team.value) {
+    return teamOptions.find((item) => item.team === team.value)?.copyright
+  }
+}
 function getIcon() {
   switch (props.operation) {
     case 'start_download_by_collect':
@@ -32,6 +41,8 @@ function getIcon() {
       return 'mdi-chevron-double-right'
     case 'auto_update':
       return 'mdi-chevron-double-right'
+    case 'remake_torrent':
+      return 'mdi-transfer'
     default:
       return 'mdi-arrow-down-bold-circle'
   }
@@ -52,6 +63,8 @@ function getTitle() {
       return '创建种子文件'
     case 'auto_update':
       return '自动更新采集任务信息'
+    case 'remake_torrent':
+      return '转种'
     default:
       return '操作'
   }
@@ -72,18 +85,34 @@ function getText() {
       return '推送创建种子文件事件，稍后可以在详情中查看采集结果'
     case 'auto_update':
       return '推送自动更新采集任务信息事件，稍后可以在详情中查看采集结果'
+    case 'remake_torrent':
+      return '推送转钟事件，稍后可以在详情中查看采集结果'
     default:
       return '异步操作，请稍后查看结果'
   }
 }
 async function handleSubmit() {
   let result: { [key: string]: any }
-  result = await api.get(`collect/${props?.operation}/${props?.collect_id}`, {
-    params: {
-      next_step: next_step.value,
-      skip_if_exists: skip_if_exists.value,
+  let params = {
+    next_step: next_step.value,
+    skip_if_exists: skip_if_exists.value,
+    copyright: getCopyright(),
+    team: team.value,
+    delete_old_file: delete_old_file.value,
+  }
+  if (props.operation == 'remake_torrent') {
+    if (!team.value) {
+      $toast.error('请选择转种制作组！')
+      return
     }
-  })
+    params = {
+      ...params,
+      copyright: getCopyright(),
+      team: team.value,
+      delete_old_file: delete_old_file.value,
+    }
+  }
+  result = await api.get(`collect/${props?.operation}/${props?.collect_id}`, { params: params })
   const title = getTitle()
   if (result && result.success) {
     // 添加下载成功
@@ -103,18 +132,37 @@ onMounted(() => {
 </script>
 <template>
   <VDialog width="auto" transition="dialog-bottom-transition">
-    <VCard max-width="400" :prepend-icon="getIcon()" :text="getText()" :title="getTitle()">
-      <div class="mb-6 ml-5">
+    <VCard width="600" :prepend-icon="getIcon()" :text="getText()" :title="getTitle()">
+
+      <div class="mb-6 ml-5" v-if="props.operation == 'remake_torrent'">
+        <VChipGroup column v-model="team">
+          <template v-for="(teamOption, index) in teamOptions" :key="index">
+            <VChip filter variant="outlined" :value="teamOption.team">
+              {{ teamOption.team }}
+            </VChip>
+          </template>
+        </VChipGroup>
+      </div>
+      <div class="ml-5">
         <v-row>
-          <v-col cols="6">
+          <v-col cols="6" v-if="props.operation == 'remake_torrent'">
+            <v-switch v-model="delete_old_file" label="清除原有做种" hide-details>
+            </v-switch>
+          </v-col>
+          <v-col cols="6" v-if="props.operation != 'remake_torrent'">
             <v-switch v-model="next_step" label="继续后续任务" hide-details>
             </v-switch>
           </v-col>
-          <v-col cols="6">
-            <v-switch v-model="skip_if_exists" label="已存在跳过" hide-details>
+          <v-col cols="6" v-if="props.operation != 'remake_torrent'" v-model="skip_if_exists">
+            <v-switch label="已存在跳过" hide-details>
             </v-switch>
           </v-col>
+          <v-col cols="12">
+            <div class="text-red-700" v-if="props.operation == 'remake_torrent' && delete_old_file">
+              清除原有做种后，会删除原有做种文件和任务，且无法恢复！</div>
+          </v-col>
         </v-row>
+
       </div>
 
       <template v-slot:actions>

@@ -303,6 +303,8 @@ function getIcon(operation: string) {
       return 'mdi-chevron-double-right'
     case 'auto_update':
       return 'mdi-refresh'
+    case 'remake_torrent':
+      return 'mdi-transfer'
     default:
       return 'mdi-arrow-down-bold-circle'
   }
@@ -375,7 +377,7 @@ watch(() => addForm.value.tags,
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-              }}</span>
+                  }}</span>
               </div>
             </span>
           </div>
@@ -429,6 +431,13 @@ watch(() => addForm.value.tags,
                   <VIcon :icon="getIcon('auto_update')" />
                 </template>
                 更新
+              </VBtn>
+              <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
+                @click.stop="showCollectOperationDialog('remake_torrent')">
+                <template #prepend>
+                  <VIcon :icon="getIcon('remake_torrent')" />
+                </template>
+                转种
               </VBtn>
               <VBtn class="ms-2 mb-2" color="primary" variant="tonal"
                 @click.stop="showCollectOperationDialog('start_download_by_collect')">
