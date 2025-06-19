@@ -7,7 +7,7 @@ import { useDisplay } from 'vuetify'
 const emit = defineEmits(['remove'])
 // 设备模式
 const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
+import { collectStatus } from '@/api/constants'
 
 // 国际化
 const { t } = useI18n()
@@ -29,10 +29,19 @@ const filterForm: Record<string, string[]> = reactive({
   edition: [] as string[],
   // 分辨率
   resolution: [] as string[],
+  // 状态
+  status: [] as string[],
 })
-
+function getFilterItemName(key: string, option: string) {
+  if (key == 'status') {
+    return collectStatus[option as keyof typeof collectStatus]
+  } else {
+    return option
+  }
+}
 // 过滤项映射（保持中文标题）
 const filterTitles: Record<string, string> = {
+  status: '状态',
   site: t('torrent.filterSite'),
   videoCode: t('torrent.filterVideoCode'),
   edition: t('torrent.filterEdition'),
@@ -53,7 +62,9 @@ const filterOptions: Record<string, string[]> = reactive({
   resolution: [] as string[],
   videoCode: [] as string[],
   releaseGroup: [] as string[],
+  status: [] as string[],
 })
+
 
 // 排序字段
 const sortField = ref('default')
@@ -108,6 +119,7 @@ function initOptions(data: Collect) {
       options.push(value)
     }
   }
+  optionValue(filterOptions.status, data?.status)
   optionValue(filterOptions.releaseGroup, data?.team)
   optionValue(filterOptions.videoCode, data?.video_codec)
   optionValue(filterOptions.edition, data?.hdr_format)
@@ -137,9 +149,9 @@ function filterData() {
     let filteredData: Collect[] = []
     // 然后根据过滤条件筛选数据
     props.items.forEach(data => {
-      console.warn('filterForm.resolution:', filterForm.resolution)
-      console.warn('data.resolution:', data.resolution)
-      console.warn('match(filterForm.resolution, data.resolution):', match(filterForm.resolution, data.resolution))
+      console.warn('filterForm.status:', filterForm.status)
+      console.warn('data.status:', data.status)
+      console.warn('match(filterForm.status, data.status):', match(filterForm.status, data.status))
       if (
         // 制作组过滤
         match(filterForm.releaseGroup, data.team) &&
@@ -147,6 +159,8 @@ function filterData() {
         match(filterForm.videoCode, data.video_codec) &&
         // 分辨率过滤
         match(filterForm.resolution, data.resolution) &&
+        // 状态过滤
+        match(filterForm.status, data.status) &&
         // 质量过滤
         match(filterForm.edition, data.hdr_format)
       ) {
@@ -215,6 +229,7 @@ function toggleAllFilterMenu() {
 // 给定过滤类型返回不同图标
 function getFilterIcon(key: string) {
   const icons: Record<string, string> = {
+    status: 'mdi-clipboard-check-outline',
     site: 'mdi-server-network',
     resolution: 'mdi-monitor-screenshot',
     videoCode: 'mdi-video-vintage',
@@ -331,7 +346,7 @@ onMounted(() => {
                     <VChipGroup v-model="filterForm[key]" column multiple class="filter-options">
                       <VChip v-for="option in filterOptions[key]" :key="option" :value="option" filter
                         variant="elevated" class="ma-1 filter-chip" size="small">
-                        {{ option }}
+                        {{ getFilterItemName(key, option) }}
                       </VChip>
                     </VChipGroup>
                   </VCardText>
@@ -363,7 +378,7 @@ onMounted(() => {
               <VChip v-for="(value, index) in values" :key="`${key}-${index}`" color="primary" size="small" closable
                 variant="elevated" class="me-1 mb-1 mt-1 filter-tag" @click:close="removeFilter(key, value)">
                 <VIcon size="small" :icon="getFilterIcon(key)" class="me-1"></VIcon>
-                <strong>{{ filterTitles[key] }}:</strong> {{ value }}
+                <strong>{{ filterTitles[key] }}:</strong> {{ getFilterItemName(key, value) }}
               </VChip>
             </template>
           </div>
@@ -459,7 +474,7 @@ onMounted(() => {
                 <VChipGroup v-model="filterForm[key]" column multiple class="filter-options">
                   <VChip v-for="option in filterOptions[key]" :key="option" :value="option" filter variant="elevated"
                     class="ma-1 filter-chip" size="small">
-                    {{ option }}
+                    {{ getFilterItemName(key, option) }}
                   </VChip>
                 </VChipGroup>
               </VCardText>
@@ -489,7 +504,7 @@ onMounted(() => {
           <VChipGroup v-model="filterForm[currentFilter]" column multiple class="filter-options">
             <VChip v-for="option in currentFilterOptions" :key="option" :value="option" filter variant="elevated"
               class="ma-1 filter-chip" size="small">
-              {{ option }}
+              {{ getFilterItemName(currentFilter, option) }}
             </VChip>
           </VChipGroup>
         </VCardText>
