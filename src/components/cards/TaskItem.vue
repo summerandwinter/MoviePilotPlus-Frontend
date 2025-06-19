@@ -32,7 +32,7 @@ const props = defineProps({
 
 // 任务信息
 const task = ref(props.task)
-const siteSeedList = ref<SiteSeed[]>([])
+const siteSeedList = ref<SiteSeed[]>(props.task?.seeds || [])
 // 计算Poster地址
 const getCoverUrl: Ref<string> = computed(() => {
   const url = props.task?.cover ?? ''
@@ -208,7 +208,7 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   // 初始加载时计算一次
   setTimeout(() => recalculateVisible(), 100) // 等待DOM渲染完成
-  getSiteSeedList()
+  //getSiteSeedList()
 })
 
 onUpdated(() => {

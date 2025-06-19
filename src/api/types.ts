@@ -1469,6 +1469,8 @@ export interface Collect {
   en_title: string
   // 分辨率
   resolution: string
+  // 做种列表
+  seeds: SiteSeed[]
   // 地区
   area: string | null
   // 参数

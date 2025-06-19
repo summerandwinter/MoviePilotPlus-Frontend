@@ -4,39 +4,15 @@ import api from '@/api'
 import type { Collect, DownloadTask } from '@/api/types'
 import TaskCardListView from '@/views/collect/TaskCardListView.vue'
 import TaskRowListView from '@/views/collect/TaskRowListView.vue'
-import { useDisplay } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 
 // 国际化
 const { t } = useI18n()
-// APP
-const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
+
 // 进度是否有效
 const progressEnabled = ref(false)
 // 路由参数
 const route = useRoute()
-
-// 查询TMDBID或标题
-const keyword = route.query?.keyword?.toString() ?? ''
-
-// 查询类型
-const type = route.query?.type?.toString() ?? ''
-
-// 搜索字段
-const area = route.query?.area?.toString() ?? ''
-
-// 搜索标题
-const title = route.query?.title?.toString() ?? ''
-
-// 搜索年份
-const year = route.query?.year
-
-// 搜索季
-const season = route.query?.season?.toString() ?? ''
-
-// 搜索站点，以,分离多个
-const sites = route.query?.sites?.toString() ?? ''
 // 视图切换中
 const isViewChanging = ref(false)
 
@@ -66,38 +42,23 @@ const errorTitle = ref('没有数据')
 // 错误描述
 const errorDescription = ref('未搜索到任何资源')
 
-// 使用SSE监听加载进度
-function startLoadingProgress() {
-  progressText.value = '正在搜索，请稍候...'
-  progressEventSource.value = new EventSource(`${import.meta.env.VITE_API_BASE_URL}system/progress/search`)
-  progressEventSource.value.onmessage = event => {
-    const progress = JSON.parse(event.data)
-    if (progress) {
-      progressText.value = progress.text
-      progressValue.value = progress.value
-    }
-  }
-}
-
 // 停止监听加载进度
 function stopLoadingProgress() {
   if (progressEventSource.value) progressEventSource.value?.close()
 }
 
-// 设置视图类型
-function setViewType(type: string) {
-  localStorage.setItem('MPTaskViewType', type)
-  viewType.value = type
-}
-
 // 获取搜索列表数据
 async function fetchData() {
   try {
-    // 查询上次搜索结果
-    collectList.value = await api.get('collect/') ?? []
-    taskList.value = await api.get('task/') ?? []
-    // 标记已刷新
-    isRefreshed.value = true
+    if (viewType.value == 'row') {
+      collectList.value = await api.get('collect/') ?? []
+      isRefreshed.value = true
+      taskList.value = await api.get('task/') ?? []
+    } else {
+      taskList.value = await api.get('task/') ?? []
+      isRefreshed.value = true
+      collectList.value = await api.get('collect/') ?? []
+    }
   } catch (error) {
     isRefreshed.value = true
     return Promise.reject(error)
