@@ -1582,6 +1582,8 @@ export interface Collect {
   is_downloaded: boolean
   // 是否做种
   torrent_seeded: boolean
+  // 种子体积
+  file_size: number | null
 }
 
 export interface CollectProgress {

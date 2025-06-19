@@ -5,6 +5,7 @@ import router from '@/router'
 import type { Collect, SiteSeed } from '@/api/types'
 import api from '@/api'
 import { seedStatus, collectStatus, tagOptions } from '@/api/constants'
+import { formatFileSize } from '@/@core/utils/formatters'
 import { useToast } from 'vue-toast-notification'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
@@ -254,6 +255,9 @@ onUnmounted(() => {
         <div class="d-flex flex-wrap gap-1 mb-2">
           <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.resolution }}
+          </VChip>
+          <VChip v-if="task?.file_size" label class="ml-1" variant="outlined" size="x-small" color="primary">
+            {{ formatFileSize(task?.file_size) }}
           </VChip>
           <VChip v-for="tag in getTags()" :key="tag" label class="ml-1" variant="outlined" size="x-small"
             color="primary">
