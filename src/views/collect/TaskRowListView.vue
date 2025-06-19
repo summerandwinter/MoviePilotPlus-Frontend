@@ -292,7 +292,7 @@ onMounted(() => {
       <VCard class="view-header mb-3">
         <div class="d-flex align-center flex-wrap pa-3">
           <VChip color="primary" variant="flat" size="small" class="search-count me-3" prepend-icon="mdi-magnify">
-            {{ dataList.length }} {{ t('torrent.resources') }}
+            {{ props.items?.length || 0 }} {{ t('torrent.resources') }}
           </VChip>
           <div class="filter-bar">
             <!-- 排序选择 -->
