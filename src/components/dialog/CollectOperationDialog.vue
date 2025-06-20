@@ -132,7 +132,7 @@ onMounted(() => {
 </script>
 <template>
   <VDialog width="auto" transition="dialog-bottom-transition">
-    <VCard width="600" :prepend-icon="getIcon()" :text="getText()" :title="getTitle()">
+    <VCard :prepend-icon="getIcon()" :text="getText()" :title="getTitle()">
 
       <div class="mb-6 ml-5" v-if="props.operation == 'remake_torrent'">
         <VChipGroup column v-model="team">

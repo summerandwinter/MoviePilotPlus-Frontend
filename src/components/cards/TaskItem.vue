@@ -382,7 +382,7 @@ onUnmounted(() => {
     @done="addSiteSeedSuccess" @error="addSiteSeedError" @close="showAddSiteSedd = false" />
   <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
   <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="task?.id"
-    :operation="operationType" @close="showCollectOperation = false" with="600" />
+    :operation="operationType" @close="showCollectOperation = false" />
 </template>
 <style scoped>
 .discount-banner {

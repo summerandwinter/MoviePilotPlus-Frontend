@@ -28,7 +28,7 @@ export function getNavMenus() {
       to: '/recommend',
       header: t('menu.discovery'),
       admin: false,
-      footer: true,
+      footer: false,
       permission: 'discovery',
     },
     {
@@ -37,7 +37,7 @@ export function getNavMenus() {
       to: '/discover',
       header: t('menu.discovery'),
       admin: false,
-      footer: true,
+      footer: false,
       permission: 'discovery',
     },
     {
@@ -100,6 +100,7 @@ export function getNavMenus() {
       icon: 'mdi-video',
       to: '/collect',
       header: t('menu.collect'),
+      footer: true,
       admin: false,
     },
     {
@@ -107,6 +108,7 @@ export function getNavMenus() {
       icon: 'mdi-arrow-down-bold-hexagon-outline',
       to: '/task',
       header: t('menu.collect'),
+      footer: true,
       admin: true,
     },
     {
