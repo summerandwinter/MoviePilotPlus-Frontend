@@ -166,10 +166,10 @@ export function getSettingTabs() {
       description: t('settingTabs.system.description'),
     },
     {
-      title: t('settingTabs.videoSite.title'),
+      title: t('settingTabs.collect.title'),
       icon: 'mdi-server-network',
-      tab: 'video',
-      description: t('settingTabs.videoSite.description'),
+      tab: 'collect',
+      description: t('settingTabs.collect.description'),
     },
     {
       title: t('settingTabs.directory.title'),

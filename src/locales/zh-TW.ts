@@ -189,6 +189,10 @@ export default {
       title: '系統',
       description: '基礎設置、下載器（Qbittorrent、Transmission）、媒體服務器（Emby、Jellyfin、Plex）',
     },
+    collect: {
+      title: '採集器',
+      description: '設置採集器相关信息',
+    },
     videoSite: {
       title: '視頻網站',
       description: '設置視頻網站配置信息',

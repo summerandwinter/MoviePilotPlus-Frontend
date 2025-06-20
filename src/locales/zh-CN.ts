@@ -1,3 +1,5 @@
+import { collectFromHash } from "@fullcalendar/core/internal";
+
 export default {
   common: {
     confirm: '确认',
@@ -187,6 +189,10 @@ export default {
     system: {
       title: '系统',
       description: '基础设置、下载器（Qbittorrent、Transmission）、媒体服务器（Emby、Jellyfin、Plex）',
+    },
+    collect: {
+      title: '采集',
+      description: '配置视频采集相关信息',
     },
     videoSite: {
       title: '视频网站',
@@ -954,6 +960,43 @@ export default {
       viewChangelog: '查看变更日志',
       changelog: '变更日志',
       dataDirectory: '/moviepilot',
+    },
+    collect: {
+      basicSettings: '基础设置',
+      basicSettingsDesc: '设置采集器的全局功能',
+      mediaDir: '媒体目录',
+      mediaDirHint: '用于存放下载的媒体文件',
+      downloaderThreadCount: '下载线程',
+      downloaderThreadCountHint: '设置下载器单任务线程数',
+      downloaderSpeed: '下载限速',
+      downloaderSpeedHint: '下载工具单任务限速，单位支持 Mbps 或 Kbps，如：15M 100K',
+      downloadTaskMaxWorkers: '下载队列',
+      downloadTaskMaxWorkersHint: '下载工具同时下载的最大任务数',
+      ptgenUrl: 'PTGen 地址',
+      ptgenUrlHint: 'PTGen 地址，用于识别和生成简介信息',
+      secondPtgenUrl: '备用 PTGen',
+      secondPtgenUrlHint: '当 PTGen 地址失效时，使用备用 PTGen 地址',
+      downloaderDeleteAfterDone: '清除下载缓存',
+      downloaderDeleteAfterDoneHint: '下载完成后清除下载产生的临时文件',
+      raiseException: '异常抛出',
+      raiseExceptionHint: '下载工具发生异常时的抛出异常信息方便调试',
+      apiDebug: '日志调试',
+      apiDebugHint:'打印采集器相关的 API 请求日志，接口请求日志体积较大只有必要的时候才需要打开',
+      tencentCookie: '腾讯视频Cookie',
+      tencentCookieHint: '设置腾讯视频Cookie，用于获取视频播放地址',
+      tencentCookieTips: '访问https://film.qq.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面面的输入框中',
+      tencentCookieTipsTitle: '获取方式：',
+      imageHosting: '图床设置',
+      imageHostingHint: '设置图床信息，用于上传简介截图',
+      active: '启用',
+      apikey: '秘钥',
+      username: '账号',
+      password: '密码',
+      ipic: 'ipic',
+      smms: 'smms',
+      imgbb: 'imgbb',
+      panda: '熊猫高清图床',
+      imgbox: 'imgbox',
     },
     system: {
       custom: '自定义',

@@ -7,6 +7,7 @@ import AccountSettingWords from '@/views/setting/AccountSettingWords.vue'
 import AccountSettingAbout from '@/views/setting/AccountSettingAbout.vue'
 import AccountSettingSearch from '@/views/setting/AccountSettingSearch.vue'
 import AccountSettingSubscribe from '@/views/setting/AccountSettingSubscribe.vue'
+import AccountSettingCollect from '@/views/setting/AccountSettingCollect.vue'
 import AccountSettingSystem from '@/views/setting/AccountSettingSystem.vue'
 import AccountSettingService from '@/views/setting/AccountSettingService.vue'
 import AccountSettingDirectory from '@/views/setting/AccountSettingDirectory.vue'
@@ -35,8 +36,18 @@ const settingTabs = computed(() => getSettingTabs())
           </div>
         </transition>
       </VWindowItem>
-       <!-- 视频网站 -->
-       <VWindowItem value="video">
+
+      <!-- 采集 -->
+      <VWindowItem value="collect">
+        <transition name="fade-slide" appear>
+          <div>
+            <AccountSettingCollect />
+          </div>
+        </transition>
+      </VWindowItem>
+
+      <!-- 视频网站 -->
+      <VWindowItem value="video">
         <transition name="fade-slide" appear>
           <div>
             <AccountSettingVideo />

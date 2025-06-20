@@ -188,6 +188,10 @@ export default {
       title: 'System',
       description: 'Basic settings, downloaders (Qbittorrent, Transmission), media servers (Emby, Jellyfin, Plex)',
     },
+    collect: {
+      title: 'Collect',
+      description: 'Collect settings',
+    },
     videoSite: {
       title: 'Video Sites',
       description: 'Video Sites settings',
