@@ -4,9 +4,9 @@ import { useToast } from 'vue-toast-notification'
 import { VRow, VSelect } from 'vuetify/lib/components/index.mjs'
 import draggable from 'vuedraggable'
 import api from '@/api'
-import { MediaServerConf } from '@/api/types'
+import { MediaServerConf, Site } from '@/api/types'
 import ImageHostingCard from '@/components/cards/ImageHostingCard.vue'
-import MediaServerCard from '@/components/cards/MediaServerCard.vue'
+import SiteSchemaCard from '@/components/cards/SiteSchemaCard.vue'
 import ProgressDialog from '@/components/dialog/ProgressDialog.vue'
 import { useI18n } from 'vue-i18n'
 import { mediaServerOptions } from '@/api/constants'
@@ -57,6 +57,8 @@ const CollectSettings = ref<any>({
 // 是否发送请求的总开关
 const isRequest = ref(true)
 
+// 所有站点
+const allSites = ref<Site[]>([])
 // 选中的媒体服务器
 const mediaServers = ref<MediaServerConf[]>([])
 
@@ -114,19 +116,25 @@ async function saveTencentCookie() {
 async function loadImageHostingSetting() {
   try {
     const result: { [key: string]: any } = await api.get('system/setting/ImageHostingParams')
-    CollectSettings.value.imageHosting.value = result.data?.value ?? {}
+    CollectSettings.value.ImageHosting = result.data?.value ?? {}
   } catch (error) {
     console.log(error)
   }
 }
-
+async function loadSiteList() {
+  try {
+    const data: Site[] = await api.get('site/')
+    allSites.value = data
+  } catch (error) {
+    console.log(error)
+  }
+}
 // 调用API保存下载器设置
 async function saveImageHostingSetting() {
   try {
     const imageHostingParam = CollectSettings.value.ImageHosting
     console.warn('imageHostingParam', imageHostingParam)
-    return
-    const result: { [key: string]: any } = await api.post('system/setting/ImageHostings', imageHostingParam)
+    const result: { [key: string]: any } = await api.post('system/setting/ImageHostingParams', imageHostingParam)
     if (result.success) $toast.success(t('setting.collect.imageHostingSaveSuccess'))
     else $toast.error(t('setting.collect.imageHostingSaveFailed'))
     await loadImageHostingSetting()
@@ -249,6 +257,7 @@ onMounted(() => {
   loadImageHostingSetting()
   loadMediaServerSetting()
   loadSystemSettings()
+  loadSiteList()
 })
 
 onActivated(async () => {
@@ -282,13 +291,13 @@ onDeactivated(() => {
 
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.Basic.DOWNLOADER_THREAD_COUNT"
-                  :label="t('setting.collect.imageHostingThreadCount')"
-                  :hint="t('setting.collect.imageHostingThreadCountHint')" placeholder="10" persistent-hint
+                  :label="t('setting.collect.downloaderThreadCount')"
+                  :hint="t('setting.collect.downloaderThreadCountHint')" placeholder="10" persistent-hint
                   prepend-inner-icon="mdi-numeric" />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.Basic.DOWNLOADER_SPEED"
-                  :label="t('setting.collect.imageHostingSpeed')" :hint="t('setting.collect.imageHostingSpeedHint')"
+                  :label="t('setting.collect.downloaderSpeed')" :hint="t('setting.collect.downloaderSpeedHint')"
                   placeholder="10M" persistent-hint prepend-inner-icon="mdi-speedometer" />
               </VCol>
               <VCol cols="12" md="6">
@@ -309,8 +318,8 @@ onDeactivated(() => {
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.Basic.DOWNLOADER_DELETE_AFTER_DONE"
-                  :label="t('setting.collect.imageHostingDeleteAfterDone')"
-                  :hint="t('setting.collect.imageHostingDeleteAfterDoneHint')" persistent-hint />
+                  :label="t('setting.collect.downloaderDeleteAfterDone')"
+                  :hint="t('setting.collect.downloaderDeleteAfterDoneHint')" persistent-hint />
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.Basic.RAISE_EXCEPTION" :label="t('setting.collect.raiseException')"
@@ -336,30 +345,6 @@ onDeactivated(() => {
       </VCard>
     </VCol>
   </VRow>
-  <VCol cols="12">
-    <VCard>
-      <VCardItem>
-        <VCardTitle> {{ t('setting.collect.tencentCookie') }}</VCardTitle>
-        <VCardSubtitle>{{ t('setting.collect.tencentCookieHint') }} </VCardSubtitle>
-      </VCardItem>
-      <VCardText>
-        <VTextarea v-model="tencentCookie" auto-grow :placeholder="t('setting.collect.tencentCookie')"
-          :hint="t('setting.collect.tencentCookieHint')" rows="3" persistent-hint />
-      </VCardText>
-      <VCardText>
-        <VAlert type="info" variant="tonal" :title="t('setting.collect.tencentCookieTipsTitle')">
-          <span v-html="t('setting.collect.tencentCookieTips')" />
-        </VAlert>
-      </VCardText>
-      <VCardText>
-        <VForm @submit.prevent="() => { }">
-          <div class="d-flex flex-wrap gap-4 mt-4">
-            <VBtn type="submit" @click="saveTencentCookie"> {{ t('common.save') }} </VBtn>
-          </div>
-        </VForm>
-      </VCardText>
-    </VCard>
-  </VCol>
   <VRow>
     <VCol cols="12">
       <VCard>
@@ -372,7 +357,7 @@ onDeactivated(() => {
             <VRow>
               <!-- ipic -->
               <VCol cols="12" class="pb-2">
-                <VListSubheader class="text-lg">{{ t('setting.collect.ipic') }}</VListSubheader>
+                <VListSubheader class="text-lg font-bold">{{ t('setting.collect.ipic') }}</VListSubheader>
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.ImageHosting.ipic.active" :label="t('setting.collect.active')"
@@ -380,22 +365,22 @@ onDeactivated(() => {
               </VCol>
               <!-- smms -->
               <VCol cols="12" class="pb-2">
-                <VListSubheader class="text-lg">{{ t('setting.collect.smms') }}</VListSubheader>
+                <VListSubheader class="text-lg font-bold">{{ t('setting.collect.smms') }}</VListSubheader>
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.ImageHosting.smms.apikey" :label="t('setting.collect.apikey')"
-                  prepend-inner-icon="mdi-folder-download" />
+                  prepend-inner-icon="mdi-key" />
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.ImageHosting.smms.active" :label="t('setting.collect.active')" />
               </VCol>
               <!-- imgbb -->
               <VCol cols="12" class="pb-2">
-                <VListSubheader class="text-lg">{{ t('setting.collect.imgbb') }}</VListSubheader>
+                <VListSubheader class="text-lg font-bold">{{ t('setting.collect.imgbb') }}</VListSubheader>
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.ImageHosting.imgbb.apikey" :label="t('setting.collect.apikey')"
-                  prepend-inner-icon="mdi-folder-download" />
+                  prepend-inner-icon="mdi-key" />
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.ImageHosting.imgbb.active" :label="t('setting.collect.active')" />
@@ -403,11 +388,11 @@ onDeactivated(() => {
 
               <!-- panda -->
               <VCol cols="12" class="pb-2">
-                <VListSubheader class="text-lg">{{ t('setting.collect.panda') }}</VListSubheader>
+                <VListSubheader class="text-lg font-bold">{{ t('setting.collect.panda') }}</VListSubheader>
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.ImageHosting.panda.apikey" :label="t('setting.collect.apikey')"
-                  prepend-inner-icon="mdi-folder-download" />
+                  prepend-inner-icon="mdi-key" />
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.ImageHosting.panda.active" :label="t('setting.collect.active')" />
@@ -415,15 +400,15 @@ onDeactivated(() => {
 
               <!-- imgbox -->
               <VCol cols="12" class="pb-2">
-                <VListSubheader class="text-lg">{{ t('setting.collect.imgbox') }}</VListSubheader>
+                <VListSubheader class="text-lg font-bold">{{ t('setting.collect.imgbox') }}</VListSubheader>
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.ImageHosting.imgbox.username"
-                  :label="t('setting.collect.username')" prepend-inner-icon="mdi-folder-download" />
+                  :label="t('setting.collect.username')" prepend-inner-icon="mdi-account" />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.ImageHosting.imgbox.password"
-                  :label="t('setting.collect.password')" prepend-inner-icon="mdi-folder-download" />
+                  :label="t('setting.collect.password')" prepend-inner-icon="mdi-account-key" />
               </VCol>
               <VCol cols="12" md="6">
                 <VSwitch v-model="CollectSettings.ImageHosting.imgbox.active" :label="t('setting.collect.active')" />
@@ -448,15 +433,14 @@ onDeactivated(() => {
     <VCol cols="12">
       <VCard>
         <VCardItem>
-          <VCardTitle>{{ t('setting.collect.mediaServers') }}</VCardTitle>
-          <VCardSubtitle>{{ t('setting.collect.mediaServersDesc') }}</VCardSubtitle>
+          <VCardTitle>{{ t('setting.collect.siteSchema') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.collect.siteSchemaDesc') }}</VCardSubtitle>
         </VCardItem>
         <VCardText>
-          <draggable v-model="mediaServers" handle=".cursor-move" item-key="name" tag="div"
+          <draggable v-model="allSites" handle=".cursor-move" item-key="id" tag="div"
             :component-data="{ 'class': 'grid gap-3 grid-app-card' }">
             <template #item="{ element }">
-              <MediaServerCard :mediaserver="element" :mediaservers="mediaServers" @close="removeMediaServer(element)"
-                @change="onMediaServerChange" />
+              <SiteSchemaCard :site="element" @close="removeMediaServer(element)" @change="onMediaServerChange" />
             </template>
           </draggable>
         </VCardText>
@@ -479,6 +463,32 @@ onDeactivated(() => {
                   </VList>
                 </VMenu>
               </VBtn>
+            </div>
+          </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+  </VRow>
+  <VRow>
+    <VCol cols="12">
+      <VCard>
+        <VCardItem>
+          <VCardTitle> {{ t('setting.collect.tencentCookie') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.collect.tencentCookieHint') }} </VCardSubtitle>
+        </VCardItem>
+        <VCardText>
+          <VTextarea v-model="tencentCookie" auto-grow :placeholder="t('setting.collect.tencentCookie')"
+            :hint="t('setting.collect.tencentCookieHint')" rows="3" persistent-hint />
+        </VCardText>
+        <VCardText>
+          <VAlert type="info" variant="tonal" :title="t('setting.collect.tencentCookieTipsTitle')">
+            <span v-html="t('setting.collect.tencentCookieTips')" />
+          </VAlert>
+        </VCardText>
+        <VCardText>
+          <VForm @submit.prevent="() => { }">
+            <div class="d-flex flex-wrap gap-4 mt-4">
+              <VBtn type="submit" @click="saveTencentCookie"> {{ t('common.save') }} </VBtn>
             </div>
           </VForm>
         </VCardText>
