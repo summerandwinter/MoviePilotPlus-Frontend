@@ -3,12 +3,13 @@ import { useToast } from 'vue-toast-notification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
 import { tagOptions } from '@/api/constants'
-import type { Collect, CollectCreate, DownloadTask, SiteSeed, Progress } from '@/api/types'
+import type { Collect, CollectCreate, DownloadTask, SiteSeed, Site } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import GroupTile from '@/components/GroupTitle.vue'
 import TaskCardSlideView from '@/views/collect/TaskCardSlideView.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { seedStatus } from '@/api/constants'
+import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import VideoMediaInfoDialog from '@/components/dialog/VideoMediaInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
 import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
@@ -29,7 +30,10 @@ const globalSettings: any = inject('globalSettings')
 
 // 用户 Store
 const userStore = useUserStore()
-
+// 资源浏览弹窗
+const resourceDialog = ref(false)
+// 所有站点
+const allSites = ref<Site[]>([])
 // 提示框
 const $toast = useToast()
 
@@ -95,7 +99,36 @@ const addForm = ref<CollectCreate>({
   episode_list: [],
   site_list: []
 })
-
+// 选中的站点
+const selectedSites = ref<number>(26)
+// 资源浏览弹窗关闭后的回调
+function onSiteResourceDone() {
+  resourceDialog.value = false
+}
+function getSelectedSite() {
+  const selected_list = allSites.value.filter(item => selectedSites.value === item.id)
+  if (selected_list.length > 0) return selected_list[0]
+}
+// 查询所有站点
+async function querySites() {
+  try {
+    const data: Site[] = await api.get('site/')
+    // 过滤站点，只有启用的站点才显示
+    allSites.value = data.filter(item => item.is_active)
+  } catch (error) {
+    console.log(error)
+  }
+}
+// 点击搜索
+async function clickSearch() {
+  if (allSites.value?.length > 0) return
+  querySites()
+}
+// 开始搜索
+function handleSearch() {
+  // TODO 显示搜索弹框
+  resourceDialog.value = true
+}
 function getCollectStatus(status: string | undefined) {
   return collectStatus[status as keyof typeof collectStatus]
 }
@@ -401,6 +434,30 @@ watch(() => addForm.value.tags,
             </template>
             媒体信息
           </VBtn>
+          <VMenu close-on-content-click max-width="450">
+            <template v-slot:activator="{ props }">
+              <VBtn v-bind="props" class="ms-2 mb-2" color="green" @click.stop="clickSearch">
+                <template #prepend>
+                  <VIcon icon="mdi-magnify" />
+                </template>
+                搜索
+              </VBtn>
+
+            </template>
+            <VList>
+              <VListItem>
+                <VChipGroup v-model="selectedSites" column @click.stop>
+                  <VChip v-for="site in allSites" :key="site.id" :color="selectedSites === site.id ? 'primary' : ''"
+                    filter variant="outlined" :value="site.id" size="small">
+                    {{ site.name }}
+                  </VChip>
+                </VChipGroup>
+              </VListItem>
+              <VListItem>
+                <VBtn @click="handleSearch" block>搜索</VBtn>
+              </VListItem>
+            </VList>
+          </VMenu>
           <VBtn class="ms-2 mb-2" color="green" @click="showDescInfoDialog()">
             <template #prepend>
               <VIcon icon="mdi-timetable" />
@@ -706,6 +763,9 @@ watch(() => addForm.value.tags,
       @close="showAddSiteSedd = false" />
     <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="collectDetail.id"
       :operation="operationType" @close="showCollectOperation = false" />
+    <!-- 站点资源弹窗 -->
+    <SiteSearchDialog v-if="resourceDialog" v-model="resourceDialog" :site="getSelectedSite()"
+      :keyword="collectDetail?.cn_title" @close="onSiteResourceDone" />
 
   </div>
   <NoDataFound v-if="!collectDetail.id && isRefreshed" error-code="500" error-title="出错啦！"

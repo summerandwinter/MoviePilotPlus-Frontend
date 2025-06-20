@@ -2,11 +2,12 @@
 import type { PropType } from 'vue'
 import { useConfirm } from '@/composables/useConfirm'
 import router from '@/router'
-import type { Collect, SiteSeed } from '@/api/types'
+import type { Collect, SiteSeed, Site } from '@/api/types'
 import api from '@/api'
 import { seedStatus, collectStatus, tagOptions } from '@/api/constants'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { useToast } from 'vue-toast-notification'
+import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
@@ -24,6 +25,11 @@ const seedInfo = ref<SiteSeed>({} as SiteSeed)
 const globalSettings: any = inject('globalSettings')
 const showCollectOperation = ref(false)
 const operationType = ref('')
+// 所有站点
+// 资源浏览弹窗
+const resourceDialog = ref(false)
+// 所有站点
+const allSites = ref<Site[]>([])
 // 输入参数
 const props = defineProps({
   task: Object as PropType<Collect>,
@@ -44,7 +50,36 @@ const getCoverUrl: Ref<string> = computed(() => {
     return `${import.meta.env.VITE_API_BASE_URL}system/img/0?imgurl=${encodeURIComponent(url)}`
   return url
 })
-
+// 选中的站点
+const selectedSites = ref<number>(26)
+// 资源浏览弹窗关闭后的回调
+function onSiteResourceDone() {
+  resourceDialog.value = false
+}
+function getSelectedSite() {
+  const selected_list = allSites.value.filter(item => selectedSites.value === item.id)
+  if (selected_list.length > 0) return selected_list[0]
+}
+// 查询所有站点
+async function querySites() {
+  try {
+    const data: Site[] = await api.get('site/')
+    // 过滤站点，只有启用的站点才显示
+    allSites.value = data.filter(item => item.is_active)
+  } catch (error) {
+    console.log(error)
+  }
+}
+// 点击搜索
+async function clickSearch() {
+  if (allSites.value?.length > 0) return
+  querySites()
+}
+// 开始搜索
+function handleSearch() {
+  // TODO 显示搜索弹框
+  resourceDialog.value = true
+}
 function goDetail() {
   // 跳转到媒体详情页（新标签页）
   const route = router.resolve({
@@ -314,6 +349,35 @@ onUnmounted(() => {
                   </template>
                   <VListItemTitle>查看详情</VListItemTitle>
                 </VListItem>
+
+                <VMenu close-on-content-click max-width="450">
+                  <template v-slot:activator="{ props }">
+                    <VListItem v-bind="props" variant="plain" @click="clickSearch()">
+                      <template #prepend>
+                        <VIcon icon="mdi-magnify" />
+                      </template>
+                      <VListItemTitle>搜索站点</VListItemTitle>
+                    </VListItem>
+
+
+                  </template>
+                  <VList>
+                    <VListItem>
+                      <VChipGroup v-model="selectedSites" column @click.stop>
+                        <VChip v-for="site in allSites" :key="site.id"
+                          :color="selectedSites === site.id ? 'primary' : ''" filter variant="outlined" :value="site.id"
+                          size="small">
+                          {{ site.name }}
+                        </VChip>
+                      </VChipGroup>
+                    </VListItem>
+                    <VListItem>
+                      <VBtn @click="handleSearch" block>搜索</VBtn>
+                    </VListItem>
+                  </VList>
+                </VMenu>
+
+
                 <VListItem variant="plain" @click="showCollectOperationDialog('start_download_by_collect')">
                   <template #prepend>
                     <VIcon :icon="getIcon('start_download_by_collect')" />
@@ -383,6 +447,9 @@ onUnmounted(() => {
   <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
   <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="task?.id"
     :operation="operationType" @close="showCollectOperation = false" />
+  <!-- 站点资源弹窗 -->
+  <SiteSearchDialog v-if="resourceDialog" v-model="resourceDialog" :site="getSelectedSite()" :keyword="task?.cn_title"
+    @close="onSiteResourceDone" />
 </template>
 <style scoped>
 .discount-banner {
