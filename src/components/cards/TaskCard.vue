@@ -45,6 +45,15 @@ function getSpeedText() {
   }
   return `${formatFileSize(props.info?.downloaded_size || 0)} / ${formatFileSize(props.info?.total_size || 0)}  ↓ ${formatFileSize(props.info?.speed)}/s`
 }
+function getFormatedTitle() {
+  // 由于 padStart 是字符串方法，需要将 number 类型的 season 转换为字符串
+  const season = props.info?.season ? `S${String(props.info.season).padStart(2, '0')}` : ''
+  const episode = props.info?.episode ? `E${String(props.info.episode).padStart(2, '0')}` : ''
+  if (props.info?.cn_title) {
+    return `${props.info?.cn_title}${season}${episode}`
+  }
+  return ''
+}
 // 角标颜色
 function getChipColor() {
   const status = getSatus()
@@ -161,9 +170,13 @@ const taskCardRef = ref<HTMLElement | null>(null)
               @load="imageLoadHandler" />
           </template>
           <VCardItem class="card-content pt-7">
-            <VCardTitle class="truncate" :class="getTextClass()">
-              {{ props.info?.name }}
-              <VTooltip activator="parent" location="bottom">{{ props.info?.name }}</VTooltip>
+            <VCardTitle class="truncate text-base font-bold" :class="getTextClass()">
+              {{ getFormatedTitle() }}
+              <VTooltip activator="parent" location="bottom">{{ getFormatedTitle() }}</VTooltip>
+            </VCardTitle>
+            <VCardTitle class="truncate text-sm" :class="getTextClass()">
+              {{ props.info?.en_title }}
+              <VTooltip activator="parent" location="bottom">{{ props.info?.en_title }}</VTooltip>
             </VCardTitle>
 
             <!-- <VCardSubtitle class="break-words whitespace-normal" :class="getTextClass()">
