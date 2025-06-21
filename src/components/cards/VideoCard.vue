@@ -49,7 +49,7 @@ const isIgnore = ref(false)
 const allSites = ref<Site[]>([])
 
 // 选中的站点
-const selectedSites = ref<number>(26)
+const selectedSites = ref<number>(0)
 
 // 绑定MediaCard元素
 const videoCardRef = ref<HTMLElement | null>(null)
@@ -197,6 +197,9 @@ async function querySites() {
     const data: Site[] = await api.get('site/')
     // 过滤站点，只有启用的站点才显示
     allSites.value = data.filter(item => item.is_active)
+    if (allSites.value.length > 0) {
+      selectedSites.value = allSites.value[0].id
+    }
   } catch (error) {
     console.log(error)
   }

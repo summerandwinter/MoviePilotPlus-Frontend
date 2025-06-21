@@ -51,7 +51,7 @@ const getCoverUrl: Ref<string> = computed(() => {
   return url
 })
 // 选中的站点
-const selectedSites = ref<number>(26)
+const selectedSites = ref<number>(0)
 // 资源浏览弹窗关闭后的回调
 function onSiteResourceDone() {
   resourceDialog.value = false
@@ -66,6 +66,9 @@ async function querySites() {
     const data: Site[] = await api.get('site/')
     // 过滤站点，只有启用的站点才显示
     allSites.value = data.filter(item => item.is_active)
+    if (allSites.value.length > 0) {
+      selectedSites.value = allSites.value[0].id
+    }
   } catch (error) {
     console.log(error)
   }
