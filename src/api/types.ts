@@ -1394,6 +1394,21 @@ export interface PtgenInfo {
   
   description: string
 }
+
+export interface SiteSchema {
+  id: number,
+  name: string,
+  domain: string,
+  download_page: string,
+  upload_page: string,
+  update_api: string,
+  upload_api: string,
+  tracker_api: string,
+  detail_page: string,
+  is_https: boolean,
+  cookie_required: boolean,
+  template: string
+}
 // 视频信息
 export interface VideoInfo {
   // 来源

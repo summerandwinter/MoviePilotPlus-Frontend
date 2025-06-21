@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useToast } from 'vue-toast-notification'
-import type { DownloaderConf, Site } from '@/api/types'
+import type { SiteSchema, Site } from '@/api/types'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { numberValidator, requiredValidator } from '@/@validators'
 import api from '@/api'
@@ -18,77 +18,36 @@ const props = defineProps({
   site: {
     type: Object as () => Site,
     required: true
-  },
-  oper: String,
+  }
 })
+const oper = computed(() => siteForm.value?.id ? 'edit' : 'add')
 
 // 注册事件
 const emit = defineEmits(['save', 'remove', 'close'])
 
 // 站点编辑表单数据
-const siteForm = ref<Site>({
+const siteForm = ref<SiteSchema>({
   id: 0,
-  url: '',
-  rss: '',
-  cookie: '',
-  passkey: '',
-  ua: '',
-  pri: 0,
-  is_active: true,
-  limit_interval: 0,
-  limit_seconds: 0,
   name: '',
   domain: '',
-  downloader: '',
+  download_page: '',
+  upload_page: '',
+  upload_api: '',
+  update_api: '',
+  tracker_api: '',
+  detail_page: '',
+  is_https: true,
+  cookie_required: true,
+  template: '{}',
 })
 
 // 提示框
 const $toast = useToast()
-
-// 维护类型
-const siteType = ref('cookie')
-
-// 是否限流
-const isLimit = ref(false)
-
-// 状态下拉项
-const statusItems = [
-  { title: t('site.status.enabled'), value: true },
-  { title: t('site.status.disabled'), value: false },
-]
-
-// 生成1到50的优先级下拉框选项
-const priorityItems = ref(
-  Array.from({ length: 100 }, (_, i) => i + 1).map(item => ({
-    title: item,
-    value: item,
-  })),
-)
-
-// 下载器选项
-const downloaderOptions = ref<{ title: string; value: string }[]>([])
-
-async function loadDownloaderSetting() {
-  try {
-    const downloaders: DownloaderConf[] = await api.get('download/clients')
-    downloaderOptions.value = [
-      { title: t('common.default'), value: '' },
-      ...downloaders.map((item: { name: any }) => ({
-        title: item.name,
-        value: item.name,
-      })),
-    ]
-  } catch (error) {
-    console.error(t('site.errors.loadDownloader'), error)
-  }
-}
-
 // 查询站点信息
 async function fetchSiteInfo() {
   try {
-    siteForm.value = await api.get(`site/${props.site.id}`)
-    siteForm.value.proxy = siteForm.value.proxy === 1
-    siteForm.value.render = siteForm.value.render === 1
+    siteForm.value = await api.get(`siteschema/${props.site.domain}`)
+    siteForm.value.template = JSON.stringify(siteForm.value.template)
   } catch (error) {
     console.error(error)
   }
@@ -96,15 +55,16 @@ async function fetchSiteInfo() {
 
 // 调用API 新增站点
 async function addSite() {
-  if (!siteForm.value?.url) return
+  if (!siteForm.value?.template) return
   startNProgress()
   try {
-    const result: { [key: string]: string } = await api.post('site/', siteForm.value)
+    siteForm.value.template = JSON.parse(siteForm.value.template)
+    const result: { [key: string]: string } = await api.post('siteschema/', siteForm.value)
     if (result.success) {
-      $toast.success(t('site.messages.addSuccess'))
+      $toast.success(t('siteshema.messages.addSuccess'))
       emit('save')
     } else {
-      $toast.error(`${t('site.messages.addFailed')}：${result.message}`)
+      $toast.error(`${t('siteshema.messages.addFailed')}：${result.message}`)
     }
   } catch (error) {
     console.error(error)
@@ -116,37 +76,24 @@ async function addSite() {
 async function updateSiteInfo() {
   startNProgress()
   try {
-    if (isLimit.value) {
-      siteForm.value.limit_interval = siteForm.value.limit_interval || 0
-      siteForm.value.limit_count = siteForm.value.limit_count || 0
-      siteForm.value.limit_seconds = siteForm.value.limit_seconds || 0
-    } else {
-      siteForm.value.limit_interval = 0
-      siteForm.value.limit_count = 0
-      siteForm.value.limit_seconds = 0
-    }
-    const result: { [key: string]: any } = await api.put('site/', siteForm.value)
+    siteForm.value.template = JSON.parse(siteForm.value.template)
+    const result: { [key: string]: any } = await api.put('siteschema/', siteForm.value)
     if (result.success) {
-      $toast.success(`${siteForm.value?.name} ${t('site.messages.updateSuccess')}`)
+      $toast.success(`${siteForm.value?.name} ${t('siteshema.messages.updateSuccess')}`)
       emit('save')
     } else {
-      $toast.error(`${siteForm.value?.name} ${t('site.messages.updateFailed')}：${result.message}`)
+      $toast.error(`${siteForm.value?.name} ${t('siteshema.messages.updateFailed')}：${result.message}`)
     }
   } catch (error) {
-    $toast.error(`${siteForm.value?.name} ${t('site.messages.updateFailed')}！`)
+    $toast.error(`${siteForm.value?.name} ${t('siteshema.messages.updateFailed')}！`)
     console.error(error)
   }
   doneNProgress()
 }
 
 onMounted(async () => {
-  if (props.oper !== 'add') {
-    await fetchSiteInfo()
-    if (siteForm.value.limit_interval || siteForm.value.limit_count || siteForm.value.limit_seconds)
-      isLimit.value = true
-    if (siteForm.value.apikey) siteType.value = 'api'
-  }
-  await loadDownloaderSetting()
+  await fetchSiteInfo()
+
 })
 </script>
 
@@ -157,7 +104,7 @@ onMounted(async () => {
         <template #prepend>
           <VIcon :icon="oper == 'add' ? 'mdi-web-plus' : 'mdi-web'" class="me-2" />
         </template>
-        <VCardTitle>{{ `${props.oper === 'add' ? t('site.actions.add') : t('site.actions.edit')}` }}</VCardTitle>
+        <VCardTitle>{{ `${oper === 'add' ? t('siteshema.actions.add') : t('siteshema.actions.edit')}` }}</VCardTitle>
         <VCardSubtitle>{{ siteForm.name }}</VCardSubtitle>
       </VCardItem>
       <VDialogCloseBtn @click="emit('close')" />
@@ -166,114 +113,62 @@ onMounted(async () => {
         <VForm @submit.prevent="() => { }">
           <VRow>
             <VCol cols="12" md="6">
-              <VTextField v-model="siteForm.url" :label="t('site.fields.url')" :rules="[requiredValidator]"
-                :hint="t('site.hints.url')" persistent-hint prepend-inner-icon="mdi-web" />
+              <VTextField v-model="siteForm.name" :label="t('siteshema.fields.name')" :rules="[requiredValidator]"
+                :hint="t('siteshema.hints.name')" persistent-hint prepend-inner-icon="mdi-account" />
             </VCol>
             <VCol cols="6" md="3">
-              <VAutocomplete v-model="siteForm.pri" :label="t('site.fields.priority')" :items="priorityItems"
-                :rules="[requiredValidator]" :hint="t('site.hints.priority')" persistent-hint
-                prepend-inner-icon="mdi-priority-high" />
+              <VSwitch v-model="siteForm.cookie_required" :label="t('siteshema.fields.cookie_required')" />
             </VCol>
             <VCol cols="6" md="3">
-              <VSelect v-model="siteForm.is_active" :items="statusItems" :label="t('site.fields.status')"
-                :hint="t('site.hints.status')" persistent-hint prepend-inner-icon="mdi-toggle-switch" />
+              <VSwitch v-model="siteForm.is_https" :label="t('siteshema.fields.is_https')" />
             </VCol>
           </VRow>
           <VRow>
             <VCol cols="12" md="6">
-              <VTextField v-model="siteForm.rss" :label="t('site.fields.rss')" :hint="t('site.hints.rss')"
-                persistent-hint prepend-inner-icon="mdi-rss" />
+              <VTextField v-model="siteForm.domain" :label="t('siteshema.fields.domain')"
+                :hint="t('siteshema.hints.domain')" persistent-hint prepend-inner-icon="mdi-web" />
             </VCol>
-            <VCol cols="12" md="3">
-              <VTextField v-model="siteForm.timeout" :label="t('site.fields.timeout')" :hint="t('site.hints.timeout')"
-                persistent-hint prepend-inner-icon="mdi-timer" />
+            <VCol cols="12" md="6">
+              <VTextField v-model="siteForm.upload_api" :label="t('siteshema.fields.upload_api')"
+                :hint="t('siteshema.hints.upload_api')" persistent-hint prepend-inner-icon="mdi-upload" />
             </VCol>
-            <VCol cols="6" md="3">
-              <VAutocomplete v-model="siteForm.downloader" :label="t('site.fields.downloader')"
-                :items="downloaderOptions" :hint="t('site.hints.downloader')" persistent-hint
-                prepend-inner-icon="mdi-download" />
-            </VCol>
-          </VRow>
-          <VTabs v-model="siteType" show-arrows class="v-tabs-pill mt-3">
-            <VTab selected-class="v-tab--selected">
-              <div>
-                <VIcon size="20" start icon="mdi-cookie" value="cookie" />
-                Cookie
-              </div>
-            </VTab>
-            <VTab selected-class="v-tab--selected">
-              <div>
-                <VIcon size="20" start icon="mdi-api" value="api" />
-                API
-              </div>
-            </VTab>
-          </VTabs>
-          <VWindow v-model="siteType" class="my-3 disable-tab-transition" :touch="false">
-            <VWindowItem value="cookie">
-              <VRow>
-                <VCol cols="12">
-                  <VTextarea v-model="siteForm.cookie" :label="t('site.fields.cookie')" :hint="t('site.hints.cookie')"
-                    persistent-hint prepend-inner-icon="mdi-cookie" />
-                </VCol>
-                <VCol cols="12">
-                  <VTextField v-model="siteForm.ua" :label="t('site.fields.userAgent')"
-                    :hint="t('site.hints.userAgent')" persistent-hint prepend-inner-icon="mdi-web-box" />
-                </VCol>
-                <VCol cols="12">
-                  <VTextField v-model="siteForm.passkey" label="站点passkey" hint="获取站点passkey" persistent-hint />
-                </VCol>
-              </VRow>
-            </VWindowItem>
-            <VWindowItem value="api">
-              <VRow>
-                <VCol cols="12" md="6">
-                  <VTextField v-model="siteForm.token" :label="t('site.fields.authorization')"
-                    :hint="t('site.hints.authorization')" persistent-hint prepend-inner-icon="mdi-key" />
-                </VCol>
-                <VCol cols="12" md="6">
-                  <VTextField v-model="siteForm.apikey" :label="t('site.fields.apiKey')" :hint="t('site.hints.apiKey')"
-                    persistent-hint prepend-inner-icon="mdi-api" />
-                </VCol>
-              </VRow>
-            </VWindowItem>
-          </VWindow>
-          <VRow>
-            <VCol cols="12" md="4">
-              <VSwitch v-model="isLimit" :label="t('site.fields.limitAccess')" />
-            </VCol>
-          </VRow>
-          <VRow v-if="isLimit">
-            <VCol cols="12" md="4">
-              <VTextField v-model="siteForm.limit_interval" :label="t('site.fields.limitInterval')"
-                :rules="[numberValidator]" :hint="t('site.hints.limitInterval')" persistent-hint
-                prepend-inner-icon="mdi-clock-outline" />
-            </VCol>
-            <VCol cols="12" md="4">
-              <VTextField v-model="siteForm.limit_count" :label="t('site.fields.limitCount')" :rules="[numberValidator]"
-                :hint="t('site.hints.limitCount')" persistent-hint prepend-inner-icon="mdi-counter" />
-            </VCol>
-            <VCol cols="12" md="4">
-              <VTextField v-model="siteForm.limit_seconds" :label="t('site.fields.limitSeconds')"
-                :rules="[numberValidator]" :hint="t('site.hints.limitSeconds')" persistent-hint
-                prepend-inner-icon="mdi-timer-sand" />
-            </VCol>
+
           </VRow>
           <VRow>
             <VCol cols="12" md="6">
-              <VSwitch v-model="siteForm.proxy" :label="t('site.fields.useProxy')" :hint="t('site.hints.useProxy')"
-                persistent-hint />
+              <VTextField v-model="siteForm.update_api" :label="t('siteshema.fields.update_api')"
+                :hint="t('siteshema.hints.update_api')" persistent-hint prepend-inner-icon="mdi-pencil-box-outline" />
             </VCol>
             <VCol cols="12" md="6">
-              <VSwitch v-model="siteForm.render" :label="t('site.fields.browserSimulation')"
-                :hint="t('site.hints.browserSimulation')" persistent-hint />
+              <VTextField v-model="siteForm.download_page" :label="t('siteshema.fields.download_page')"
+                :hint="t('siteshema.hints.download_page')" persistent-hint prepend-inner-icon="mdi-download" />
             </VCol>
+
+          </VRow>
+          <VRow>
+            <VCol cols="12" md="6">
+              <VTextField v-model="siteForm.detail_page" :label="t('siteshema.fields.detail_page')"
+                :hint="t('siteshema.hints.detail_page')" persistent-hint prepend-inner-icon="mdi-information-variant" />
+            </VCol>
+            <VCol cols="12" md="6">
+              <VTextField v-model="siteForm.tracker_api" :label="t('siteshema.fields.tracker_api')"
+                :hint="t('siteshema.hints.tracker_api')" persistent-hint prepend-inner-icon="mdi-incognito" />
+            </VCol>
+
+          </VRow>
+          <VRow>
+            <VCol cols="12">
+              <VTextarea v-model="siteForm.template" :label="t('siteshema.fields.template')" mdi-format-text
+                :hint="t('siteshema.hints.template')" persistent-hint prepend-inner-icon="mdi-format-text" />
+            </VCol>
+
           </VRow>
         </VForm>
       </VCardText>
       <VCardActions class="pt-3">
         <VSpacer />
-        <VBtn v-if="props.oper === 'add'" color="primary" @click="addSite" prepend-icon="mdi-plus" class="px-5">
-          {{ t('site.actions.add') }}
+        <VBtn v-if="oper === 'add'" color="primary" @click="addSite" prepend-icon="mdi-plus" class="px-5">
+          {{ t('siteshema.actions.add') }}
         </VBtn>
         <VBtn v-else color="primary" @click="updateSiteInfo" prepend-icon="mdi-content-save" class="px-5">
           {{ t('common.save') }}

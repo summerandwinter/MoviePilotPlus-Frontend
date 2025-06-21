@@ -832,6 +832,52 @@ export default {
     link: '硬链接',
     softlink: '软链接',
   },
+  siteshema: {
+    noSites: '没有站点',
+    sitesWillBeShownHere: '已添加并支持的站点将会在这里显示。',
+    noFilterData: '没有符合条件的站点',
+    title: '站点',
+    status: {
+      enabled: '启用',
+      disabled: '停用',
+    },
+    fields: {
+      name: '站点名称',
+      domain: '站点域名',
+      download_page: '下载地址',
+      upload_page: '上传页面',
+      upload_api: '上传接口',
+      update_api: '更新接口',
+      tracker_api: 'Tracker地址',
+      detail_page: '详情地址',
+      is_https: '是否Https',
+      cookie_required: '是否需要Cookie',
+      template: '模版'
+    },
+    hints: {
+      name: '站点名称，根据站点域名自动生成',
+      domain: '站点域名',
+      download_page: '种子下载地址，如：https://examples.com/download.php',
+      upload_page: '上传页面地址，如：https://examples.com/download.php',
+      upload_api: '上传接口，如：https://examples.com/takeupload.php',
+      update_api: '更新接口，如：https://examples.com/takeedit.php',
+      tracker_api: 'Tracker地址，如：https://examples.com/announce.php',
+      detail_page: '详情地址，如：https://examples.com/detail.php',
+      is_https: '如果站点是https协议就开启',
+      cookie_required: '站点接口是否需要 cookie,有些站点如：馒头是通过 apikey 访问接口',
+      template: '配置站点分类、来源、分辨率、视频编码、音频编码、地区、制作组、标签等字典与系统标准字典的映射关系'
+    },
+    actions: {
+      add: '新增站点模板',
+      edit: '编辑站点模板',
+    },
+    messages: {
+      addSuccess: '新增站点模板成功',
+      addFailed: '新增站点模板失败',
+      updateSuccess: '更新成功',
+      updateFailed: '更新失败',
+    }
+  },
   site: {
     noSites: '没有站点',
     sitesWillBeShownHere: '已添加并支持的站点将会在这里显示。',
@@ -982,6 +1028,7 @@ export default {
       raiseExceptionHint: '下载工具发生异常时的抛出异常信息方便调试',
       apiDebug: '日志调试',
       apiDebugHint:'打印采集器相关的 API 请求日志，接口请求日志体积较大只有必要的时候才需要打开',
+      saveFailed: '保存失败',
       tencentCookie: '腾讯视频Cookie',
       tencentCookieHint: '设置腾讯视频Cookie，用于获取视频播放地址',
       tencentCookieTips: '访问https://film.qq.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面面的输入框中',

@@ -206,7 +206,7 @@ async function saveSystemSetting(value: { [key: string]: any }) {
     if (result.success) {
       return true
     } else {
-      $toast.error(t('setting.collect.saveFailed', { message: result?.message }))
+      $toast.error(result?.message || t('setting.collect.basicSaveFailed'))
       return false
     }
   } catch (error) {
