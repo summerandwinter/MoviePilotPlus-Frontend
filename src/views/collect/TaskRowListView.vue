@@ -9,6 +9,7 @@ const emit = defineEmits(['remove'])
 const display = useDisplay()
 import { collectStatus } from '@/api/constants'
 
+
 // 国际化
 const { t } = useI18n()
 
@@ -17,8 +18,10 @@ const props = defineProps({
   items: Array as PropType<Collect[]>,
 })
 
+const keyword = ref('')
 // 过滤表单
 const filterForm: Record<string, string[]> = reactive({
+  keyword: [] as string[],
   // 站点
   site: [] as string[],
   // 制作组
@@ -41,7 +44,8 @@ function getFilterItemName(key: string, option: string) {
 }
 // 过滤项映射（保持中文标题）
 const filterTitles: Record<string, string> = {
-  status: '状态',
+  keyword: t('torrent.keyword'),
+  status: t('torrent.status'),
   site: t('torrent.filterSite'),
   videoCode: t('torrent.filterVideoCode'),
   edition: t('torrent.filterEdition'),
@@ -63,6 +67,7 @@ const filterOptions: Record<string, string[]> = reactive({
   videoCode: [] as string[],
   releaseGroup: [] as string[],
   status: [] as string[],
+  keyword: [] as string[],
 })
 
 
@@ -110,6 +115,7 @@ function clearAllFilters() {
   for (const key in filterForm) {
     filterForm[key] = []
   }
+  keywordClear()
 }
 
 // 初始化过滤选项
@@ -137,7 +143,13 @@ function filterData() {
   // 匹配过滤函数
   const match = (filter: Array<string>, value: string | undefined) =>
     filter.length === 0 || (value && filter.includes(value))
-
+  const search = (filter: string[], value?: string) => {
+    if (!filter.length) return true;
+    if (!value) return false;
+    return filter.some(item =>
+      value.toLowerCase().includes(item.toLowerCase())
+    );
+  }
   // 先收集所有过滤选项，再过滤数据
   if (props.items?.length) {
     // 首先收集所有过滤选项
@@ -153,6 +165,8 @@ function filterData() {
       console.warn('data.status:', data.status)
       console.warn('match(filterForm.status, data.status):', match(filterForm.status, data.status))
       if (
+        // 关键字过滤
+        search(filterForm.keyword, data.cn_title) &&
         // 制作组过滤
         match(filterForm.releaseGroup, data.team) &&
         // 视频编码过滤
@@ -247,6 +261,9 @@ function selectAll(key: string) {
 // 清除某个过滤项
 function clearFilter(key: string) {
   filterForm[key] = []
+  if (key === 'keyword') {
+    keywordClear()
+  }
 }
 
 // 添加toggleFilterMenu函数
@@ -272,7 +289,22 @@ const handleSortIconClick = () => {
   sortType.value = sortType.value === 'asc' ? 'desc' : 'asc'
 }
 
-
+function keywordSearch() {
+  if (keyword.value) {
+    filterForm.keyword = [keyword.value]
+    filterOptions.keyword = [keyword.value]
+  } else {
+    filterForm.keyword = []
+    filterOptions.keyword = []
+  }
+  // filterData()
+}
+function keywordClear() {
+  keyword.value = ''
+  filterForm.keyword = []
+  filterOptions.keyword = []
+  // filterData()
+}
 function remove(collect_id: number) {
   let idx = 0
   for (let i = 0; i < dataList.value.length; i++) {
@@ -322,7 +354,6 @@ onMounted(() => {
               </template>
             </VSelect>
             <div class="filter-divider"></div>
-
             <!-- 筛选按钮 -->
             <VBtn v-for="(title, key) in filterTitles" v-show="filterOptions[key].length > 0" :key="key" variant="tonal"
               size="small" :color="filterForm[key].length > 0 ? 'primary' : undefined"
@@ -369,8 +400,13 @@ onMounted(() => {
               {{ t('torrent.clearFilters') }}
             </VBtn>
           </div>
-        </div>
 
+        </div>
+        <div class="search-bar">
+          <VTextField v-model="keyword" :label="filterTitles.keyword" :placeholder="t('torrent.searchHint')"
+            append-inner-icon="mdi-close" prepend-inner-icon="mdi-magnify" density="compact" variant="solo" hide-details
+            single-line @click:append-inner="keywordClear" @blur="keywordSearch" @keyup.enter="keywordSearch" />
+        </div>
         <!-- 已选择的过滤项显示 -->
         <div v-if="getFilterCount > 0" class="selected-filters">
           <div class="d-flex flex-wrap align-center">
@@ -432,6 +468,11 @@ onMounted(() => {
                 location="top end" offset-x="-10" offset-y="-10"></VBadge>
             </VBtn>
           </div>
+        </div>
+        <div class="search-bar">
+          <VTextField v-model="keyword" :label="filterTitles.keyword" :placeholder="t('torrent.searchHint')"
+            append-inner-icon="mdi-close" prepend-inner-icon="mdi-magnify" density="compact" variant="solo" hide-details
+            single-line @click:append-inner="keywordClear" @blur="keywordSearch" @keyup.enter="keywordSearch" />
         </div>
       </div>
     </VCard>
@@ -563,6 +604,13 @@ onMounted(() => {
 
 .search-count {
   font-weight: 500;
+}
+
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
 }
 
 .filter-bar {
