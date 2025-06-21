@@ -961,6 +961,7 @@ export default {
     collect: {
       basicSettings: '基礎設置',
       basicSettingsDesc: '設置採集器的全局功能',
+      basicSaveSuccess: '基礎設置保存成功',
       mediaDir: '媒體目錄',
       mediaDirHint: '用於存放下載的媒體文件',
       downloaderThreadCount: '下載線程',
