@@ -3,7 +3,8 @@ import type { Collect } from '@/api/types'
 import TaskItem from '@/components/cards/TaskItem.vue'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
-
+import api from '@/api'
+import type { Site, SiteSeed } from '@/api/types'
 const emit = defineEmits(['remove'])
 // 设备模式
 const display = useDisplay()
@@ -17,13 +18,16 @@ const { t } = useI18n()
 const props = defineProps({
   items: Array as PropType<Collect[]>,
 })
-
+// 所有站点
+const allSites = ref<Site[]>([])
 const keyword = ref('')
 // 过滤表单
 const filterForm: Record<string, string[]> = reactive({
   keyword: [] as string[],
-  // 站点
+  // 包含站点
   site: [] as string[],
+  // 不包含站点
+  siteNotInclude: [] as string[],
   // 制作组
   releaseGroup: [] as string[],
   // 视频编码
@@ -45,8 +49,9 @@ function getFilterItemName(key: string, option: string) {
 // 过滤项映射（保持中文标题）
 const filterTitles: Record<string, string> = {
   keyword: t('torrent.keyword'),
+  site: t('torrent.siteInclude'),
+  siteNotInclude: t('torrent.siteNotInclude'),
   status: t('torrent.status'),
-  site: t('torrent.filterSite'),
   videoCode: t('torrent.filterVideoCode'),
   edition: t('torrent.filterEdition'),
   resolution: t('torrent.filterResolution'),
@@ -62,6 +67,7 @@ const sortTitles: Record<string, string> = {
 // 统一存储过滤选项
 const filterOptions: Record<string, string[]> = reactive({
   site: [] as string[],
+  siteNotInclude: [] as string[],
   edition: [] as string[],
   resolution: [] as string[],
   videoCode: [] as string[],
@@ -131,7 +137,18 @@ function initOptions(data: Collect) {
   optionValue(filterOptions.edition, data?.hdr_format)
   optionValue(filterOptions.resolution, data?.resolution)
 }
-
+// 查询所有站点
+async function querySites() {
+  try {
+    const data: Site[] = await api.get('site/')
+    // 过滤站点，只有启用的站点才显示
+    allSites.value = data.filter(item => item.is_active)
+    filterOptions.site = allSites.value.map(item => item.name)
+    filterOptions.siteNotInclude = allSites.value.map(item => item.name)
+  } catch (error) {
+    console.log(error)
+  }
+}
 // 修改watch监听，同时监听排序字段的变化
 watch([filterForm, sortField, sortType], filterData)
 
@@ -143,6 +160,12 @@ function filterData() {
   // 匹配过滤函数
   const match = (filter: Array<string>, value: string | undefined) =>
     filter.length === 0 || (value && filter.includes(value))
+  // 站点匹配
+  const matchSite = (filter: Array<string>, value: Array<SiteSeed>) =>
+    filter.length === 0 || (value && filter.some(item => value.some(site => site.site_name.includes(item))))
+  // 不包含站点匹配
+  const matchSiteNotInclude = (filter: Array<string>, value: Array<SiteSeed>) =>
+    filter.length === 0 || value.length === 0 || (value && filter.every(item => value.every(site => !site.site_name.includes(item))))
   const search = (filter: string[], value?: string) => {
     if (!filter.length) return true;
     if (!value) return false;
@@ -167,6 +190,9 @@ function filterData() {
       if (
         // 关键字过滤
         search(filterForm.keyword, data.cn_title) &&
+        //过滤站点
+        matchSite(filterForm.site, data.seeds) &&
+        matchSiteNotInclude(filterForm.siteNotInclude, data.seeds) &&
         // 制作组过滤
         match(filterForm.releaseGroup, data.team) &&
         // 视频编码过滤
@@ -245,6 +271,7 @@ function getFilterIcon(key: string) {
   const icons: Record<string, string> = {
     status: 'mdi-clipboard-check-outline',
     site: 'mdi-server-network',
+    siteNotInclude: 'mdi-server-network-off',
     resolution: 'mdi-monitor-screenshot',
     videoCode: 'mdi-video-vintage',
     edition: 'mdi-quality-high',
@@ -324,9 +351,16 @@ function remove(collect_id: number) {
   displayDataList.value.splice(idx, 1)
 
 }
+function filterSiteSeed() {
+  props.items?.forEach(item => {
+    item.seeds = item.seeds.filter(seed => seed.deleted === false)
+  })
+}
 
 // 初始化过滤选项
 onMounted(() => {
+  filterSiteSeed()
+  querySites()
   filterData()
 })
 </script>

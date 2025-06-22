@@ -749,6 +749,8 @@ export default {
     backButton: 'Go Back',
   },
   torrent: {
+    siteNotInclude: 'Exclude sites',
+    siteInclude: 'Include sites',
     selectAll: 'Select All',
     clear: 'Clear',
     clearFilters: 'Clear Filters',

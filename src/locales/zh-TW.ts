@@ -744,6 +744,8 @@ export default {
     backButton: '返回',
   },
   torrent: {
+    siteNotInclude: '排除站點',
+    siteInclude: '包含站點',
     selectAll: '全選',
     clear: '清除',
     clearFilters: '清除篩選',
