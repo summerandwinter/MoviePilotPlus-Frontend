@@ -1769,6 +1769,7 @@ export interface SiteSeed {
   torrent_uploaded: boolean
   torrent_downloaded: boolean
   torrent_seeded: boolean 
+  deleted: boolean
 }
   
 // 种子缓存项

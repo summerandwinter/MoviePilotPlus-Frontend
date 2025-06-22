@@ -38,7 +38,7 @@ const props = defineProps({
 
 // 任务信息
 const task = ref(props.task)
-const siteSeedList = ref<SiteSeed[]>(props.task?.seeds || [])
+const siteSeedList = ref<SiteSeed[]>(props.task?.seeds?.filter(seed => !seed.deleted) || [])
 // 计算Poster地址
 const getCoverUrl: Ref<string> = computed(() => {
   const url = props.task?.cover ?? ''
