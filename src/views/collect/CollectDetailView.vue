@@ -109,6 +109,22 @@ function getSelectedSite() {
   const selected_list = allSites.value.filter(item => selectedSites.value === item.id)
   if (selected_list.length > 0) return selected_list[0]
 }
+// 打开豆瓣详情页
+function openDoubanDetail(doubanId: string) {
+  if (!doubanId) {
+    $toast.warning('豆瓣ID不存在，无法打开详情页！')
+    return
+  }
+  window.open(`https://movie.douban.com/subject/${doubanId}/`, '_blank')
+}
+
+function openImdbDetail(imdbId: string) {
+  if (!imdbId) {
+    $toast.warning('IMDB ID不存在，无法打开详情页！')
+    return
+  }
+  window.open(`https://www.imdb.com/title/${imdbId}/`, '_blank')
+}
 // 查询所有站点
 async function querySites() {
   try {
@@ -652,8 +668,12 @@ watch(() => addForm.value.tags,
         <v-row>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" label="豆瓣ID" variant="plain" persistent-hint
-              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.douban_id = true"
+              class="max-w mt-1" density="compact" @focus="showSaveIcons.douban_id = true"
               @blur="showSaveIcons.douban_id = false">
+              <template #prepend-inner v-if="addForm.douban_id">
+                <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg mt-1"
+                  @click="addForm.douban_id && openDoubanDetail(addForm.douban_id)" />
+              </template>
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
@@ -666,8 +686,12 @@ watch(() => addForm.value.tags,
           </v-col>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" label="IMDB ID" variant="plain"
-              persistent-hint class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.imdb_id = true"
+              persistent-hint class="max-w mt-1" density="compact" @focus="showSaveIcons.imdb_id = true"
               @blur="showSaveIcons.imdb_id = false">
+              <template #prepend-inner v-if="addForm.imdb_id">
+                <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg mt-1"
+                  @click="addForm.imdb_id && openImdbDetail(addForm.imdb_id)" />
+              </template>
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
