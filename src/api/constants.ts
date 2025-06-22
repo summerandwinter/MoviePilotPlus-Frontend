@@ -97,6 +97,8 @@ export const collectStatus = {
   'DescCollected': '简介采集',
   'Renamed': '重命名',
   'TorrentCreated': '制种',
+  'TorrentRemaking': '转种中',
+  'TorrentRemaked': '转种完成',
   'Finished': '完成',
 }
 
