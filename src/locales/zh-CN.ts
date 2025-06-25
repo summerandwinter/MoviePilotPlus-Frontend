@@ -1024,6 +1024,8 @@ export default {
       downloaderSpeedHint: '下载工具单任务限速，单位支持 Mbps 或 Kbps，如：15M 100K',
       downloadTaskMaxWorkers: '下载队列',
       downloadTaskMaxWorkersHint: '下载工具同时下载的最大任务数',
+      downloaderSleepTime: '下载冷却时间',
+      downloaderSleepTimeHint: '下载工具每个任务下载完成后开始下个下载任务的时间间隔，单位秒',
       ptgenUrl: 'PTGen 地址',
       ptgenUrlHint: 'PTGen 地址，用于识别和生成简介信息',
       secondPtgenUrl: '备用 PTGen',

@@ -307,6 +307,11 @@ onDeactivated(() => {
                   prepend-inner-icon="mdi-view-week" />
               </VCol>
               <VCol cols="12" md="6">
+                <VTextField v-model="CollectSettings.Basic.DOWNLOADER_SLEEP_TIME"
+                  :label="t('setting.collect.downloaderSleepTime')" :hint="t('setting.collect.downloaderSleepTimeHint')"
+                  placeholder="1" persistent-hint prepend-inner-icon="mdi-fan" />
+              </VCol>
+              <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.Basic.PTGEN_URL" :label="t('setting.collect.ptgenUrl')"
                   :hint="t('setting.collect.ptgenUrlHint')" placeholder="1" persistent-hint
                   prepend-inner-icon="mdi-apple-safari" />

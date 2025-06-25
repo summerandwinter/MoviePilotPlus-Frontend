@@ -1025,6 +1025,8 @@ export default {
       downloaderSpeedHint: 'Per-task speed limit (supports Mbps/Kbps, e.g. 15M 100K)',
       downloadTaskMaxWorkers: 'Download Queue',
       downloadTaskMaxWorkersHint: 'Maximum concurrent download tasks',
+      downloaderSleepTime: 'Download Cooldown Time',
+      downloaderSleepTimeHint: 'The interval in seconds between the completion of one download task and the start of the next one by the download tool',
       ptgenUrl: 'PTGen URL',
       ptgenUrlHint: 'URL for generating metadata descriptions',
       secondPtgenUrl: 'Fallback PTGen',
