@@ -3,6 +3,8 @@ import api from '@/api'
 import { ref, reactive, watch, onMounted } from 'vue'
 import type { TencentCategoryInfo, CategoryItem } from '@/api/types'
 import { default as MediaCardListView } from '@/views/collect/MediaCardListView.vue'
+import { default as MediaSearchView } from '@/views/collect/MediaSearchView.vue'
+import { VTextField } from 'vuetify/components'
 
 // 排序 类型 资费 出品 地区 年份 状态 画风 年龄 全部 性别 语言  动画明星 剧场 奖项 其他-characteristic
 // 电影或者电视剧 movies/tvs
@@ -11,13 +13,15 @@ const type = ref('100113')
 const currentKey = ref(0)
 
 const cates = ref<Record<string, TencentCategoryInfo[]>>({})
-
+// 搜索词
+const searchWord = ref<string | null>(null)
+const isSearch = ref(false)
 
 
 // 过滤参数
 const defaultType = '100113'
 const defaultSort = '75'
-const cate =ref('TV')
+const cate = ref('TV')
 
 const filterParams = reactive({
   'type': defaultType,
@@ -49,12 +53,12 @@ const filterParams = reactive({
 // 分类字典
 const cateDictArray: CategoryItem[] = [
   { "key": "100113", "value": "电视剧", "cate": "TV" },
-  { "key": "100173", "value": "电影", "cate": "Movie"  },
-  { "key": "100105", "value": "纪录片", "cate": "Documentary"  },
-  { "key": "100109", "value": "综艺", "cate": "Show"  },
-  { "key": "100119", "value": "动漫", "cate": "Comic"  },
-  { "key": "100150", "value": "少儿", "cate": "TV"  },
-  { "key": "110755", "value": "短剧", "cate": "Short"  }
+  { "key": "100173", "value": "电影", "cate": "Movie" },
+  { "key": "100105", "value": "纪录片", "cate": "Documentary" },
+  { "key": "100109", "value": "综艺", "cate": "Show" },
+  { "key": "100119", "value": "动漫", "cate": "Comic" },
+  { "key": "100150", "value": "少儿", "cate": "TV" },
+  { "key": "110755", "value": "短剧", "cate": "Short" }
 ]
 // 分类信息
 async function queryCate(type: string) {
@@ -69,7 +73,7 @@ async function queryCate(type: string) {
         cate.value = item.cate
       }
     })
-    
+
     const groupedData: Record<string, TencentCategoryInfo[]> = {};
     data.forEach((item: TencentCategoryInfo) => {
       const filter_key = item.filter_key;
@@ -84,7 +88,13 @@ async function queryCate(type: string) {
     console.log(error)
   }
 }
-
+function searchMedia() {
+  isSearch.value = true
+}
+function searchClear() {
+  searchWord.value = null
+  isSearch.value = false
+}
 onMounted(() => {
   queryCate(defaultType)
 })
@@ -110,7 +120,12 @@ watch(filterParams, () => {
 
 <template>
   <div>
-    <div class="px-3">
+    <div class="px-3 flex justify-start align-center">
+      <VCombobox ref="searchWordInput" v-model="searchWord" density="comfortable" variant="outlined"
+        class="search-input" prepend-inner-icon="mdi-magnify" append-inner-icon="mdi-close"
+        @click:append-inner="searchClear()" placeholder="搜索腾讯视频" @keydown.enter="searchMedia()" hide-details />
+    </div>
+    <div class="px-3" v-show="!isSearch">
       <div class="flex justify-start align-center">
         <VChipGroup v-model="type" column mandatory>
           <!-- 遍历数组 -->
@@ -121,8 +136,8 @@ watch(filterParams, () => {
         </VChipGroup>
       </div>
       <div class="flex justify-start align-center" v-for="(item, key) in cates" :key="key">
-        <VChipGroup v-model="filterParams[key]" column mandatory>
-          <VChip :color="filterParams[option.filter_key] == option.option_value ? 'primary' : ''" tile
+        <VChipGroup v-model="filterParams[key as keyof typeof filterParams]" column mandatory>
+          <VChip :color="filterParams[key as keyof typeof filterParams] == option.option_value ? 'primary' : ''" tile
             :value="option.option_value" v-for="option in item" :key="option.option_value" size="small">
             {{ option.option_name }}
           </VChip>
@@ -131,8 +146,10 @@ watch(filterParams, () => {
     </div>
 
 
-    <div>
-      <MediaCardListView :key="currentKey" :apipath="`tencent/page_data`" :params="filterParams" :cate="cate"/>
+    <div class="pt-3">
+      <MediaSearchView v-if="isSearch" :key="currentKey" :apipath="`tencent/search`" :keyword="searchWord || ''" />
+      <MediaCardListView v-show="!isSearch" :key="currentKey" :apipath="`tencent/page_data`" :params="filterParams"
+        :cate="cate" />
     </div>
   </div>
 </template>
