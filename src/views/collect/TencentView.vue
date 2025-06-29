@@ -100,7 +100,6 @@ onMounted(() => {
 })
 // 类型变化
 watch(type, () => {
-  console.log(type.value)
   filterParams.type = type.value
   queryCate(type.value)
   currentKey.value++

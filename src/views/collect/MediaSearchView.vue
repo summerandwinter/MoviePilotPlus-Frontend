@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, defineProps } from 'vue'
+import { ref, defineProps, watch } from 'vue'
 import api from '@/api'
 import { VideoInfo } from '@/api/types'
 import { default as VideoCard } from '@/components/cards/VideoCard.vue'
@@ -30,7 +30,6 @@ function getParams() {
   let params = {
     keyword: props?.keyword,
   }
-  console.log('keyword.value', props?.keyword)
   return params
 }
 
@@ -53,12 +52,8 @@ async function fetchData() {
     loading.value = false
     // 标计为已请求完成
     isRefreshed.value = true
-    if (currData.value.length === 0) {
-      // 如果没有数据，跳出
-      return
-    }
     // 合并数据
-    dataList.value = [...dataList.value, ...currData.value]
+    dataList.value = [...currData.value]
     // 页码+1
     page.value++
     // 返回加载成功
@@ -68,6 +63,10 @@ async function fetchData() {
     console.error(error)
   }
 }
+
+watch(() => props.keyword, () => {
+  fetchData()
+})
 onMounted(() => {
   fetchData()
 })
