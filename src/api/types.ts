@@ -1492,6 +1492,7 @@ export interface Collect {
   params: any | null
   // IMDB ID
   imdb_id: string | null
+  cate: string
   // 是否重命名
   is_renamed: boolean
   // 自动下载

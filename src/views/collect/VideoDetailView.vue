@@ -2,7 +2,7 @@
 import { useToast } from 'vue-toast-notification'
 
 import api from '@/api'
-import { tagOptions, teamOptions, mediaCateOptions } from '@/api/constants'
+import { tagOptions, teamOptions, mediaCateOptions, categoryOptions } from '@/api/constants'
 import type { VideoInfo, CollectCreate, Site, PtgenInfo } from '@/api/types'
 import GroupTile from '@/components/GroupTitle.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
@@ -76,7 +76,7 @@ const addForm = ref<CollectCreate>({
   type: mediaProps.type ?? "",
   overview: "",
   season: 1,
-  cate: "",
+  cate: "TV",
   site: "",
   cover: "",
   poster: "",
@@ -278,6 +278,9 @@ function validateForm() {
   }
   if (!addForm.value.defn) {
     errors.push('请选择清晰度！')
+  }
+  if (!addForm.value.cate) {
+    errors.push('请选择分类！')
   }
   if (!addForm.value.cn_title) {
     errors.push('中文标题不能为空！')
@@ -830,6 +833,16 @@ function handleIgnore() {
           <VChipGroup column v-model="addForm.type">
             <template v-for="(value, key) in mediaCateOptions" :key="key">
               <VChip :color="addForm.type === key ? 'primary' : ''" filter variant="outlined" :value="key">
+                {{ value }}
+              </VChip>
+            </template>
+          </VChipGroup>
+        </div>
+        <div class="mt-6">
+          <GroupTile title="分类" />
+          <VChipGroup column v-model="addForm.cate">
+            <template v-for="(value, key) in categoryOptions" :key="key">
+              <VChip :color="addForm.cate === key ? 'primary' : ''" filter variant="outlined" :value="key">
                 {{ value }}
               </VChip>
             </template>

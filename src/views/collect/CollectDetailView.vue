@@ -2,7 +2,7 @@
 import { useToast } from 'vue-toast-notification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
-import { tagOptions } from '@/api/constants'
+import { tagOptions, categoryOptions } from '@/api/constants'
 import type { Collect, CollectCreate, DownloadTask, SiteSeed, Site } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import GroupTile from '@/components/GroupTitle.vue'
@@ -167,6 +167,7 @@ async function getDetail() {
     addForm.value.year = collectDetail.value.year ?? ''
     addForm.value.season = collectDetail.value.season ?? 1
     addForm.value.episodes_all = collectDetail.value.episodes_all ?? 1
+    addForm.value.cate = collectDetail.value.cate ?? ''
     // 等待 tags 更新完 watch 事件触发以后再设置加载完成，避免触发更新标签
     setTimeout(() => {
       isRefreshed.value = true
@@ -383,6 +384,17 @@ const updateTagsDebounced = useDebounceFn(async (newTags) => {
   }
 }, 500);
 
+const updateCateDebounced = useDebounceFn(async (newCate) => {
+  try {
+    await api.put(`collect/`, {
+      id: collectDetail.value.id,
+      cate: newCate
+    })
+  } catch (error) {
+    console.error('标签类型失败:', error)
+  }
+}, 500);
+
 async function updateCollect(field: string) {
   try {
     await api.put(`collect/`, {
@@ -399,6 +411,14 @@ watch(() => addForm.value.tags,
   (newTags, oldTags) => {
     if (!isRefreshed.value || JSON.stringify(newTags) === JSON.stringify(oldTags)) return;
     updateTagsDebounced(newTags);
+  },
+  { deep: true, immediate: false }
+)
+
+watch(() => addForm.value.cate,
+  (newCate, oldCate) => {
+    if (!isRefreshed.value || !newCate) return;
+    updateCateDebounced(newCate);
   },
   { deep: true, immediate: false }
 )
@@ -626,6 +646,16 @@ watch(() => addForm.value.tags,
         <VChipGroup column v-model="addForm.tags" multiple>
           <template v-for="(value, key) in tagOptions" :key="key">
             <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
+              {{ value }}
+            </VChip>
+          </template>
+        </VChipGroup>
+      </div>
+      <div class="mt-6">
+        <GroupTile title="分类信息" />
+        <VChipGroup column v-model="addForm.cate">
+          <template v-for="(value, key) in categoryOptions" :key="key">
+            <VChip :color="addForm.cate === key ? 'primary' : ''" filter variant="outlined" :value="key">
               {{ value }}
             </VChip>
           </template>

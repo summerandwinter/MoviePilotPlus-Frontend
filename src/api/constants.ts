@@ -135,6 +135,19 @@ export const mediaCateOptions = {
   'Movie': '电影',
   'TV': '剧集'
 }
+
+export const categoryOptions = {
+  'Movie': '电影',
+  'TV': '电视剧',
+  'Documentary': '纪录片',
+  'Comic': '动漫',
+  'Show': '综艺',
+  'Music': '音乐',
+  'Sports': '体育',
+  'Game': '游戏',
+  'Short': '短片',
+  'Other': '其他',
+}
 export const mediaServerDict = mediaServerOptions.reduce((dict, item) => {
   dict[item.value] = item.title
   return dict
