@@ -147,7 +147,8 @@ watch(filterParams, () => {
 
 
     <div class="pt-3">
-      <MediaSearchView v-if="isSearch" :key="currentKey" :apipath="`tencent/search`" :keyword="searchWord || ''" />
+      <MediaSearchView v-if="isSearch" :key="currentKey" :apipath="`tencent/search`" :keyword="searchWord || ''"
+        :cate="cate" />
       <MediaCardListView v-show="!isSearch" :key="currentKey" :apipath="`tencent/page_data`" :params="filterParams"
         :cate="cate" />
     </div>
