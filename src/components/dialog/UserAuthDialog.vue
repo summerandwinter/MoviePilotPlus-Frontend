@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { isNullOrEmptyObject } from '@/@core/utils'
 import api from '@/api'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 
 
@@ -134,7 +134,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <VDialog width="40rem" scrollable>
+  <DialogWrapper width="40rem" scrollable>
     <VCard>
       <VCardItem>
         <VCardTitle>
@@ -179,5 +179,5 @@ onMounted(async () => {
         </VBtn>
       </VCardText>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

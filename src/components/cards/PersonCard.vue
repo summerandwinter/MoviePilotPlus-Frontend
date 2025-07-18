@@ -2,6 +2,7 @@
 import personIcon from '@images/misc/person-icon.png'
 import type { Person } from '@/api/types'
 import router from '@/router'
+import { useGlobalSettingsStore } from '@/stores'
 
 const personProps = defineProps({
   person: Object as PropType<Person>,
@@ -10,7 +11,9 @@ const personProps = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 当前人物
 const personInfo = ref(personProps.person)
@@ -87,7 +90,7 @@ function goPersonDetail() {
             <div class="absolute inset-0 flex h-full w-full flex-col items-center p-2">
               <div class="relative mt-2 mb-4 flex h-1/2 w-full justify-center">
                 <VAvatar
-                  size="120"
+                  size="100"
                   :class="{
                     'ring-1 ring-gray-700': isImageLoaded,
                   }"

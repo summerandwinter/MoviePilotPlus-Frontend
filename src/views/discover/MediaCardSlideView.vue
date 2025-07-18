@@ -3,7 +3,6 @@ import api from '@/api'
 import type { MediaInfo } from '@/api/types'
 import MediaCard from '@/components/cards/MediaCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
-import { registerAbortController } from '@/router'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -28,10 +27,7 @@ const dataList = ref<MediaInfo[]>([])
 async function fetchData() {
   try {
     if (!props.apipath) return
-    const abortController = new AbortController()
-    registerAbortController(abortController)
-    const { signal } = abortController
-    dataList.value = await api.get(props.apipath, { signal })
+    dataList.value = await api.get(props.apipath)
     if (dataList.value.length > 0) componentLoaded.value = true
   } catch (error) {
     console.error(error)
@@ -53,7 +49,7 @@ onActivated(() => {
   <SlideView v-if="componentLoaded">
     <template #content>
       <template v-for="data in dataList" :key="data.tmdb_id || data.douban_id || data.bangumi_id">
-        <MediaCard :media="data" height="15rem" width="10rem" />
+        <MediaCard :media="data" width="9rem" />
       </template>
     </template>
   </SlideView>

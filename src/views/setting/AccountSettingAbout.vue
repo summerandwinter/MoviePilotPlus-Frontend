@@ -12,6 +12,9 @@ const systemEnv = ref<any>({})
 // 所有Release
 const allRelease = ref<any>([])
 
+// 支持站点
+const supportingSites = ref<any>({})
+
 // 变更日志对话框
 const releaseDialog = ref(false)
 
@@ -56,6 +59,15 @@ async function queryAllRelease() {
   }
 }
 
+// 查询支持站点
+async function querySupportingSites() {
+  try {
+    supportingSites.value = await api.get('site/supporting')
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 // 计算发布时间
 function releaseTime(releaseDate: string) {
   // 上一次更新时间
@@ -65,6 +77,7 @@ function releaseTime(releaseDate: string) {
 onMounted(() => {
   querySystemEnv()
   queryAllRelease()
+  querySupportingSites()
 })
 </script>
 
@@ -156,6 +169,28 @@ onMounted(() => {
               </dd>
             </div>
           </div>
+          <div>
+            <div class="max-w-6xl py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+              <dt class="block text-sm font-bold">{{ t('setting.about.supportingSites') }}</dt>
+              <dd class="flex text-sm sm:col-span-2 sm:mt-0">
+                <div class="flex flex-wrap gap-2">
+                  <VChip
+                    v-for="(site, domain) in supportingSites"
+                    :key="domain"
+                    variant="outlined"
+                    size="small"
+                    :title="`${site.name} - ${site.url}`"
+                    :href="site.url"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span class="truncate max-w-32">{{ site.name }}</span>
+                    <VIcon icon="mdi-open-in-new" size="12" class="ml-1 flex-shrink-0" />
+                  </VChip>
+                </div>
+              </dd>
+            </div>
+          </div>
         </dl>
       </div>
     </div>
@@ -171,12 +206,12 @@ onMounted(() => {
               <dd class="flex text-sm sm:col-span-2 sm:mt-0">
                 <span class="flex-grow undefined">
                   <a
-                    href="https://wiki.movie-pilot.org"
+                    href="https://movie-pilot.org"
                     target="_blank"
                     rel="noreferrer"
                     class="text-indigo-500 transition duration-300 hover:underline"
                   >
-                    https://wiki.movie-pilot.org
+                    https://movie-pilot.org
                   </a>
                 </span>
               </dd>
@@ -261,7 +296,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  <VDialog v-if="releaseDialog" v-model="releaseDialog" width="600" scrollable>
+  <DialogWrapper v-if="releaseDialog" v-model="releaseDialog" width="600" scrollable>
     <VCard>
       <VCardItem>
         <VDialogCloseBtn @click="releaseDialog = false" />
@@ -269,7 +304,7 @@ onMounted(() => {
       </VCardItem>
       <VCardText v-html="releaseDialogBody" />
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>
 
 <style type="scss" scoped>

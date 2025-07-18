@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { CustomRule } from '@/api/types'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import filter_svg from '@images/svg/filter.svg'
 import { cloneDeep } from 'lodash-es'
 import { innerFilterRules } from '@/api/constants'
@@ -110,7 +110,7 @@ function onClose() {
         <VImg :src="filter_svg" cover class="mt-7" max-width="3rem" />
       </VCardText>
     </VCard>
-    <VDialog
+    <DialogWrapper
       v-if="ruleInfoDialog"
       v-model="ruleInfoDialog"
       scrollable
@@ -215,6 +215,6 @@ function onClose() {
           }}</VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
   </div>
 </template>

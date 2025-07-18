@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 import type { StorageConf, TransferHistory } from '@/api/types'
 import ReorganizeDialog from '@/components/dialog/ReorganizeDialog.vue'
@@ -11,13 +11,15 @@ import router from '@/router'
 import { useDisplay } from 'vuetify'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { useI18n } from 'vue-i18n'
+import { usePWA } from '@/composables/usePWA'
 
 // i18n
 const { t } = useI18n()
 
 // APP
 const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
+// PWA模式检测
+const { appMode } = usePWA()
 
 // 提示框
 const $toast = useToast()
@@ -212,10 +214,28 @@ const TransferDict: { [key: string]: string } = {
   rclone_move: t('transferHistory.transferMode.rclone_move'),
 }
 
-const tableStyle = computed(() => {
-  return appMode
-    ? 'height: calc(100vh - 15rem - env(safe-area-inset-bottom) - 7rem)'
-    : 'height: calc(100vh - 15rem - env(safe-area-inset-bottom)'
+// 计算列表可用高度
+const availableHeight = computed(() => {
+  // 获取视口高度
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight
+
+  // navbar高度
+  const navbarHeight = 72
+  // 工具栏高度
+  const toolbarHeight = 88
+  // 底部导航栏高度
+  const footerHeight = appMode.value ? 80 : 16
+  // 安全区域高度
+  const safeAreaHeight =
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom')) ||
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top')) ||
+    0
+
+  // 计算可用高度，预留一些边距
+  const availableHeight = viewportHeight - navbarHeight - toolbarHeight - footerHeight - safeAreaHeight - 48
+
+  // 确保最小高度
+  return Math.max(availableHeight, 300)
 })
 
 // 分页提示
@@ -507,7 +527,7 @@ onMounted(() => {
       show-select
       :loading-text="t('transferHistory.loading')"
       hover
-      :style="tableStyle"
+      :style="{ height: `${availableHeight}px` }"
     >
       <template #header.data-table-group>
         <span>{{ t('transferHistory.titleColumn') }}</span>
@@ -606,7 +626,7 @@ onMounted(() => {
       show-select
       :loading-text="t('transferHistory.loading')"
       hover
-      :style="tableStyle"
+      :style="{ height: `${availableHeight}px` }"
     >
       <template #item.title="{ item }">
         <div class="d-flex align-center">
@@ -698,29 +718,31 @@ onMounted(() => {
   </VCard>
 
   <!-- 底部操作按钮 -->
-  <div v-if="isRefreshed && selected.length > 0">
-    <VFab
-      icon="mdi-trash-can-outline"
-      color="error"
-      location="bottom"
-      size="x-large"
-      fixed
-      app
-      appear
-      @click="removeHistoryBatch"
-      :class="appMode ? 'mb-28' : 'mb-16'"
-    />
-    <VFab
-      :class="appMode ? 'mb-44' : 'mb-32'"
-      icon="mdi-redo-variant"
-      location="bottom"
-      size="x-large"
-      fixed
-      app
-      appear
-      @click="retransferBatch"
-    />
-  </div>
+  <Teleport to="body" v-if="route.path === '/history'">
+    <div v-if="isRefreshed && selected.length > 0">
+      <VFab
+        icon="mdi-trash-can-outline"
+        color="error"
+        location="bottom"
+        size="x-large"
+        fixed
+        app
+        appear
+        @click="removeHistoryBatch"
+        :class="appMode ? 'mb-28' : 'mb-16'"
+      />
+      <VFab
+        :class="appMode ? 'mb-44' : 'mb-32'"
+        icon="mdi-redo-variant"
+        location="bottom"
+        size="x-large"
+        fixed
+        app
+        appear
+        @click="retransferBatch"
+      />
+    </div>
+  </Teleport>
   <!-- 底部弹窗 -->
   <VBottomSheet v-model="deleteConfirmDialog" inset>
     <VCard class="text-center">

@@ -1,20 +1,23 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 import type { TorrentCacheData, TorrentCacheItem } from '@/api/types'
 import { useI18n } from 'vue-i18n'
-import { useDisplay } from 'vuetify'
 import { formatFileSize, formatDateDifference } from '@core/utils/formatters'
 import { useConfirm } from '@/composables/useConfirm'
+import { useGlobalSettingsStore } from '@/stores'
+import { usePWA } from '@/composables/usePWA'
 
 // 国际化
 const { t } = useI18n()
 
-const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
 
-// 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// PWA模式检测
+const { appMode } = usePWA()
+
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 确认框
 const createConfirm = useConfirm()
@@ -420,7 +423,7 @@ onMounted(() => {
   </VCard>
 
   <!-- 重新识别对话框 -->
-  <VDialog v-model="reidentifyDialog" scrollable max-width="35rem">
+  <DialogWrapper v-model="reidentifyDialog" scrollable max-width="35rem">
     <VCard>
       <VCardItem class="py-2">
         <template #prepend>
@@ -466,5 +469,5 @@ onMounted(() => {
         </VBtn>
       </VCardActions>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

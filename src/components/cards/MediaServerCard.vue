@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { MediaServerConf, MediaServerLibrary, MediaStatistic } from '@/api/types'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import emby_image from '@images/logos/emby.png'
 import jellyfin_image from '@images/logos/jellyfin.png'
 import plex_image from '@images/logos/plex.png'
@@ -200,11 +200,11 @@ onMounted(() => {
             <span class="me-2 mb-1">自定义媒体服务器</span>
           </div>
         </div>
-        <VImg :src="getIcon" cover class="mt-7 me-3" max-width="3rem" min-width="3rem" />
+        <VImg :src="getIcon" cover class="mt-8 me-3" max-width="3rem" min-width="3rem" />
       </VCardText>
     </VCard>
 
-    <VDialog
+    <DialogWrapper
       v-if="mediaServerInfoDialog"
       v-model="mediaServerInfoDialog"
       scrollable
@@ -506,6 +506,6 @@ onMounted(() => {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
   </div>
 </template>

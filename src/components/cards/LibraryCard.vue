@@ -4,6 +4,7 @@ import plex from '@images/misc/plex.png'
 import emby from '@images/misc/emby.png'
 import jellyfin from '@images/misc/jellyfin.png'
 import trimemedia from '@images/logos/trimemedia.png'
+import { openMediaServerWithAutoDetect } from '@/utils/appDeepLink'
 
 // 输入参数
 const props = defineProps({
@@ -36,16 +37,18 @@ function imageErrorHandler() {
 
 // 默认图片
 function getDefaultImage() {
-  if (props.media?.server === 'plex') return plex
-  else if (props.media?.server === 'emby') return emby
-  else if (props.media?.server === 'jellyfin') return jellyfin
-  else if (props.media?.server === 'trimemedia') return trimemedia
+  if (props.media?.server_type === 'plex') return plex
+  else if (props.media?.server_type === 'emby') return emby
+  else if (props.media?.server_type === 'jellyfin') return jellyfin
+  else if (props.media?.server_type === 'trimemedia') return trimemedia
   else return plex
 }
 
 // 跳转播放
-function goPlay() {
-  if (props.media?.link) window.open(props.media?.link, '_blank')
+async function goPlay() {
+  if (props.media?.link) {
+    await openMediaServerWithAutoDetect(props.media.link, undefined, props.media.server_type)
+  }
 }
 
 // 生成图片代理路径
@@ -170,13 +173,15 @@ onMounted(async () => {
                 <VSkeletonLoader class="object-cover aspect-w-3 aspect-h-2" />
               </div>
             </template>
-            <VCardText
-              class="w-full flex flex-col flex-wrap justify-end align-center text-white absolute bottom-0 cursor-pointer pa-2"
-            >
-              <h1 class="mb-1 text-white text-shadow font-bold line-clamp-2 overflow-hidden text-ellipsis ...">
-                {{ props.media?.name }}
-              </h1>
-            </VCardText>
+            <template #default>
+              <VCardText
+                class="w-full flex flex-col flex-wrap justify-end align-center text-white absolute bottom-0 cursor-pointer pa-2"
+              >
+                <h1 class="mb-1 text-white text-shadow font-bold line-clamp-2 overflow-hidden text-ellipsis ...">
+                  {{ props.media?.name }}
+                </h1>
+              </VCardText>
+            </template>
           </VImg>
         </template>
       </VCard>

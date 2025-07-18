@@ -9,13 +9,18 @@ import { useDisplay } from 'vuetify'
 import { useDynamicButton } from '@/composables/useDynamicButton'
 import { useI18n } from 'vue-i18n'
 import { VCardActions } from 'vuetify/components'
+import { usePWA } from '@/composables/usePWA'
 
 // 国际化
 const { t } = useI18n()
 
 // APP
 const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
+// PWA模式检测
+const { appMode } = usePWA()
+
+// 路由
+const route = useRoute()
 
 // 从用户 Store 中获取superuser信息
 const superUser = useUserStore().superUser
@@ -46,6 +51,7 @@ const enableConfig = ref<{ [key: string]: boolean }>({
   weeklyOverview: false,
   cpu: false,
   memory: false,
+  network: false,
   library: true,
   playing: true,
   latest: true,
@@ -107,6 +113,14 @@ const dashboardConfigs = ref<DashboardItem[]>([
   {
     id: 'memory',
     name: t('dashboard.memory'),
+    key: '',
+    attrs: {},
+    cols: { cols: 12, md: 6 },
+    elements: [],
+  },
+  {
+    id: 'network',
+    name: t('dashboard.network'),
     key: '',
     attrs: {},
     cols: { cols: 12, md: 6 },
@@ -342,19 +356,21 @@ onDeactivated(() => {
   </draggable>
 
   <!-- 底部操作按钮（只在非移动设备上显示） -->
-  <VFab
-    v-if="!appMode"
-    icon="mdi-view-dashboard-edit"
-    location="bottom"
-    size="x-large"
-    fixed
-    app
-    appear
-    @click="dialog = true"
-  />
+  <Teleport to="body" v-if="route.path === '/dashboard'">
+    <VFab
+      v-if="!appMode"
+      icon="mdi-view-dashboard-edit"
+      location="bottom"
+      size="x-large"
+      fixed
+      app
+      appear
+      @click="dialog = true"
+    />
+  </Teleport>
 
   <!-- 弹窗，根据配置生成选项 -->
-  <VDialog v-if="dialog" v-model="dialog" max-width="35rem" :fullscreen="!display.mdAndUp.value" scrollable>
+  <DialogWrapper v-if="dialog" v-model="dialog" max-width="35rem" :fullscreen="!display.mdAndUp.value" scrollable>
     <VCard>
       <VCardItem>
         <VCardTitle>
@@ -407,7 +423,7 @@ onDeactivated(() => {
         </VBtn>
       </VCardActions>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>
 <style lang="scss" scoped>
 .settings-card-header {

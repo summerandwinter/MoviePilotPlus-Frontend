@@ -50,6 +50,7 @@ const sortTitles: Record<string, string> = {
   site: t('torrent.sortSite'),
   size: t('torrent.sortSize'),
   seeder: t('torrent.sortSeeder'),
+  publishTime: t('torrent.sortPublishTime'),
 }
 
 // 统一存储过滤选项
@@ -264,6 +265,11 @@ function filterData() {
         filteredData = filteredData.sort((a, b) => b.torrent_info.size - a.torrent_info.size)
       } else if (sortField.value === 'seeder') {
         filteredData = filteredData.sort((a, b) => b.torrent_info.seeders - a.torrent_info.seeders)
+      } else if (sortField.value === 'publishTime') {
+        // 按发布时间排序（降序，最新的在前）
+        filteredData = filteredData.sort(
+          (a, b) => new Date(b.torrent_info.pubdate || 0).getTime() - new Date(a.torrent_info.pubdate || 0).getTime(),
+        )
       }
     } else {
       if (sortField.value === 'default') {
@@ -276,6 +282,11 @@ function filterData() {
         filteredData = filteredData.sort((a, b) => a.torrent_info.size - b.torrent_info.size)
       } else if (sortField.value === 'seeder') {
         filteredData = filteredData.sort((a, b) => a.torrent_info.seeders - b.torrent_info.seeders)
+      } else if (sortField.value === 'publishTime') {
+        // 按发布时间排序（升序，最旧的在前）
+        filteredData = filteredData.sort(
+          (a, b) => new Date(a.torrent_info.pubdate || 0).getTime() - new Date(b.torrent_info.pubdate || 0).getTime(),
+        )
       }
     }
 
@@ -586,7 +597,7 @@ onMounted(() => {
     </VCard>
 
     <!-- 全部筛选弹窗 -->
-    <VDialog
+    <DialogWrapper
       v-model="allFilterMenuOpen"
       max-width="50rem"
       location="center"
@@ -659,10 +670,10 @@ onMounted(() => {
           </div>
         </VCardText>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
 
     <!-- 筛选弹窗 -->
-    <VDialog v-model="filterMenuOpen" max-width="25rem" max-height="85vh" location="center">
+    <DialogWrapper v-model="filterMenuOpen" max-width="25rem" max-height="85vh" location="center">
       <VCard>
         <VCardTitle class="py-3 d-flex align-center">
           <VIcon :icon="getFilterIcon(currentFilter)" class="me-2"></VIcon>
@@ -704,7 +715,7 @@ onMounted(() => {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
 
     <!-- 资源列表容器 -->
     <VCard class="resource-list-container">

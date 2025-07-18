@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { MediaServerPlayItem } from '@/api/types'
+import { openMediaServerWithAutoDetect } from '@/utils/appDeepLink'
 // 输入参数
 const props = defineProps({
   media: Object as PropType<MediaServerPlayItem>,
@@ -16,8 +17,10 @@ function imageLoadHandler() {
 }
 
 // 跳转播放
-function goPlay() {
-  if (props.media?.link) window.open(props.media?.link, '_blank')
+async function goPlay() {
+  if (props.media?.link) {
+    await openMediaServerWithAutoDetect(props.media.link, undefined, props.media.server_type)
+  }
 }
 
 // 计算图片地址
@@ -48,16 +51,18 @@ const getImgUrl = computed(() => {
                 <VSkeletonLoader class="object-cover aspect-w-3 aspect-h-2" />
               </div>
             </template>
-            <VCardText
-              class="w-full flex flex-col flex-wrap justify-end align-left text-white absolute bottom-0 cursor-pointer pa-2"
-            >
-              <h1
-                class="mb-1 text-white text-shadow font-extrabold text-xl line-clamp-2 overflow-hidden text-ellipsis ..."
+            <template #default>
+              <VCardText
+                class="w-full flex flex-col flex-wrap justify-end align-left text-white absolute bottom-0 cursor-pointer pa-2"
               >
-                {{ props.media?.title }}
-              </h1>
-              <span class="text-shadow">{{ props.media?.subtitle }}</span>
-            </VCardText>
+                <h1
+                  class="mb-1 text-white text-shadow font-bold text-lg line-clamp-2 overflow-hidden text-ellipsis ..."
+                >
+                  {{ props.media?.title }}
+                </h1>
+                <span class="text-shadow text-sm">{{ props.media?.subtitle }}</span>
+              </VCardText>
+            </template>
           </VImg>
         </template>
         <div class="w-full absolute bottom-0">

@@ -4,12 +4,12 @@ import tmdbImage from '@images/logos/tmdb.png'
 import doubanImage from '@images/logos/douban-black.png'
 import bangumiImage from '@images/logos/bangumi.png'
 import api from '@/api'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { formatSeason, formatRating } from '@/@core/utils/formatters'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import type { MediaInfo, Subscribe, MediaSeason, Site } from '@/api/types'
-import router, { registerAbortController } from '@/router'
-import { useUserStore } from '@/stores'
+import router from '@/router'
+import { useUserStore, useGlobalSettingsStore } from '@/stores'
 import SubscribeEditDialog from '../dialog/SubscribeEditDialog.vue'
 import SearchSiteDialog from '@/components/dialog/SearchSiteDialog.vue'
 import SubscribeSeasonDialog from '../dialog/SubscribeSeasonDialog.vue'
@@ -28,7 +28,9 @@ const props = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 用户 Store
 const userStore = useUserStore()
@@ -232,9 +234,6 @@ async function handleCheckSubscribe() {
 // 查询当前媒体是否已入库
 async function handleCheckExists() {
   try {
-    const abortController = new AbortController()
-    registerAbortController(abortController)
-    const { signal } = abortController
     const result: { [key: string]: any } = await api.get('mediaserver/exists', {
       params: {
         tmdbid: props.media?.tmdb_id,
@@ -243,7 +242,6 @@ async function handleCheckExists() {
         season: props.media?.season,
         mtype: props.media?.type,
       },
-      signal,
     })
 
     if (result.success) isExists.value = true
@@ -255,16 +253,13 @@ async function handleCheckExists() {
 // 调用API检查是否已订阅，电视剧需要指定季
 async function checkSubscribe(season = 0) {
   try {
-    const abortController = new AbortController()
-    registerAbortController(abortController)
-    const { signal } = abortController
+    // AbortController 现在由全局请求优化器自动管理
     const mediaid = getMediaId()
     const result: Subscribe = await api.get(`subscribe/media/${mediaid}`, {
       params: {
         season,
         title: props.media?.title,
       },
-      signal,
     })
 
     return result.id || null
@@ -473,11 +468,11 @@ onBeforeUnmount(() => {
             class="w-full h-full flex flex-col flex-wrap justify-end align-left text-white absolute bottom-0 cursor-pointer pa-2"
             style="background: linear-gradient(rgba(45, 55, 72, 40%) 0%, rgba(45, 55, 72, 90%) 100%)"
           >
-            <span class="font-bold">{{ props.media?.year }}</span>
-            <h1 class="mb-1 text-white font-extrabold text-xl line-clamp-2 overflow-hidden text-ellipsis ...">
+            <span class="font-semibold text-sm">{{ props.media?.year }}</span>
+            <h1 class="media-card-title font-bold mb-2 text-white line-clamp-2 overflow-hidden text-ellipsis ...">
               {{ props.media?.title }}
             </h1>
-            <p class="leading-4 line-clamp-4 overflow-hidden text-ellipsis ...">
+            <p class="media-card-overview line-clamp-3 overflow-hidden text-ellipsis ...">
               {{ props.media?.overview }}
             </p>
             <div v-if="props.media?.collection_id" class="mb-3" @click.stop=""></div>
@@ -486,10 +481,16 @@ onBeforeUnmount(() => {
                 v-if="hasPermission({ is_superuser: userStore.superUser, ...userStore.permissions }, 'search')"
                 icon="mdi-magnify"
                 color="white"
+                size="small"
                 @click.stop="clickSearch"
               />
               <VSpacer />
-              <IconBtn icon="mdi-heart" :color="isSubscribed ? 'error' : 'white'" @click.stop="handleSubscribe" />
+              <IconBtn
+                icon="mdi-heart"
+                :color="isSubscribed ? 'error' : 'white'"
+                size="small"
+                @click.stop="handleSubscribe"
+              />
             </div>
           </VCardText>
           <!-- 类型角标 -->
@@ -555,3 +556,14 @@ onBeforeUnmount(() => {
     @close="chooseSiteDialog = false"
   />
 </template>
+<style scoped>
+.media-card-title {
+  font-size: 1.125rem;
+  line-height: 1.25rem;
+}
+
+.media-card-overview {
+  font-size: 0.875rem;
+  line-height: 1rem;
+}
+</style>

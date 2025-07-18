@@ -4,11 +4,16 @@ import type { Plugin } from '@/api/types'
 import PageRender from '@/components/render/PageRender.vue'
 import api from '@/api'
 import { loadRemoteComponent } from '@/utils/federationLoader'
+import { usePWA } from '@/composables/usePWA'
 
 // 输入参数
 const props = defineProps({
   plugin: {
     type: Object as PropType<Plugin>,
+  },
+  show_switch: {
+    type: Boolean,
+    default: true,
   },
 })
 
@@ -18,7 +23,8 @@ const emit = defineEmits(['close', 'save', 'switch'])
 // 显示器宽度
 const display = useDisplay()
 // APP
-const appMode = inject('pwaMode') && display.mdAndDown.value
+// PWA模式检测
+const { appMode } = usePWA()
 
 // 是否刷新
 const isRefreshed = ref(false)
@@ -118,7 +124,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <VDialog scrollable max-width="80rem" :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper scrollable max-width="80rem" :fullscreen="!display.mdAndUp.value">
     <!-- Vuetify 渲染模式 -->
     <VCard v-if="renderMode === 'vuetify'" :title="`${props.plugin?.plugin_name}`">
       <VDialogCloseBtn @click="emit('close')" />
@@ -130,6 +136,7 @@ onMounted(() => {
         </div>
       </VCardText>
       <VFab
+        v-if="show_switch"
         icon="mdi-cog"
         location="bottom"
         size="x-large"
@@ -146,11 +153,12 @@ onMounted(() => {
         <component
           :is="dynamicComponent"
           :api="api"
+          :show_switch="show_switch"
           @action="handleAction"
           @switch="emit('switch')"
           @close="emit('close')"
         />
       </VCardText>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

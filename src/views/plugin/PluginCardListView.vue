@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import draggable from 'vuedraggable'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 import type { Plugin } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
@@ -13,6 +13,8 @@ import PluginMarketSettingDialog from '@/components/dialog/PluginMarketSettingDi
 import { useDynamicButton } from '@/composables/useDynamicButton'
 import { useI18n } from 'vue-i18n'
 import PluginMixedSortCard from '@/components/cards/PluginMixedSortCard.vue'
+import { usePWA } from '@/composables/usePWA'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 
 // 国际化
 const { t } = useI18n()
@@ -23,13 +25,89 @@ const route = useRoute()
 const display = useDisplay()
 
 // APP
-const appMode = inject('pwaMode') && display.mdAndDown.value
+// PWA模式检测
+const { appMode } = usePWA()
 
 // 当前标签
 const activeTab = ref('installed')
 
 // 获取插件标签页
 const pluginTabs = computed(() => getPluginTabs())
+
+// 使用动态标签页
+const { registerHeaderTab } = useDynamicHeaderTab()
+
+// 注册动态标签页（在setup顶层立即执行）
+registerHeaderTab({
+  items: pluginTabs.value,
+  modelValue: activeTab,
+  appendButtons: [
+    {
+      icon: 'mdi-filter-multiple-outline',
+      variant: 'text',
+      color: computed(() =>
+        installedFilter.value || hasUpdateFilter.value || enabledFilter.value ? 'primary' : 'gray',
+      ),
+      class: 'settings-icon-button',
+      dataAttr: 'installed-filter-btn',
+      action: () => {
+        filterInstalledPluginDialog.value = true
+      },
+      show: computed(() => activeTab.value === 'installed'),
+    },
+    {
+      icon: 'mdi-filter-multiple-outline',
+      variant: 'text',
+      color: computed(() => (isFilterFormEmpty.value ? 'gray' : 'primary')),
+      class: 'settings-icon-button',
+      dataAttr: 'market-filter-btn',
+      action: () => {
+        filterMarketPluginDialog.value = true
+      },
+      show: computed(() => activeTab.value === 'market'),
+    },
+    {
+      icon: 'mdi-refresh',
+      variant: 'text',
+      color: 'gray',
+      class: 'settings-icon-button',
+      action: () => {
+        refreshMarket()
+      },
+      show: computed(() => activeTab.value === 'market'),
+    },
+    {
+      icon: 'mdi-store-cog',
+      variant: 'text',
+      color: 'gray',
+      class: 'settings-icon-button',
+      action: () => {
+        MarketSettingDialog.value = true
+      },
+      show: computed(() => activeTab.value === 'market'),
+    },
+    {
+      icon: 'mdi-folder-plus',
+      variant: 'text',
+      color: 'gray',
+      class: 'settings-icon-button',
+      action: () => {
+        showNewFolderDialog()
+      },
+      show: computed(() => activeTab.value === 'installed' && !currentFolder.value),
+    },
+    {
+      icon: 'mdi-arrow-left',
+      variant: 'text',
+      color: 'gray',
+      class: 'settings-icon-button',
+      action: () => {
+        backToMain()
+      },
+      show: computed(() => activeTab.value === 'installed' && !!currentFolder.value),
+    },
+  ],
+})
 
 // 插件ID参数
 const pluginId = ref(route.query.id)
@@ -603,7 +681,7 @@ function pluginIcon(item: Plugin) {
   if (pluginIconLoaded.value[item.id || '0'] === false) return noImage
   // 如果是网络图片则使用代理后返回
   if (item?.plugin_icon?.startsWith('http'))
-    return `${import.meta.env.VITE_API_BASE_URL}system/img/1?imgurl=${encodeURIComponent(item?.plugin_icon)}`
+    return `${import.meta.env.VITE_API_BASE_URL}system/img/1?imgurl=${encodeURIComponent(item?.plugin_icon)}&cache=true`
 
   return `./plugin_icon/${item?.plugin_icon}`
 }
@@ -796,6 +874,7 @@ function loadMarketMore({ done }: { done: any }) {
 }
 
 // 组件挂载后
+
 onMounted(async () => {
   await loadPluginOrderConfig()
   await loadPluginFolders() // 加载文件夹配置
@@ -1213,173 +1292,118 @@ function onDragStartPlugin(evt: any) {
 
 <template>
   <div>
-    <VHeaderTab :items="pluginTabs" v-model="activeTab">
-      <template #append>
-        <VMenu
-          v-if="activeTab === 'installed'"
-          v-model="filterInstalledPluginDialog"
-          width="20rem"
-          :close-on-content-click="false"
-          scrim
-        >
-          <template #activator="{ props }">
-            <VBtn
-              icon="mdi-filter-multiple-outline"
-              variant="text"
-              :color="installedFilter || hasUpdateFilter || enabledFilter ? 'primary' : 'gray'"
-              size="default"
-              class="settings-icon-button"
-              v-bind="props"
-            />
-          </template>
-          <VCard>
-            <VCardItem>
-              <VCardTitle>
-                <VIcon icon="mdi-filter-multiple-outline" class="mr-2" />
-                {{ t('plugin.filterPlugins') }}
-              </VCardTitle>
-              <VDialogCloseBtn @click="filterInstalledPluginDialog = false" />
-            </VCardItem>
-            <VCardText>
+    <!-- 过滤弹窗 -->
+    <Teleport to="body" v-if="filterInstalledPluginDialog">
+      <VMenu
+        v-model="filterInstalledPluginDialog"
+        width="20rem"
+        :close-on-content-click="false"
+        :activator="'[data-menu-activator=installed-filter-btn]'"
+        location="bottom end"
+      >
+        <VCard>
+          <VCardItem>
+            <VCardTitle>
+              <VIcon icon="mdi-filter-multiple-outline" class="mr-2" />
+              {{ t('plugin.filterPlugins') }}
+            </VCardTitle>
+            <VDialogCloseBtn @click="filterInstalledPluginDialog = false" />
+          </VCardItem>
+          <VCardText>
+            <VRow>
+              <VCol cols="12">
+                <VCombobox
+                  v-model="installedFilter"
+                  :items="installedPluginNames"
+                  :label="t('plugin.name')"
+                  density="comfortable"
+                  clearable
+                />
+              </VCol>
+              <VCol cols="6">
+                <VSwitch v-model="enabledFilter" :label="t('plugin.running')" />
+              </VCol>
+              <VCol cols="6">
+                <VSwitch v-model="hasUpdateFilter" :label="t('plugin.hasNewVersion')" />
+              </VCol>
+            </VRow>
+          </VCardText>
+        </VCard>
+      </VMenu>
+    </Teleport>
+
+    <Teleport to="body" v-if="filterMarketPluginDialog">
+      <VMenu
+        v-model="filterMarketPluginDialog"
+        width="25rem"
+        :close-on-content-click="false"
+        :activator="'[data-menu-activator=market-filter-btn]'"
+        location="bottom end"
+      >
+        <VCard>
+          <VCardItem>
+            <VCardTitle>
+              <VIcon icon="mdi-filter-multiple-outline" class="mr-2" />
+              {{ t('plugin.filterPlugins') }}
+            </VCardTitle>
+            <VDialogCloseBtn @click="filterMarketPluginDialog = false" />
+          </VCardItem>
+          <VCardText>
+            <!-- 过滤表单 -->
+            <div v-if="isAppMarketLoaded">
               <VRow>
-                <VCol cols="12">
-                  <VCombobox
-                    v-model="installedFilter"
-                    :items="installedPluginNames"
-                    :label="t('plugin.name')"
+                <VCol cols="6">
+                  <VTextField v-model="filterForm.name" density="comfortable" :label="t('plugin.name')" clearable />
+                </VCol>
+                <VCol v-if="authorFilterOptions.length > 0" cols="6">
+                  <VSelect
+                    v-model="filterForm.author"
+                    :items="authorFilterOptions"
                     density="comfortable"
+                    chips
+                    :label="t('plugin.author')"
+                    multiple
                     clearable
                   />
                 </VCol>
-                <VCol cols="6">
-                  <VSwitch v-model="enabledFilter" :label="t('plugin.running')" />
+                <VCol v-if="labelFilterOptions.length > 0" cols="6">
+                  <VSelect
+                    v-model="filterForm.label"
+                    :items="labelFilterOptions"
+                    density="comfortable"
+                    chips
+                    :label="t('plugin.label')"
+                    multiple
+                    clearable
+                  />
                 </VCol>
-                <VCol cols="6">
-                  <VSwitch v-model="hasUpdateFilter" :label="t('plugin.hasNewVersion')" />
+                <VCol v-if="repoFilterOptions.length > 0" cols="6">
+                  <VSelect
+                    v-model="filterForm.repo"
+                    :items="repoFilterOptions"
+                    density="comfortable"
+                    chips
+                    :label="t('plugin.repository')"
+                    multiple
+                    clearable
+                  />
+                </VCol>
+                <VCol v-if="sortOptions.length > 0" cols="6">
+                  <VSelect
+                    v-model="activeSort"
+                    :items="sortOptions"
+                    density="comfortable"
+                    :label="t('plugin.sortTitle')"
+                  />
                 </VCol>
               </VRow>
-            </VCardText>
-          </VCard>
-        </VMenu>
-        <VMenu
-          v-if="activeTab === 'market'"
-          v-model="filterMarketPluginDialog"
-          width="25rem"
-          :close-on-content-click="false"
-          scrim
-        >
-          <template #activator="{ props }">
-            <VBtn
-              icon="mdi-filter-multiple-outline"
-              variant="text"
-              :color="isFilterFormEmpty ? 'gray' : 'primary'"
-              size="default"
-              class="settings-icon-button"
-              v-bind="props"
-            />
-          </template>
-          <VCard>
-            <VCardItem>
-              <VCardTitle>
-                <VIcon icon="mdi-filter-multiple-outline" class="mr-2" />
-                {{ t('plugin.filterPlugins') }}
-              </VCardTitle>
-              <VDialogCloseBtn @click="filterMarketPluginDialog = false" />
-            </VCardItem>
-            <VCardText>
-              <!-- 过滤表单 -->
-              <div v-if="isAppMarketLoaded">
-                <VRow>
-                  <VCol cols="6">
-                    <VTextField v-model="filterForm.name" density="comfortable" :label="t('plugin.name')" clearable />
-                  </VCol>
-                  <VCol v-if="authorFilterOptions.length > 0" cols="6">
-                    <VSelect
-                      v-model="filterForm.author"
-                      :items="authorFilterOptions"
-                      density="comfortable"
-                      chips
-                      :label="t('plugin.author')"
-                      multiple
-                      clearable
-                    />
-                  </VCol>
-                  <VCol v-if="labelFilterOptions.length > 0" cols="6">
-                    <VSelect
-                      v-model="filterForm.label"
-                      :items="labelFilterOptions"
-                      density="comfortable"
-                      chips
-                      :label="t('plugin.label')"
-                      multiple
-                      clearable
-                    />
-                  </VCol>
-                  <VCol v-if="repoFilterOptions.length > 0" cols="6">
-                    <VSelect
-                      v-model="filterForm.repo"
-                      :items="repoFilterOptions"
-                      density="comfortable"
-                      chips
-                      :label="t('plugin.repository')"
-                      multiple
-                      clearable
-                    />
-                  </VCol>
-                  <VCol v-if="sortOptions.length > 0" cols="6">
-                    <VSelect
-                      v-model="activeSort"
-                      :items="sortOptions"
-                      density="comfortable"
-                      :label="t('plugin.sortTitle')"
-                    />
-                  </VCol>
-                </VRow>
-              </div>
-            </VCardText>
-          </VCard>
-        </VMenu>
-        <VBtn
-          v-if="activeTab === 'market'"
-          icon="mdi-refresh"
-          variant="text"
-          color="gray"
-          size="default"
-          class="settings-icon-button"
-          :loading="isMarketRefreshing"
-          @click="refreshMarket"
-        />
-        <VBtn
-          v-if="activeTab === 'market'"
-          icon="mdi-store-cog"
-          variant="text"
-          color="gray"
-          size="default"
-          class="settings-icon-button"
-          @click="MarketSettingDialog = true"
-        />
-        <VBtn
-          v-if="activeTab === 'installed' && !currentFolder"
-          icon="mdi-folder-plus"
-          variant="text"
-          color="gray"
-          size="default"
-          class="settings-icon-button"
-          @click="showNewFolderDialog"
-        />
-        <VBtn
-          v-if="activeTab === 'installed' && currentFolder"
-          icon="mdi-arrow-left"
-          variant="text"
-          color="gray"
-          size="default"
-          class="settings-icon-button"
-          @click="backToMain"
-        />
-      </template>
-    </VHeaderTab>
+            </div>
+          </VCardText>
+        </VCard>
+      </VMenu>
+    </Teleport>
 
-    <VWindow v-model="activeTab" class="mt-5 disable-tab-transition px-2" :touch="false">
+    <VWindow v-model="activeTab" class="disable-tab-transition px-2" :touch="false">
       <!-- 我的插件 -->
       <VWindowItem value="installed">
         <transition name="fade-slide" appear>
@@ -1502,21 +1526,23 @@ function onDragStartPlugin(evt: any) {
     </VWindow>
   </div>
 
-  <div v-if="isRefreshed">
-    <!-- 插件搜索图标 -->
-    <VFab
-      v-if="!appMode"
-      icon="mdi-magnify"
-      color="info"
-      location="bottom"
-      size="x-large"
-      fixed
-      app
-      appear
-      @click="SearchDialog = true"
-      :class="{ 'mb-12': appMode }"
-    />
-  </div>
+  <!-- 插件搜索图标 -->
+  <Teleport to="body" v-if="route.path === '/plugins'">
+    <div v-if="isRefreshed">
+      <VFab
+        v-if="!appMode"
+        icon="mdi-magnify"
+        color="info"
+        location="bottom"
+        size="x-large"
+        fixed
+        app
+        appear
+        @click="SearchDialog = true"
+        :class="{ 'mb-12': appMode }"
+      />
+    </div>
+  </Teleport>
   <!-- 插件市场设置窗口 -->
   <PluginMarketSettingDialog
     v-if="MarketSettingDialog"
@@ -1526,7 +1552,7 @@ function onDragStartPlugin(evt: any) {
   />
 
   <!-- 插件搜索窗口 -->
-  <VDialog
+  <DialogWrapper
     v-if="SearchDialog"
     v-model="SearchDialog"
     scrollable
@@ -1585,20 +1611,20 @@ function onDragStartPlugin(evt: any) {
         </VVirtualScroll>
       </VList>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 
   <!-- 安装插件进度框 -->
-  <VDialog v-if="progressDialog" v-model="progressDialog" :scrim="false" width="25rem">
+  <DialogWrapper v-if="progressDialog" v-model="progressDialog" :scrim="false" width="25rem">
     <VCard color="primary">
       <VCardText class="text-center">
         {{ progressText }}
         <VProgressLinear indeterminate color="white" class="mb-0 mt-1" />
       </VCardText>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 
   <!-- 新建文件夹对话框 -->
-  <VDialog v-if="newFolderDialog" v-model="newFolderDialog" max-width="400">
+  <DialogWrapper v-if="newFolderDialog" v-model="newFolderDialog" max-width="400">
     <VCard>
       <VDialogCloseBtn @click="newFolderDialog = false" />
       <VCardItem>
@@ -1620,9 +1646,5 @@ function onDragStartPlugin(evt: any) {
         }}</VBtn>
       </VCardActions>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>
-
-<style lang="scss" scoped>
-// 样式已移至 PluginMixedSortCard 组件
-</style>

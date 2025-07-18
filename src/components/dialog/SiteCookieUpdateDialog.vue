@@ -2,7 +2,7 @@
 import api from '@/api'
 import { Site } from '@/api/types'
 import { requiredValidator } from '@/@validators'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import ProgressDialog from '../dialog/ProgressDialog.vue'
 import { useI18n } from 'vue-i18n'
 
@@ -71,7 +71,7 @@ async function updateSiteCookie() {
 }
 </script>
 <template>
-  <VDialog max-width="30rem" scrollable>
+  <DialogWrapper max-width="30rem" scrollable>
     <!-- Dialog Content -->
     <VCard :title="t('dialog.siteCookieUpdate.title')">
       <VDialogCloseBtn @click="emit('close')" />
@@ -114,5 +114,5 @@ async function updateSiteCookie() {
     </VCard>
     <!-- 进度框 -->
     <ProgressDialog v-if="progressDialog" v-model="progressDialog" :text="progressText" />
-  </VDialog>
+  </DialogWrapper>
 </template>

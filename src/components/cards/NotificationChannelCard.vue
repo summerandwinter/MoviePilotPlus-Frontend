@@ -7,7 +7,7 @@ import synologychat_image from '@images/logos/synologychat.png'
 import slack_image from '@images/logos/slack.webp'
 import chrome_image from '@images/logos/chrome.png'
 import custom_image from '@images/logos/notification.png'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
@@ -141,7 +141,7 @@ function onClose() {
       </VCardText>
     </VCard>
 
-    <VDialog
+    <DialogWrapper
       v-if="notificationInfoDialog"
       v-model="notificationInfoDialog"
       scrollable
@@ -476,6 +476,6 @@ function onClose() {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
   </div>
 </template>

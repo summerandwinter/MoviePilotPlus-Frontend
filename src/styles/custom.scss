@@ -6,14 +6,13 @@
 
 html.v-overlay-scroll-blocked {
   position: fixed;
+  position: relative;
+
+  --v-body-scroll-y: 0px !important;
 }
 
-@media (width <= 768px){
-  html.v-overlay-scroll-blocked {
-    position: relative;
-
-    --v-body-scroll-y: 0px !important;
-  }
+body {
+  overscroll-behavior: none;
 }
 
 @mixin hide-scrollbar {
@@ -48,14 +47,21 @@ html.v-overlay-scroll-blocked {
   }
 }
 
-.v-toast--bottom {
+.Vue-Toastification__container {
   z-index: 2500;
-  margin-block-end: env(safe-area-inset-bottom);
+  margin-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
 }
 
-.v-toast--top {
-  z-index: 2500;
-  margin-block-start: env(safe-area-inset-top);
+@media only screen and (width <= 600px){
+  .Vue-Toastification__container {
+    inline-size: 100vw;
+    padding-block: 4.5rem;
+    padding-inline: 1rem;
+  }
+
+  .Vue-Toastification__toast {
+    border-radius: 8px;
+  }
 }
 
 .v-dialog > .v-overlay__content > .v-card > .v-card-item {
@@ -96,7 +102,6 @@ html.v-overlay-scroll-blocked {
 .slider-header {
   position: relative;
   display: flex;
-  margin-block: 1.5rem 1rem;
 }
 
 .slider-title {
@@ -162,10 +167,6 @@ html.v-overlay-scroll-blocked {
   background: rgb(var(--v-table-header-background));
 }
 
-.v-toast {
-  z-index: 2500 !important;
- }
-
  .v-divider {
   border-color: rgba(var(--v-theme-on-background), var(--v-selected-opacity));
   opacity:0.75;
@@ -229,7 +230,11 @@ html.v-overlay-scroll-blocked {
 }
 
 .grid-workflow-card {
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+
+.grid-workflow-share-card {
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
 }
 
 .v-tabs:not(.v-tabs-pill).v-tabs--horizontal {
@@ -316,9 +321,8 @@ html.v-overlay-scroll-blocked {
   box-shadow: none !important;
 }
 
-
-// 透明主题特殊样式
-.transparent-app {
+// 透明主题下的弹出窗口样式
+html[data-theme="transparent"] {
   // 先将所有全局组件定义放在前面，避免CSS优先级问题
   .v-application, .v-layout, .v-main, .layout-page-content {
     background: transparent;
@@ -357,7 +361,11 @@ html.v-overlay-scroll-blocked {
   // 表格
   .v-table {
     border-radius: 0;
-    background-color: rgba(var(--v-theme-surface), 0.3);
+    background-color: rgba(var(--v-theme-surface), 0);
+
+    .v-table__wrapper > table > thead {
+      background-color: rgba(var(--v-theme-surface), 0.3);
+    }
   }
   
   // 页脚
@@ -397,11 +405,13 @@ html.v-overlay-scroll-blocked {
   .v-skeleton-loader {
     background-color: rgba(var(--v-theme-surface), 0.3);
   }
-}
 
-// 透明主题下的弹出窗口样式
-html[data-theme="transparent"] {
-  .v-overlay__content {    
+  // 输入框和搜索框
+  .v-field {
+    background-color: rgba(var(--v-theme-surface), 0);
+  }
+  
+  .v-overlay__content {
     border-radius: 12px !important;
     backdrop-filter: blur(10px) !important;
 
@@ -415,8 +425,8 @@ html[data-theme="transparent"] {
       background-color: rgb(var(--v-theme-surface), 0.5) !important;
     }
 
-    .v-table thead {
-      background-color: rgb(var(--v-theme-surface), 0.5) !important;
+    .v-table__wrapper table thead {
+      background-color: rgba(var(--v-theme-surface), 0.3);
     }
   }
 }

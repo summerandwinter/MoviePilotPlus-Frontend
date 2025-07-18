@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
-import { formatFileSize } from '@/@core/utils/formatters'
+import { formatFileSize, formatDateDifference } from '@/@core/utils/formatters'
 import api from '@/api'
 import type { Context } from '@/api/types'
 import AddDownloadDialog from '../dialog/AddDownloadDialog.vue'
@@ -196,8 +196,19 @@ onMounted(() => {
           {{ meta?.subtitle || torrent?.description }}
         </div>
 
+        <!-- 发布时间 -->
+        <div v-if="torrent?.pubdate" class="d-flex align-center justify-start mb-2">
+          <VIcon size="small" color="grey" icon="mdi-clock-outline" class="me-1"></VIcon>
+          <span class="text-sm text-medium-emphasis">{{ formatDateDifference(torrent.pubdate) }}</span>
+        </div>
+
         <!-- 资源标签区 -->
         <div class="d-flex flex-wrap gap-1 mb-2">
+          <!-- 流媒体平台 -->
+          <VChip v-if="meta?.web_source" class="chip-web-source rounded-sm" size="x-small" variant="elevated">
+            {{ meta?.web_source }}
+          </VChip>
+
           <!-- 版本标签 -->
           <VChip v-if="meta?.edition" class="chip-edition rounded-sm" size="x-small" variant="elevated">
             {{ meta?.edition }}
@@ -267,7 +278,7 @@ onMounted(() => {
     </VCard>
 
     <!-- 更多来源对话框 -->
-    <VDialog v-model="showMoreTorrents" max-width="25rem" location="center">
+    <DialogWrapper v-model="showMoreTorrents" max-width="25rem" location="center">
       <VCard>
         <VCardTitle class="py-3 d-flex align-center">
           <span>其他来源</span>
@@ -350,7 +361,7 @@ onMounted(() => {
           </VList>
         </VCardText>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
 
     <AddDownloadDialog
       v-if="addDownloadDialog"
@@ -403,6 +414,11 @@ onMounted(() => {
 
 .chip-season {
   background-color: #3f51b5;
+  color: white;
+}
+
+.chip-web-source {
+  background-color: #8000FF;
   color: white;
 }
 

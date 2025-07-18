@@ -3,7 +3,6 @@ import FileList from './filebrowser/FileList.vue'
 import FileToolbar from './filebrowser/FileToolbar.vue'
 import FileNavigator from './filebrowser/FileNavigator.vue'
 import type { EndPoints, FileItem, StorageConf } from '@/api/types'
-import { useDisplay } from 'vuetify'
 import { storageIconDict } from '@/api/constants'
 
 // 输入参数
@@ -28,12 +27,6 @@ const props = defineProps({
 
 // 对外事件
 const emit = defineEmits(['pathchanged'])
-
-// 显示器宽度
-const display = useDisplay()
-
-// APP
-const appMode = inject('pwaMode') && display.mdAndDown.value
 
 const fileIcons = {
   // 压缩包
@@ -238,20 +231,6 @@ function stopDrag() {
   ;(document.body.style as any).webkitUserSelect = ''
   ;(document.body.style as any).mozUserSelect = ''
 }
-
-// 外层DIV大小控制
-const scrollStyle = computed(() => {
-  return appMode
-    ? 'height: calc(100vh - 10.5rem - env(safe-area-inset-bottom) - 7rem)'
-    : 'height: calc(100vh - 10.5rem - env(safe-area-inset-bottom)'
-})
-
-// 文件列表大小限制
-const fileListStyle = computed(() => {
-  return appMode
-    ? 'height: calc(100vh - 14rem - env(safe-area-inset-bottom) - 7rem)'
-    : 'height: calc(100vh - 14rem - env(safe-area-inset-bottom)'
-})
 </script>
 
 <template>
@@ -269,7 +248,7 @@ const fileListStyle = computed(() => {
         @foldercreated="refreshPending = true"
         @sortchanged="sortChanged"
       />
-      <div class="flex" :style="scrollStyle">
+      <div class="flex">
         <FileNavigator
           v-if="showDirTree"
           :storage="activeStorage"
@@ -293,7 +272,6 @@ const fileListStyle = computed(() => {
           :axios="axios"
           :refreshpending="refreshPending"
           :sort="sort"
-          :listStyle="fileListStyle"
           :showTree="showDirTree"
           :style="{ flex: 1 }"
           @pathchanged="pathChanged"

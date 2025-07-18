@@ -4,16 +4,18 @@ import type { User } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import UserCard from '@/components/cards/UserCard.vue'
 import UserAddEditDialog from '@/components/dialog/UserAddEditDialog.vue'
-import { useDisplay } from 'vuetify'
 import { useDynamicButton } from '@/composables/useDynamicButton'
 import { useI18n } from 'vue-i18n'
+import { usePWA } from '@/composables/usePWA'
 
 // 国际化
 const { t } = useI18n()
 
-// APP
-const display = useDisplay()
-const appMode = inject('pwaMode') && display.mdAndDown.value
+// 路由
+const route = useRoute()
+
+// PWA模式检测
+const { appMode } = usePWA()
 
 // 是否刷新过
 const isRefreshed = ref(false)
@@ -96,17 +98,19 @@ useDynamicButton({
     </div>
 
     <!-- 新增用户按钮 -->
-    <VFab
-      v-if="isRefreshed && !appMode"
-      icon="mdi-account-plus"
-      location="bottom"
-      size="x-large"
-      fixed
-      app
-      appear
-      @click="openAddUserDialog"
-      :class="{ 'mb-12': appMode }"
-    />
+    <Teleport to="body" v-if="route.path === '/user'">
+      <VFab
+        v-if="isRefreshed && !appMode"
+        icon="mdi-account-plus"
+        location="bottom"
+        size="x-large"
+        fixed
+        app
+        appear
+        @click="openAddUserDialog"
+        :class="{ 'mb-12': appMode }"
+      />
+    </Teleport>
 
     <!-- 用户添加弹窗 -->
     <UserAddEditDialog

@@ -3,7 +3,7 @@ import draggable from 'vuedraggable'
 import { copyToClipboard } from '@/@core/utils/navigator'
 import { CustomRule, FilterRuleGroup } from '@/api/types'
 import FilterRuleCard from '@/components/cards/FilterRuleCard.vue'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import ImportCodeDialog from '@/components/dialog/ImportCodeDialog.vue'
 import filter_group_svg from '@images/svg/filter-group.svg'
 import { cloneDeep } from 'lodash-es'
@@ -223,7 +223,7 @@ function onClose() {
         <VImg :src="filter_group_svg" cover class="mt-10" max-width="3rem" />
       </VCardText>
     </VCard>
-    <VDialog
+    <DialogWrapper
       v-if="groupInfoDialog"
       v-model="groupInfoDialog"
       scrollable
@@ -308,7 +308,7 @@ function onClose() {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
     <ImportCodeDialog
       v-if="importCodeDialog"
       v-model="importCodeDialog"

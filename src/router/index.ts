@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { configureNProgress } from '@/api/nprogress'
 import { useAuthStore } from '@/stores'
+import { setNavigatingState as setRequestNavigatingState } from '@/utils/requestOptimizer'
 
 // Nprogress
 configureNProgress()
@@ -66,6 +67,14 @@ const router = createRouter({
             keepAlive: true,
             requiresAuth: true,
             subType: '电视剧',
+          },
+        },
+        {
+          path: '/subscribe-share',
+          component: () => import('../pages/subscribe-share.vue'),
+          meta: {
+            keepAlive: true,
+            requiresAuth: true,
           },
         },
         {
@@ -244,23 +253,11 @@ const router = createRouter({
   ],
 })
 
-const abortControllers = new Set<AbortController>()
-
-// 注册中止控制器
-function registerAbortController(controller: AbortController) {
-  abortControllers.add(controller)
-}
-
-// 中止所有组件的任务
-function abortAllControllers() {
-  for (const controller of abortControllers) {
-    controller.abort()
-  }
-  abortControllers.clear()
-}
-
 // 路由导航守卫
 router.beforeEach(async (to: any, from: any, next: any) => {
+  // 设置导航状态 - 同时中断API请求
+  setRequestNavigatingState(true)
+
   // 认证 Store
   const authStore = useAuthStore()
   // 总是记录非login路由
@@ -269,15 +266,19 @@ router.beforeEach(async (to: any, from: any, next: any) => {
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     // 用户未登录，重定向到登录页
+    setRequestNavigatingState(false)
     next('/login')
   } else {
-    // 清理所有中止控制器
-    abortAllControllers()
     next()
   }
 })
 
+// 路由导航完成后
+router.afterEach(() => {
+  setTimeout(() => {
+    setRequestNavigatingState(false)
+  }, 100)
+})
+
 // 导出默认对象
 export default router
-// 另行导出其他功能
-export { registerAbortController }

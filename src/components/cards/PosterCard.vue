@@ -2,6 +2,7 @@
 import type { PropType } from 'vue'
 import type { MediaServerPlayItem } from '@/api/types'
 import noImage from '@images/no-image.jpeg'
+import { openMediaServerWithAutoDetect } from '@/utils/appDeepLink'
 
 // 输入参数
 const props = defineProps({
@@ -31,8 +32,10 @@ const getImgUrl = computed(() => {
 })
 
 // 跳转播放
-function goPlay(isHovering: boolean | null = false) {
-  if (props.media?.link && isHovering) window.open(props.media?.link, '_blank')
+async function goPlay(isHovering: boolean | null = false) {
+  if (props.media?.link && isHovering) {
+    await openMediaServerWithAutoDetect(props.media.link, undefined, props.media.server_type)
+  }
 }
 </script>
 
@@ -80,8 +83,8 @@ function goPlay(isHovering: boolean | null = false) {
           style="background: linear-gradient(rgba(45, 55, 72, 40%) 0%, rgba(45, 55, 72, 90%) 100%)"
           @click.stop="goPlay(hover.isHovering)"
         >
-          <span class="font-bold">{{ props.media?.subtitle }}</span>
-          <h1 class="mb-1 text-white font-extrabold text-xl line-clamp-2 overflow-hidden text-ellipsis ...">
+          <span class="font-semibold text-sm">{{ props.media?.subtitle }}</span>
+          <h1 class="mb-1 text-white font-bold text-lg line-clamp-2 overflow-hidden text-ellipsis ...">
             {{ props.media?.title }}
           </h1>
         </VCardText>

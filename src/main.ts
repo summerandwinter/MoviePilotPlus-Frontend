@@ -17,12 +17,10 @@ import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar'
 import { CronVuetify } from '@vue-js-cron/vuetify'
 
 // 4. 工具函数和其他辅助模块
-import { isPWA } from './@core/utils/navigator'
 import { loadRemoteComponents } from './utils/federationLoader'
-import { fetchGlobalSettings } from './utils/globalSetting'
 
 // 5. 其他插件和功能模块
-import ToastPlugin from 'vue-toast-notification'
+import Toast from 'vue-toastification'
 import ConfirmDialog from '@/composables/useConfirm'
 import VueApexCharts from 'vue3-apexcharts'
 
@@ -47,11 +45,17 @@ import '@/styles/main.scss'
 
 // 注册 tiptap 组件
 import useRichText from '@/plugins/useRichText'
+// 8. 状态恢复插件
+import stateRestorePlugin from '@/plugins/stateRestore'
+
+// 9. 后台优化工具
+import { backgroundManager } from '@/utils/backgroundManager'
+import { sseManagerSingleton } from '@/utils/sseManager'
 
 // 创建Vue实例
 const app = createApp(App)
 
-// 注册pinia
+// 1. 注册pinia
 app.use(pinia)
 
 // 初始化配置
@@ -110,4 +114,52 @@ initializeApp().then(() => {
     .use(ConfirmDialog)
     .use(i18n)
     .mount('#app')
+// 异步加载远程组件（不阻塞启动）
+loadRemoteComponents().catch(error => {
+  console.error('Failed to load remote components', error)
+})
+
+// 2. 注册 UI 框架
+app.use(vuetify)
+
+// 3. 注册路由
+app.use(router)
+
+// 4. 注册状态恢复插件
+app.use(stateRestorePlugin)
+
+// 5. 注册全局组件
+app
+  .component('VAceEditor', VAceEditor)
+  .component('VApexChart', VueApexCharts)
+  .component('VCronVuetify', CronVuetify)
+  .component('VDialogCloseBtn', DialogCloseBtn)
+  .component('VScrollToTopBtn', ScrollToTopBtn)
+  .component('VMediaCard', MediaCard)
+  .component('VPosterCard', PosterCard)
+  .component('VBackdropCard', BackdropCard)
+  .component('VPersonCard', PersonCard)
+  .component('VMediaInfoCard', MediaInfoCard)
+  .component('VTorrentCard', TorrentCard)
+  .component('VMediaIdSelector', MediaIdSelector)
+  .component('VCronField', CronField)
+  .component('VPathField', PathField)
+  .component('VHeaderTab', HeaderTab)
+  .component('VPageContentTitle', PageContentTitle)
+
+// 6. 注册其他插件
+app
+  .use(PerfectScrollbarPlugin)
+  .use(Toast, {
+    position: 'bottom-right',
+    hideProgressBar: true,
+  })
+  .use(ConfirmDialog)
+  .use(i18n)
+  .mount('#app')
+
+// 页面卸载时清理后台管理器
+window.addEventListener('beforeunload', () => {
+  backgroundManager.destroy()
+  sseManagerSingleton.closeAllManagers()
 })

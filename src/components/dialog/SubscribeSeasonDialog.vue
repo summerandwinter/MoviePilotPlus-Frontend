@@ -4,6 +4,7 @@ import { MediaInfo, MediaSeason, NotExistMediaInfo } from '@/api/types'
 import { PropType } from 'vue'
 import NoDataFound from '@/components/NoDataFound.vue'
 import { useI18n } from 'vue-i18n'
+import { useGlobalSettingsStore } from '@/stores'
 
 // 国际化
 const { t } = useI18n()
@@ -17,7 +18,9 @@ const props = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 季详情
 const seasonInfos = ref<MediaSeason[]>([])
@@ -78,6 +81,10 @@ function getMediaId() {
 
 // 查询所有剧集组
 async function getEpisodeGroups() {
+  if (!props.media?.tmdb_id) {
+    console.warn('tmdbid is not set or is empty')
+    return
+  }
   try {
     episodeGroups.value = await api.get(`media/groups/${props.media?.tmdb_id}`)
   } catch (error) {

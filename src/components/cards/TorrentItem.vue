@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
-import { formatFileSize } from '@/@core/utils/formatters'
+import { formatFileSize, formatDateDifference } from '@/@core/utils/formatters'
 import api from '@/api'
 import type { Context } from '@/api/types'
 import AddDownloadDialog from '../dialog/AddDownloadDialog.vue'
@@ -121,12 +121,22 @@ onMounted(() => {
       </div>
 
       <template v-slot:prepend>
-        <div class="d-flex flex-column align-center pr-3">
-          <VImg v-if="siteIcon" :src="siteIcon" :alt="torrent?.site_name" class="rounded mb-1" width="32" height="32" />
-          <VAvatar v-else size="24" class="mb-1 text-caption bg-primary-lighten-4 text-primary font-weight-bold">
+        <div class="d-flex flex-column align-center pr-3" :title="torrent?.site_name">
+          <VImg
+            v-if="siteIcon"
+            :src="siteIcon"
+            :alt="torrent?.site_name"
+            class="rounded mb-1 site-icon"
+            width="32"
+            height="32"
+          />
+          <VAvatar
+            v-else
+            size="32"
+            class="mb-1 text-caption bg-primary-lighten-4 text-primary font-weight-bold site-icon"
+          >
             {{ torrent?.site_name?.substring(0, 1) }}
           </VAvatar>
-          <div class="font-weight-bold text-body-2 text-center d-none d-sm-block">{{ torrent?.site_name }}</div>
         </div>
       </template>
 
@@ -154,7 +164,18 @@ onMounted(() => {
           {{ meta?.subtitle || torrent?.description || '暂无描述' }}
         </div>
 
+        <!-- 发布时间 -->
+        <div v-if="torrent?.pubdate" class="d-flex align-center mb-2">
+          <VIcon size="small" color="grey" icon="mdi-clock-outline" class="me-1"></VIcon>
+          <span class="text-sm text-medium-emphasis">{{ formatDateDifference(torrent.pubdate) }}</span>
+        </div>
+
         <div class="d-flex flex-wrap gap-1 mb-2">
+          <!-- 流媒体平台 -->
+          <VChip v-if="meta?.web_source" class="chip-web-source rounded-sm" size="x-small" variant="elevated">
+            {{ meta?.web_source }}
+          </VChip>
+
           <!-- 版本标签 -->
           <VChip v-if="meta?.edition" class="chip-edition rounded-sm" size="x-small" variant="elevated">
             {{ meta?.edition }}
@@ -254,6 +275,11 @@ onMounted(() => {
   color: white;
 }
 
+.chip-web-source {
+  background-color: #8000ff;
+  color: white;
+}
+
 .chip-edition {
   background-color: #f44336;
   color: white;
@@ -315,5 +341,13 @@ onMounted(() => {
 .chip-bonus {
   background-color: #9c27b0;
   color: white;
+}
+
+.site-icon {
+  transition: transform 0.2s ease;
+}
+
+.site-icon:hover {
+  transform: scale(1.1);
 }
 </style>

@@ -1,6 +1,6 @@
 <!-- eslint-disable sonarjs/no-duplicate-string -->
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import draggable from 'vuedraggable'
 import { VRow } from 'vuetify/lib/components/index.mjs'
 import api from '@/api'
@@ -9,6 +9,7 @@ import DirectoryCard from '@/components/cards/DirectoryCard.vue'
 import StorageCard from '@/components/cards/StorageCard.vue'
 import ProgressDialog from '@/components/dialog/ProgressDialog.vue'
 import { useI18n } from 'vue-i18n'
+import { storageAttributes } from '@/api/constants'
 
 const { t } = useI18n()
 
@@ -32,6 +33,17 @@ const sourceItems = [
   { 'title': 'TheMovieDb', 'value': 'themoviedb' },
   { 'title': '豆瓣', 'value': 'douban' },
 ]
+
+// 存储选项（排除已添加的）
+const storageOptions = computed(() => {
+  const existingTypes = storages.value.map(storage => storage.type)
+  return storageAttributes
+    .filter(item => !existingTypes.includes(item.type))
+    .map(item => ({
+      title: t(`storage.${item.type}`),
+      value: item.type,
+    }))
+})
 
 // 系统设置
 const SystemSettings = ref<any>({
@@ -156,12 +168,32 @@ async function loadMediaCategories() {
 }
 
 // 添加存储
-function addStorage() {
+function addStorage(storageType = 'custom') {
+  let name: string
+  let type: string
+
+  if (storageType === 'custom') {
+    // 自定义存储需要数字序号
+    name = `${t(`storage.${storageType}`)} ${storages.value.length + 1}`
+    while (storages.value.some(item => item.name === name)) {
+      const num = parseInt(name.match(/\d+$/)?.[0] || '1') + 1
+      name = `${t(`storage.${storageType}`)} ${num}`
+    }
+    type = `custom${storages.value.length + 1}`
+  } else {
+    // 预定义存储类型直接使用类型名称
+    name = t(`storage.${storageType}`)
+    type = storageType
+  }
+
   storages.value.push({
-    name: `${t('storage.custom')} ${storages.value.length + 1}`,
-    type: 'custom',
+    name: name,
+    type: type,
     config: {},
   })
+
+  // 保存存储
+  saveStorages()
 }
 
 // 移除存储
@@ -169,14 +201,6 @@ function removeStorage(storage: StorageConf) {
   const index = storages.value.indexOf(storage)
   if (index > -1) {
     storages.value.splice(index, 1)
-  }
-}
-
-// 更新存储
-async function updatedStorage(storage: StorageConf) {
-  const index = storages.value.indexOf(storage)
-  if (index > -1) {
-    storages.value[index] = storage
   }
 }
 
@@ -218,7 +242,7 @@ onMounted(() => {
             :component-data="{ 'class': 'grid gap-3 grid-app-card' }"
           >
             <template #item="{ element }">
-              <StorageCard :storage="element" @close="removeStorage(element)" @done="updatedStorage" />
+              <StorageCard :storage="element" @close="removeStorage(element)" @done="loadStorages" />
             </template>
           </draggable>
         </VCardText>
@@ -228,8 +252,18 @@ onMounted(() => {
               <VBtn type="submit" class="me-2" @click="saveStorages" prepend-icon="mdi-content-save">
                 {{ t('common.save') }}
               </VBtn>
-              <VBtn color="success" variant="tonal" @click="addStorage">
+              <VBtn color="success" variant="tonal">
                 <VIcon icon="mdi-plus" />
+                <VMenu activator="parent" close-on-content-click>
+                  <VList>
+                    <VListItem v-for="item in storageOptions" :key="item.value" @click="addStorage(item.value)">
+                      <VListItemTitle>{{ item.title }}</VListItemTitle>
+                    </VListItem>
+                    <VListItem @click="addStorage('custom')">
+                      <VListItemTitle>{{ t('storage.custom') }}</VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
               </VBtn>
             </div>
           </VForm>

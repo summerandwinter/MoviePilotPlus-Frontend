@@ -3,9 +3,11 @@ import { useTheme } from 'vuetify'
 import { hexToRgb } from '@layouts/utils'
 import api from '@/api'
 import { useI18n } from 'vue-i18n'
+import { useBackgroundOptimization } from '@/composables/useBackgroundOptimization'
 
 // 国际化
 const { t } = useI18n()
+const { useDataRefresh } = useBackgroundOptimization()
 
 // 输入参数
 const props = defineProps({
@@ -28,9 +30,6 @@ const variableTheme = controlledComputed(
 )
 
 const chartKey = ref(0)
-
-// 定时器
-let refreshTimer: NodeJS.Timeout | null = null
 
 // 时间序列
 const series = ref([
@@ -107,11 +106,13 @@ const chartOptions = controlledComputed(
 )
 
 // 调用API接口获取最新CPU使用率
-async function getCpuUsage() {
+async function loadCpuData() {
   if (!props.allowRefresh) return
   try {
     // 请求数据
     current.value = (await api.get('dashboard/cpu')) ?? 0
+    // 使用nextTick确保DOM更新完成后再更新图表数据
+    await nextTick()
     // 添加到序列
     series.value[0].data.push(current.value)
     // 序列超过30条记录时，清掉前面的
@@ -121,23 +122,18 @@ async function getCpuUsage() {
   }
 }
 
-onMounted(() => {
-  getCpuUsage() // 启动定时器
-  refreshTimer = setInterval(() => {
-    getCpuUsage()
-  }, 2000)
-})
-
-// 组件卸载时停止定时器
-onUnmounted(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
-})
+// 使用优化的数据刷新定时器
+const { loading } = useDataRefresh(
+  'analytics-cpu',
+  loadCpuData,
+  2000, // 2秒间隔
+  true // 立即执行
+)
 
 onActivated(() => {
-  chartKey.value += 1
+  nextTick(() => {
+    chartKey.value += 1
+  })
 })
 </script>
 

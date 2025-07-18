@@ -24,7 +24,7 @@ const inProps = defineProps({
   },
   endpoints: Object as PropType<EndPoints>,
   axios: {
-    type: Object as PropType<any>,
+    type: Function,
     required: true,
   },
 })
@@ -166,7 +166,7 @@ const sortIcon = computed(() => {
       <VIcon icon="mdi-arrow-up-bold-outline" />
     </IconBtn>
     <!-- 新建文件夹 -->
-    <VDialog v-model="newFolderPopper" max-width="35rem">
+    <DialogWrapper v-model="newFolderPopper" max-width="35rem">
       <template #activator="{ props }">
         <IconBtn>
           <VIcon v-bind="props" icon="mdi-folder-plus-outline" />
@@ -191,6 +191,6 @@ const sortIcon = computed(() => {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
   </VToolbar>
 </template>

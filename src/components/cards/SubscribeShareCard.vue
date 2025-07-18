@@ -4,6 +4,7 @@ import type { SubscribeShare } from '@/api/types'
 import router from '@/router'
 import SubscribeEditDialog from '../dialog/SubscribeEditDialog.vue'
 import ForkSubscribeDialog from '../dialog/ForkSubscribeDialog.vue'
+import { useGlobalSettingsStore } from '@/stores'
 
 // 输入参数
 const props = defineProps({
@@ -14,7 +15,9 @@ const props = defineProps({
 const emit = defineEmits(['delete'])
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 图片是否加载完成
 const imageLoaded = ref(false)
@@ -118,7 +121,9 @@ function doDelete() {
                     <VSkeletonLoader class="object-cover aspect-w-3 aspect-h-2" />
                   </div>
                 </template>
-                <div class="absolute inset-0 subscribe-card-background"></div>
+                <template #default>
+                  <div class="absolute inset-0 subscribe-card-background"></div>
+                </template>
               </VImg>
             </template>
             <div class="h-full flex flex-col">
@@ -184,6 +189,6 @@ function doDelete() {
 </template>
 <style lang="scss" scoped>
 .subscribe-card-background {
-  background-image: linear-gradient(90deg, rgba(31, 41, 55, 47%) 0%, rgb(31, 41, 55) 100%);
+  background-image: linear-gradient(180deg, rgba(31, 41, 55, 47%) 0%, rgb(31, 41, 55) 100%);
 }
 </style>

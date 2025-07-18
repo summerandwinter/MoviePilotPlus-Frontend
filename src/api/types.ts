@@ -145,6 +145,38 @@ export interface SubscribeShare {
   episode_group?: string
 }
 
+// 工作流分享
+export interface WorkflowShare {
+  // 分享ID
+  id?: string
+  // 工作流ID
+  workflow_id?: string
+  // 分享标题
+  share_title?: string
+  // 分享说明
+  share_comment?: string
+  // 分享人
+  share_user?: string
+  // 分享人唯一ID
+  share_uid?: string
+  // 工作流名称
+  name?: string
+  // 工作流描述
+  description?: string
+  // 定时器
+  timer?: string
+  // 动作列表
+  actions?: any[]
+  // 动作流
+  flows?: any[]
+  // 上下文
+  context?: string
+  // 时间
+  date?: string
+  // 复用次数
+  count?: number
+}
+
 // 历史记录
 export interface TransferHistory {
   // ID
@@ -772,6 +804,8 @@ export interface MetaInfo {
   audio_term: string
   // 资源类型+特效
   edition: string
+  // 流媒体平台
+  web_source: string
   // 应用的自定义识别词
   apply_words: string[]
 }
@@ -955,6 +989,8 @@ export interface MediaServerPlayItem {
   link?: string
   // 播放百分比
   percent?: number
+  // 媒体服务器类型
+  server_type?: string
 }
 
 // 媒体服务器媒体库
@@ -975,6 +1011,8 @@ export interface MediaServerLibrary {
   image_list?: string[]
   // 链接
   link?: string
+  // 媒体服务器类型
+  server_type?: string
 }
 
 // 消息通知
@@ -1817,4 +1855,14 @@ export interface TorrentCacheData {
   sites: number
   // 缓存数据
   data: TorrentCacheItem[]
+}
+
+// 订阅分享统计
+export interface SubscribeShareStatistics {
+  // 分享人
+  share_user?: string
+  // 分享数量
+  share_count?: number
+  // 总复用人次
+  total_reuse_count?: number
 }

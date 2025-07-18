@@ -4,7 +4,7 @@ import { VueFlow, useVueFlow, type Connection, type GraphNode } from '@vue-flow/
 import { MiniMap } from '@vue-flow/minimap'
 import useDragAndDrop from '@core/utils/workflow'
 import { Workflow } from '@/api/types'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 import WorkflowSidebar from '@/layouts/components/WorkflowSidebar.vue'
 import DropzoneBackground from '@/layouts/components/DropzoneBackground.vue'
@@ -197,7 +197,7 @@ const isMacOS = computed(() => {
 </script>
 
 <template>
-  <VDialog scrollable fullscreen :scrim="false" transition="dialog-bottom-transition">
+  <DialogWrapper scrollable fullscreen :scrim="false" transition="dialog-bottom-transition">
     <VCard class="workflow-dialog">
       <!-- Toolbar -->
       <VToolbar color="primary" density="comfortable">
@@ -207,7 +207,6 @@ const isMacOS = computed(() => {
           </VBtn>
         </VToolbarItems>
         <VToolbarTitle> {{ t('dialog.workflowActions.title') }} - {{ workflow?.name }} </VToolbarTitle>
-        <VSpacer></VSpacer>
         <VToolbarItems>
           <VBtn icon variant="text" @click="importCodeDialog = true" class="ms-2">
             <VIcon size="24" color="white" icon="mdi-import" />
@@ -257,7 +256,7 @@ const isMacOS = computed(() => {
       @close="importCodeDialog = false"
       @save="saveCodeString"
     />
-  </VDialog>
+  </DialogWrapper>
 </template>
 
 <style lang="scss">

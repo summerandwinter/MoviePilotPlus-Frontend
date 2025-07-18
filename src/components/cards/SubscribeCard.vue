@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { useConfirm } from '@/composables/useConfirm'
 import SubscribeEditDialog from '../dialog/SubscribeEditDialog.vue'
 import SubscribeFilesDialog from '../dialog/SubscribeFilesDialog.vue'
@@ -10,6 +10,7 @@ import type { Subscribe } from '@/api/types'
 import router from '@/router'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
+import { useGlobalSettingsStore } from '@/stores'
 
 // 显示器宽度
 const display = useDisplay()
@@ -23,7 +24,9 @@ const props = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 定义触发的自定义事件
 const emit = defineEmits(['remove', 'save'])
@@ -343,7 +346,9 @@ function onSubscribeEditRemove() {
                     <VSkeletonLoader class="object-cover aspect-w-3 aspect-h-2" />
                   </div>
                 </template>
-                <div class="absolute inset-0 outline-none subscribe-card-background"></div>
+                <template #default>
+                  <div class="absolute inset-0 outline-none subscribe-card-background"></div>
+                </template>
               </VImg>
               <div
                 v-if="subscribeState === 'P'"
@@ -440,6 +445,6 @@ function onSubscribeEditRemove() {
 </template>
 <style lang="scss" scoped>
 .subscribe-card-background {
-  background-image: linear-gradient(90deg, rgba(31, 41, 55, 47%) 0%, rgb(31, 41, 55) 100%);
+  background-image: linear-gradient(180deg, rgba(31, 41, 55, 47%) 0%, rgb(31, 41, 55) 100%);
 }
 </style>

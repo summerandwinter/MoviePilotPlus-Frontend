@@ -9,11 +9,15 @@ import { DiscoverSource } from '@/api/types'
 import api from '@/api'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 
 const display = useDisplay()
 
 // 国际化
 const { t } = useI18n()
+
+// 路由
+const route = useRoute()
 
 const activeTab = ref('')
 
@@ -119,6 +123,26 @@ async function saveTabOrder() {
   }
 }
 
+// 使用动态标签页
+const { registerHeaderTab } = useDynamicHeaderTab()
+
+// 注册动态标签页（在setup阶段，但使用computed保证响应性）
+registerHeaderTab({
+  items: discoverTabItems, // 传递computed值，会自动响应变化
+  modelValue: activeTab,
+  appendButtons: [
+    {
+      icon: 'mdi-order-alphabetical-ascending',
+      variant: 'text',
+      color: 'grey',
+      class: 'settings-icon-button',
+      action: () => {
+        orderConfigDialog.value = true
+      },
+    },
+  ],
+})
+
 onBeforeMount(async () => {
   initDiscoverTabs()
   await loadOrderConfig()
@@ -133,25 +157,18 @@ onBeforeMount(async () => {
 onActivated(async () => {
   await loadExtraDiscoverSources()
   sortSubscribeOrder()
+  // 如果当前没有选中任何标签页，或者当前选中的标签页不存在，则选中第一个标签页
+  if (!activeTab.value || !discoverTabs.value.find(tab => tab.mediaid_prefix === activeTab.value)) {
+    if (discoverTabs.value.length > 0) {
+      activeTab.value = discoverTabs.value[0].mediaid_prefix
+    }
+  }
 })
 </script>
 
 <template>
   <div>
-    <VHeaderTab :items="discoverTabItems" v-model="activeTab">
-      <template #append>
-        <VBtn
-          icon="mdi-order-alphabetical-ascending"
-          variant="text"
-          color="grey"
-          size="default"
-          class="settings-icon-button"
-          @click="orderConfigDialog = true"
-        />
-      </template>
-    </VHeaderTab>
-
-    <VWindow v-model="activeTab" class="mt-5 disable-tab-transition" :touch="false">
+    <VWindow v-model="activeTab" class="disable-tab-transition" :touch="false">
       <VWindowItem value="themoviedb">
         <transition name="fade-slide" appear>
           <div>
@@ -182,7 +199,7 @@ onActivated(async () => {
       </VWindowItem>
     </VWindow>
     <!-- 弹窗，根据配置生成选项 -->
-    <VDialog
+    <DialogWrapper
       v-if="orderConfigDialog"
       v-model="orderConfigDialog"
       max-width="35rem"
@@ -226,9 +243,11 @@ onActivated(async () => {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
     <!-- 快速滚动到顶部按钮 -->
-    <VScrollToTopBtn />
+    <Teleport to="body" v-if="route.path === '/discover'">
+      <VScrollToTopBtn />
+    </Teleport>
   </div>
 </template>
 <style lang="scss" scoped>

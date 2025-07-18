@@ -5,17 +5,18 @@ import storage_png from '@images/misc/storage.png'
 import alipan_png from '@images/misc/alipan.webp'
 import u115_png from '@images/misc/u115.png'
 import rclone_png from '@images/misc/rclone.png'
-import alist_png from '@images/misc/alist.svg'
+import alist_png from '@images/misc/openlist.svg'
 import custom_png from '@images/misc/database.png'
+import smb_png from '@images/misc/smb.png'
 import api from '@/api'
 import AliyunAuthDialog from '../dialog/AliyunAuthDialog.vue'
 import U115AuthDialog from '../dialog/U115AuthDialog.vue'
 import RcloneConfigDialog from '../dialog/RcloneConfigDialog.vue'
 import AlistConfigDialog from '../dialog/AlistConfigDialog.vue'
-import { useToast } from 'vue-toast-notification'
+import SmbConfigDialog from '../dialog/SmbConfigDialog.vue'
+import { useToast } from 'vue-toastification'
 import { isNullOrEmptyObject } from '@/@core/utils'
 import { useI18n } from 'vue-i18n'
-import { storageIconDict } from '@/api/constants'
 import { useDisplay } from 'vuetify'
 
 // 显示器宽度
@@ -66,6 +67,8 @@ const u115AuthDialog = ref(false)
 const rcloneConfigDialog = ref(false)
 // AList配置对话框
 const aListConfigDialog = ref(false)
+// SMB配置对话框
+const smbConfigDialog = ref(false)
 // 自定义存储配置对话框
 const customConfigDialog = ref(false)
 
@@ -83,6 +86,9 @@ function openStorageDialog() {
       break
     case 'alist':
       aListConfigDialog.value = true
+      break
+    case 'smb':
+      smbConfigDialog.value = true
       break
     case 'local':
       $toast.info(t('storage.noConfigNeeded'))
@@ -106,6 +112,8 @@ const getIcon = computed(() => {
       return rclone_png
     case 'alist':
       return alist_png
+    case 'smb':
+      return smb_png
     default:
       return custom_png
   }
@@ -144,6 +152,7 @@ function handleDone() {
   u115AuthDialog.value = false
   rcloneConfigDialog.value = false
   aListConfigDialog.value = false
+  smbConfigDialog.value = false
   customConfigDialog.value = false
   // 更新存储
   storage_ref.value.name = customName.value
@@ -163,14 +172,14 @@ function onClose() {
 <template>
   <div>
     <VCard variant="tonal" @click="openStorageDialog">
-      <VDialogCloseBtn v-if="!storageIconDict[storage.type]" @click="onClose" />
+      <VDialogCloseBtn @click="onClose" class="absolute top-1 right-1" />
       <VCardText class="flex justify-space-between align-center gap-3">
         <div class="align-self-start flex-1">
           <h5 class="text-h6 mb-1">{{ storage.name }}</h5>
           <div class="mb-3 text-sm" v-if="total">{{ formatBytes(used, 1) }} / {{ formatBytes(total, 1) }}</div>
           <div v-else-if="isNullOrEmptyObject(storage.config)">{{ t('storage.notConfigured') }}</div>
         </div>
-        <VImg :src="getIcon" cover class="mt-7" max-width="3rem" min-width="3rem" />
+        <VImg :src="getIcon" cover class="mt-8" max-width="3rem" min-width="3rem" />
       </VCardText>
       <div class="w-full absolute bottom-0">
         <VProgressLinear v-if="usage > 0" :model-value="usage" :bg-color="progressColor" :color="progressColor" />
@@ -204,7 +213,14 @@ function onClose() {
       @close="aListConfigDialog = false"
       @done="handleDone"
     />
-    <VDialog
+    <SmbConfigDialog
+      v-if="smbConfigDialog"
+      v-model="smbConfigDialog"
+      :conf="props.storage.config || {}"
+      @close="smbConfigDialog = false"
+      @done="handleDone"
+    />
+    <DialogWrapper
       v-if="customConfigDialog"
       v-model="customConfigDialog"
       scrollable
@@ -247,6 +263,6 @@ function onClose() {
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
   </div>
 </template>

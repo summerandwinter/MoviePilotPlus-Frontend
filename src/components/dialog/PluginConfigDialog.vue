@@ -3,7 +3,7 @@ import { useDisplay } from 'vuetify'
 import type { Plugin } from '@/api/types'
 import { isNullOrEmptyObject } from '@/@core/utils'
 import api from '@/api'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import FormRender from '../render/FormRender.vue'
 import ProgressDialog from '../dialog/ProgressDialog.vue'
 import { useI18n } from 'vue-i18n'
@@ -148,7 +148,7 @@ onBeforeMount(async () => {
 })
 </script>
 <template>
-  <VDialog scrollable max-width="60rem" :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper scrollable max-width="60rem" :fullscreen="!display.mdAndUp.value">
     <!-- Vuetify 渲染模式 -->
     <VCard v-if="renderMode === 'vuetify'" :title="`${props.plugin?.plugin_name} - ${t('dialog.pluginConfig.title')}`">
       <VDialogCloseBtn @click="emit('close')" />
@@ -187,5 +187,5 @@ onBeforeMount(async () => {
 
     <!-- 进度框 -->
     <ProgressDialog v-if="progressDialog" v-model="progressDialog" :text="progressText" />
-  </VDialog>
+  </DialogWrapper>
 </template>

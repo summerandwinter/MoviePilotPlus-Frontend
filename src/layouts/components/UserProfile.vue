@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import router from '@/router'
 import avatar1 from '@images/avatars/avatar-1.png'
 import api from '@/api'
@@ -391,7 +391,7 @@ onUnmounted(() => {
             <VListItemTitle>{{ t('user.profile') }}</VListItemTitle>
           </VListItem>
 
-          <VListItem link @click="router.push('/setting')" class="mb-1 rounded-lg" hover>
+          <VListItem v-if="superUser" link @click="router.push('/setting')" class="mb-1 rounded-lg" hover>
             <template #prepend>
               <VIcon icon="mdi-cog-outline" />
             </template>
@@ -481,7 +481,7 @@ onUnmounted(() => {
           </VMenu>
 
           <!-- 👉 FAQ -->
-          <VListItem href="https://wiki.movie-pilot.org" target="_blank" class="mb-1 rounded-lg" hover>
+          <VListItem href="https://movie-pilot.org" target="_blank" class="mb-1 rounded-lg" hover>
             <template #prepend>
               <VIcon icon="mdi-help-circle-outline" />
             </template>
@@ -518,7 +518,7 @@ onUnmounted(() => {
   <!-- 用户认证对话框 -->
   <UserAuthDialog v-if="siteAuthDialog" v-model="siteAuthDialog" @done="siteAuthDone" @close="siteAuthDialog = false" />
   <!-- 自定义 CSS -->
-  <VDialog v-if="cssDialog" v-model="cssDialog" max-width="50rem" scrollable :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper v-if="cssDialog" v-model="cssDialog" max-width="50rem" scrollable :fullscreen="!display.mdAndUp.value">
     <VCard>
       <VCardItem>
         <VCardTitle>
@@ -539,7 +539,7 @@ onUnmounted(() => {
         </VBtn>
       </VCardText>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>
 
 <style lang="scss" scoped>

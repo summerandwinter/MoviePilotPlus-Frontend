@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { numberValidator } from '@/@validators'
 import api from '@/api'
 import type { DownloaderConf, FilterRuleGroup, Site, Subscribe, TransferDirectoryConf } from '@/api/types'
@@ -99,6 +99,10 @@ function episodeGroupItemProps(item: { title: string; subtitle: string }) {
 
 // 查询所有剧集组
 async function getEpisodeGroups() {
+  if (!subscribeForm.value.tmdbid) {
+    console.warn('tmdbid is not set or is empty')
+    return
+  }
   try {
     episodeGroups.value = await api.get(`media/groups/${subscribeForm.value.tmdbid}`)
   } catch (error) {
@@ -280,9 +284,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <VDialog scrollable max-width="45rem" :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper scrollable max-width="45rem" :fullscreen="!display.mdAndUp.value">
     <VCard>
       <VCardItem class="py-2">
+        <VDialogCloseBtn @click="emit('close')" />
         <template #prepend>
           <VIcon icon="mdi-clipboard-list-outline" class="me-2" />
         </template>
@@ -300,7 +305,6 @@ onMounted(() => {
         </VCardSubtitle>
       </VCardItem>
       <VCardText>
-        <VDialogCloseBtn @click="emit('close')" />
         <VForm @submit.prevent="() => {}">
           <VTabs v-model="activeTab" show-arrows>
             <VTab value="basic">
@@ -539,5 +543,5 @@ onMounted(() => {
         </VBtn>
       </VCardActions>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

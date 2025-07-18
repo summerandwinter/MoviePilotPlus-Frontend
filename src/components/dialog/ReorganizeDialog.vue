@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import MediaIdSelector from '../misc/MediaIdSelector.vue'
 import api from '@/api'
 import { transferTypeOptions } from '@/api/constants'
@@ -8,9 +8,12 @@ import { useDisplay } from 'vuetify'
 import ProgressDialog from './ProgressDialog.vue'
 import { FileItem, StorageConf, TransferDirectoryConf, TransferForm } from '@/api/types'
 import { useI18n } from 'vue-i18n'
+import { useGlobalSettingsStore } from '@/stores'
+import { useBackgroundOptimization } from '@/composables/useBackgroundOptimization'
 
 // 国际化
 const { t } = useI18n()
+const { useProgressSSE } = useBackgroundOptimization()
 
 // 显示器宽度
 const display = useDisplay()
@@ -24,10 +27,12 @@ const props = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 当前识别类型
-const mediaSource = ref(globalSettings.data?.RECOGNIZE_SOURCE || 'themoviedb')
+const mediaSource = ref(globalSettings.RECOGNIZE_SOURCE || 'themoviedb')
 
 // 定义事件
 const emit = defineEmits(['done', 'close'])
@@ -46,8 +51,8 @@ const $toast = useToast()
 // TMDB选择对话框
 const mediaSelectorDialog = ref(false)
 
-// 加载进度SSE
-const progressEventSource = ref<EventSource>()
+// 进度是否激活
+const progressActive = ref(false)
 
 // 整理进度条
 const progressDialog = ref(false)
@@ -186,22 +191,34 @@ async function handleTransferLog(logid: number, background: boolean = false) {
   }
 }
 
+// 进度SSE消息处理函数
+function handleProgressMessage(event: MessageEvent) {
+  const progress = JSON.parse(event.data)
+  if (progress) {
+    progressText.value = progress.text
+    progressValue.value = progress.value
+  }
+}
+
+// 使用优化的进度SSE连接
+const progressSSE = useProgressSSE(
+  `${import.meta.env.VITE_API_BASE_URL}system/progress/filetransfer`,
+  handleProgressMessage,
+  'reorganize-progress',
+  progressActive
+)
+
 // 使用SSE监听加载进度
 function startLoadingProgress() {
   progressText.value = t('dialog.reorganize.processing')
-  progressEventSource.value = new EventSource(`${import.meta.env.VITE_API_BASE_URL}system/progress/filetransfer`)
-  progressEventSource.value.onmessage = event => {
-    const progress = JSON.parse(event.data)
-    if (progress) {
-      progressText.value = progress.text
-      progressValue.value = progress.value
-    }
-  }
+  progressActive.value = true
+  progressSSE.start()
 }
 
 // 停止监听加载进度
 function stopLoadingProgress() {
-  progressEventSource.value?.close()
+  progressActive.value = false
+  progressSSE.stop()
 }
 
 // 整理文件
@@ -252,7 +269,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <VDialog scrollable max-width="45rem" :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper scrollable max-width="45rem" :fullscreen="!display.mdAndUp.value">
     <VCard>
       <VCardItem class="py-2">
         <template #prepend> <VIcon icon="mdi-folder-move" class="me-2" /> </template>
@@ -470,7 +487,7 @@ onUnmounted(() => {
     <!-- 手动整理进度框 -->
     <ProgressDialog v-if="progressDialog" v-model="progressDialog" :text="progressText" :value="progressValue" />
     <!-- TMDB ID搜索框 -->
-    <VDialog v-model="mediaSelectorDialog" width="40rem" scrollable max-height="85vh">
+    <DialogWrapper v-model="mediaSelectorDialog" width="40rem" scrollable max-height="85vh">
       <MediaIdSelector
         v-if="mediaSource === 'themoviedb'"
         v-model="transferForm.tmdbid"
@@ -483,6 +500,6 @@ onUnmounted(() => {
         @close="mediaSelectorDialog = false"
         :type="mediaSource"
       />
-    </VDialog>
-  </VDialog>
+    </DialogWrapper>
+  </DialogWrapper>
 </template>

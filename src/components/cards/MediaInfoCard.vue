@@ -47,10 +47,12 @@ function openTmdbPage(type: string, tmdbId: number) {
         </div>
         <div class="flex-grow">
           <VCardItem class="pb-1">
-            <VCardTitle class="text-center text-md-left">
+            <div class="text-center text-md-left text-h6 font-weight-bold line-clamp-2 overflow-hidden text-ellipsis">
               {{ context?.media_info?.title || context?.meta_info?.name }}
-              {{ context?.meta_info?.season_episode }}
-            </VCardTitle>
+              <span v-if="context?.meta_info?.season_episode" class="text-sm text-medium-emphasis align-top">
+                {{ context?.meta_info?.season_episode }}
+              </span>
+            </div>
             <VCardSubtitle class="text-center text-md-left">
               {{ context?.media_info?.year || context?.meta_info?.year }}
             </VCardSubtitle>
@@ -87,6 +89,9 @@ function openTmdbPage(type: string, tmdbId: number) {
               {{ context?.media_info?.tmdb_id }}
             </VChip>
             <!-- meta_info -->
+            <VChip v-if="context?.meta_info?.web_source" variant="elevated" class="me-1 mb-1 text-white bg-purple-500">
+              {{ context?.meta_info?.web_source }}
+            </VChip>
             <VChip v-if="context?.meta_info?.edition" variant="elevated" class="me-1 mb-1 text-white bg-red-500">
               {{ context?.meta_info?.edition }}
             </VChip>

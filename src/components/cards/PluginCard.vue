@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { useConfirm } from '@/composables/useConfirm'
 import api from '@/api'
 import type { Plugin } from '@/api/types'
@@ -170,7 +170,9 @@ const iconPath: Ref<string> = computed(() => {
   if (imageLoadError.value) return noImage
   // 如果是网络图片则使用代理后返回
   if (props.plugin?.plugin_icon?.startsWith('http'))
-    return `${import.meta.env.VITE_API_BASE_URL}system/img/1?imgurl=${encodeURIComponent(props.plugin?.plugin_icon)}`
+    return `${import.meta.env.VITE_API_BASE_URL}system/img/1?imgurl=${encodeURIComponent(
+      props.plugin?.plugin_icon,
+    )}&cache=true`
 
   return `./plugin_icon/${props.plugin?.plugin_icon}`
 })
@@ -180,7 +182,7 @@ const authorPath: Ref<string> = computed(() => {
   // 网络图片则使用代理后返回
   return `${import.meta.env.VITE_API_BASE_URL}system/img/1?imgurl=${encodeURIComponent(
     props.plugin?.author_url + '.png',
-  )}`
+  )}&cache=true`
 })
 
 // 重置插件
@@ -475,7 +477,9 @@ watch(
             <div class="flex flex-nowrap items-center w-full pe-10">
               <div class="flex flex-nowrap max-w-40 items-center align-middle">
                 <VImg :src="authorPath" class="author-avatar" @load="isAvatarLoaded = true">
-                  <VIcon v-if="!isAvatarLoaded" size="small" icon="mdi-github" class="me-1" />
+                  <template #default>
+                    <VIcon v-if="!isAvatarLoaded" size="small" icon="mdi-github" class="me-1" />
+                  </template>
                 </VImg>
                 <a
                   :href="props.plugin?.author_url"
@@ -543,7 +547,7 @@ watch(
     <ProgressDialog v-if="progressDialog" v-model="progressDialog" :text="progressText" />
 
     <!-- 更新日志 -->
-    <VDialog v-if="releaseDialog" v-model="releaseDialog" width="600" scrollable :fullscreen="!display.mdAndUp.value">
+    <DialogWrapper v-if="releaseDialog" v-model="releaseDialog" width="600" scrollable :fullscreen="!display.mdAndUp.value">
       <VCard :title="t('plugin.updateHistoryTitle', { name: props.plugin?.plugin_name })">
         <VDialogCloseBtn @click="releaseDialog = false" />
         <VDivider />
@@ -558,10 +562,10 @@ watch(
           </VBtn>
         </VCardItem>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
 
     <!-- 实时日志弹窗 -->
-    <VDialog
+    <DialogWrapper
       v-if="loggingDialog"
       v-model="loggingDialog"
       scrollable
@@ -587,10 +591,10 @@ watch(
           <LoggingView :logfile="`plugins/${props.plugin?.id?.toLowerCase()}.log`" />
         </VCardText>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
 
     <!-- 插件分身对话框 -->
-    <VDialog
+    <DialogWrapper
       v-if="pluginCloneDialog"
       v-model="pluginCloneDialog"
       width="600"
@@ -696,7 +700,7 @@ watch(
           </VBtn>
         </VCardActions>
       </VCard>
-    </VDialog>
+    </DialogWrapper>
   </div>
 </template>
 

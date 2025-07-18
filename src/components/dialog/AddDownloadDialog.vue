@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import type { DownloaderConf, MediaInfo, TorrentInfo, TransferDirectoryConf } from '@/api/types'
@@ -132,7 +132,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <VDialog max-width="35rem" scrollable>
+  <DialogWrapper max-width="35rem" scrollable>
     <VCard>
       <VCardItem class="py-2">
         <template #prepend>
@@ -209,5 +209,5 @@ onMounted(() => {
         </VBtn>
       </VCardText>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

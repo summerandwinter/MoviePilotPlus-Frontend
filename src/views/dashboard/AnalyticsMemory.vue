@@ -4,9 +4,11 @@ import { hexToRgb } from '@layouts/utils'
 import api from '@/api'
 import { formatBytes } from '@/@core/utils/formatters'
 import { useI18n } from 'vue-i18n'
+import { useBackgroundOptimization } from '@/composables/useBackgroundOptimization'
 
 // 国际化
 const { t } = useI18n()
+const { useDataRefresh } = useBackgroundOptimization()
 
 // 输入参数
 const props = defineProps({
@@ -29,9 +31,6 @@ const variableTheme = controlledComputed(
 )
 
 const chartKey = ref(0)
-
-// 定时器
-let refreshTimer: NodeJS.Timeout | null = null
 
 // 时间序列
 const series = ref([
@@ -113,11 +112,13 @@ const chartOptions = controlledComputed(
 )
 
 // 调用API接口获取最新内存使用量
-async function getMemorgUsage() {
+async function loadMemoryData() {
   if (!props.allowRefresh) return
   try {
     // 请求数据
     ;[usedMemory.value, memoryUsage.value] = await api.get('dashboard/memory')
+    // 使用nextTick确保DOM更新完成后再更新图表数据
+    await nextTick()
     series.value[0].data.push(memoryUsage.value)
     // 序列超过30条记录时，清掉前面的
     if (series.value[0].data.length > 30) series.value[0].data.shift()
@@ -126,24 +127,19 @@ async function getMemorgUsage() {
   }
 }
 
-onMounted(() => {
-  getMemorgUsage()
-  // 启动定时器
-  refreshTimer = setInterval(() => {
-    getMemorgUsage()
-  }, 3000)
-})
-
-// 组件卸载时停止定时器
-onUnmounted(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
-})
+// 使用优化的数据刷新定时器
+const { loading } = useDataRefresh(
+  'analytics-memory',
+  loadMemoryData,
+  3000, // 3秒间隔
+  true // 立即执行
+)
 
 onActivated(() => {
-  chartKey.value += 1
+  // 使用nextTick确保DOM准备完成后再更新chartKey
+  nextTick(() => {
+    chartKey.value += 1
+  })
 })
 </script>
 

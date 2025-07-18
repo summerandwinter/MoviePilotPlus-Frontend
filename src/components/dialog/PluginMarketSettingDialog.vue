@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import api from '@/api'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useDisplay } from 'vuetify'
@@ -63,7 +63,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <VDialog width="50rem" scrollable :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper width="50rem" scrollable :fullscreen="!display.mdAndUp.value">
     <VCard>
       <VCardItem>
         <VCardTitle>
@@ -89,5 +89,5 @@ onMounted(() => {
         </VBtn>
       </VCardActions>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

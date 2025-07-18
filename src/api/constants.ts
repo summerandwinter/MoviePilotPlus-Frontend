@@ -26,6 +26,11 @@ export const storageAttributes = [
     icon: 'mdi-server-network-outline',
     remote: true,
   },
+  {
+    type: 'smb',
+    icon: 'mdi-folder-network-outline',
+    remote: true,
+  },
 ]
 
 export const storageIconDict = storageAttributes.reduce((dict, item) => {
@@ -413,6 +418,10 @@ export const actionStepOptions = [
   {
     title: i18n.global.t('actionStep.invokePlugin'),
     value: '调用插件',
+  },
+  {
+    title: i18n.global.t('actionStep.note'),
+    value: '备注',
   },
 ]
 

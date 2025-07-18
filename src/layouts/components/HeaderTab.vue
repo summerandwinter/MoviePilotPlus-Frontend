@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useTabStateRestore } from '@/composables/useStateRestore'
+import { isMobileDevice } from '@/@core/utils/navigator'
+
 const props = defineProps({
   modelValue: {
     type: String,
@@ -8,22 +11,51 @@ const props = defineProps({
     type: Array as PropType<{ title: string; icon: string; tab: string }[]>,
     default: () => [],
   },
+  // 新增：是否启用PWA状态恢复
+  enableStateRestore: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
 
-const currentValue = ref(props.modelValue)
+// 集成PWA状态恢复功能
+const pwaTabState = props.enableStateRestore ? useTabStateRestore(props.modelValue) : null
 
+// 使用PWA状态恢复的activeTab或本地状态
+const currentValue = ref(pwaTabState?.activeTab.value || props.modelValue)
+
+// 监听currentValue变化，同时更新PWA状态和父组件
 watch(currentValue, newVal => {
   emit('update:modelValue', newVal)
+  // 如果启用了PWA状态恢复，同步更新PWA状态
+  if (pwaTabState && newVal) {
+    pwaTabState.activeTab.value = newVal
+  }
 })
 
+// 监听父组件的modelValue变化
 watch(
   () => props.modelValue,
   value => {
     currentValue.value = value
+    // 同步到PWA状态
+    if (pwaTabState && value) {
+      pwaTabState.activeTab.value = value
+    }
   },
 )
+
+// 如果启用了PWA状态恢复，监听PWA状态变化
+if (pwaTabState) {
+  watch(pwaTabState.activeTab, newTab => {
+    if (newTab && newTab !== currentValue.value) {
+      currentValue.value = newTab
+      emit('update:modelValue', newTab)
+    }
+  })
+}
 
 // Ref for the tabs container
 const tabsContainerRef = ref<HTMLElement | null>(null)
@@ -38,13 +70,19 @@ const scrollTabs = (direction: 'left' | 'right') => {
   const el = tabsContainerRef.value
   if (!el) return
 
-  const scrollAmount = 200 // 可以根据需要调整滚动量
+  // 可以根据需要调整滚动量
+  const scrollAmount = 200
   const scrollPosition = direction === 'left' ? el.scrollLeft - scrollAmount : el.scrollLeft + scrollAmount
 
   el.scrollTo({
     left: scrollPosition,
     behavior: 'smooth',
   })
+
+  // 滚动完成后更新指示器状态
+  setTimeout(() => {
+    updateTabsIndicator()
+  }, 300) // 等待滚动动画完成
 }
 
 // Function to check and update the indicator state
@@ -52,14 +90,17 @@ const updateTabsIndicator = () => {
   const el = tabsContainerRef.value
   if (!el) return
 
+  // 在移动端不显示滚动指示器
+  const isMobile = isMobileDevice()
+
   const tolerance = 1 // Allow 1px tolerance
   const hasOverflow = el.scrollWidth > el.clientWidth + tolerance
   const isScrolledToEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - tolerance
   const isScrolledToStart = el.scrollLeft <= tolerance
 
-  showTabsScrollIndicator.value = hasOverflow && !isScrolledToEnd
-  showLeftButton.value = hasOverflow && !isScrolledToStart
-  showRightButton.value = hasOverflow && !isScrolledToEnd
+  showTabsScrollIndicator.value = hasOverflow && !isScrolledToEnd && !isMobile
+  showLeftButton.value = hasOverflow && !isScrolledToStart && !isMobile
+  showRightButton.value = hasOverflow && !isScrolledToEnd && !isMobile
 }
 
 // Debounce resize handler
@@ -74,12 +115,11 @@ const handleResize = () => {
 onMounted(async () => {
   // Add resize listener for tabs indicator
   window.addEventListener('resize', handleResize)
+  // Add scroll listener for tabs container
+  tabsContainerRef.value?.addEventListener('scroll', updateTabsIndicator)
   // Initial check for tabs indicator after DOM update
   await nextTick() // Ensure element is rendered
   updateTabsIndicator()
-
-  // Listen for scroll events specifically on the tabs container
-  tabsContainerRef.value?.addEventListener('scroll', updateTabsIndicator, { passive: true })
 })
 
 onUnmounted(() => {
@@ -90,7 +130,7 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div class="tab-header rounded-t-lg">
+  <div class="tab-header">
     <VBtn v-if="showLeftButton" class="scroll-button left-button" @click="scrollTabs('left')" variant="text" icon>
       <VIcon icon="tabler-chevron-left" size="small" color="secondary" />
     </VBtn>
@@ -117,17 +157,11 @@ onUnmounted(() => {
 </template>
 <style scoped lang="scss">
 .tab-header {
-  position: sticky;
-  z-index: 10;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  backdrop-filter: blur(10px);
-  border-block-end: 1px solid rgba(var(--v-theme-on-surface), 0.05);
-  inset-block-start: 0;
-  margin-block-end: 16px;
-  padding-block: 8px;
-  padding-inline: 16px;
+  transition: all 0.3s ease;
 }
 
 .scroll-button {
@@ -149,6 +183,11 @@ onUnmounted(() => {
 
   &.right-button {
     margin-inline-start: 6px;
+  }
+
+  // 在移动端隐藏滚动按钮
+  @media (width <= 768px) {
+    display: none !important;
   }
 }
 
@@ -186,11 +225,24 @@ onUnmounted(() => {
     pointer-events: none; // Allow interaction with content behind it
     transition: opacity 0.2s ease-in-out;
   }
+
+  // Show indicator when class is applied
+  &.show-indicator::after {
+    opacity: 1;
+  }
+
+  // 在移动端隐藏渐变指示器
+  @media (width <= 768px) {
+    &::after {
+      display: none !important;
+    }
+  }
 }
 
 .header-tab-icon {
   color: rgba(var(--v-theme-on-background), 0.6);
   margin-inline-end: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 10%);
   transition: color 0.2s ease;
 }
 
@@ -206,6 +258,7 @@ onUnmounted(() => {
   font-weight: 600;
   padding-block: 6px;
   padding-inline: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 10%);
   transition: all 0.2s ease;
   white-space: nowrap;
 
@@ -224,6 +277,7 @@ onUnmounted(() => {
 
   &.active {
     color: rgb(var(--v-theme-primary));
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 15%);
 
     &::after {
       transform: translateX(-50%) scaleX(1);
@@ -231,6 +285,7 @@ onUnmounted(() => {
 
     .header-tab-icon {
       color: rgb(var(--v-theme-primary));
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 15%);
     }
   }
 

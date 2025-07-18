@@ -179,15 +179,15 @@ onActivated(() => {
 <style lang="scss" scoped>
 .slider-container {
   position: relative;
-  margin-block-end: 24px;
+  margin-block-end: 8px;
 }
 
 .slider-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-block-end: 12px;
+  gap: 8px;
+  margin-block-end: 8px;
   padding-block: 0;
   padding-inline: 8px;
 
@@ -260,6 +260,7 @@ onActivated(() => {
   inset-block-start: 50%;
   opacity: 0;
   pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 10%);
   transform: translateY(-50%);
   transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s ease,
     box-shadow 0.3s ease, border-color 0.3s ease;

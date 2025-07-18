@@ -3,9 +3,10 @@ import api from '@/api'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { SubscribeShare } from '@/api/types'
 import router from '@/router'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { VBtn } from 'vuetify/lib/components/index.mjs'
 import { useI18n } from 'vue-i18n'
+import { useGlobalSettingsStore } from '@/stores'
 
 // 国际化
 const { t } = useI18n()
@@ -19,7 +20,9 @@ const props = defineProps({
 const emit = defineEmits(['fork', 'delete', 'close'])
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 提示框
 const $toast = useToast()
@@ -167,9 +170,8 @@ onMounted(() => {
 })
 </script>
 <template>
-  <VDialog max-width="40rem" scrollable>
+  <DialogWrapper max-width="40rem" scrollable>
     <VCard>
-      <VDialogCloseBtn @click="emit('close')" />
       <VCardText>
         <VCol>
           <div class="d-flex justify-space-between flex-wrap flex-md-nowrap flex-column flex-md-row">
@@ -282,6 +284,7 @@ onMounted(() => {
           </div>
         </VCol>
       </VCardText>
+      <VDialogCloseBtn @click="emit('close')" />
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import type { Workflow } from '@/api/types'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import { requiredValidator } from '@/@validators'
@@ -85,11 +85,11 @@ async function editWorkflow() {
 </script>
 
 <template>
-  <VDialog scrollable :close-on-back="false" eager max-width="30rem" :fullscreen="!display.mdAndUp.value">
+  <DialogWrapper scrollable :close-on-back="false" eager max-width="30rem" :fullscreen="!display.mdAndUp.value">
     <VCard>
       <VCardItem>
         <template #prepend>
-          <VIcon icon="mdi-clock-outline" class="me-2" />
+          <VIcon icon="mdi-workflow-outline" class="me-2" />
         </template>
         <VCardTitle>{{ title }}</VCardTitle>
       </VCardItem>
@@ -140,5 +140,5 @@ async function editWorkflow() {
         </VBtn>
       </VCardActions>
     </VCard>
-  </VDialog>
+  </DialogWrapper>
 </template>
