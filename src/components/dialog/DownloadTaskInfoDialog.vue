@@ -3,7 +3,7 @@
 import api from '@/api'
 import { CollectProgress, DownloadTask } from '@/api/types'
 import { getIcon } from '@iconify/vue'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 
 // 提示框
 const $toast = useToast()
@@ -75,20 +75,20 @@ function getNextAction(action: keyof typeof actions) {
 }
 
 function showActionBtn(action_key: string) {
-  if (action_key){
-      const action = getNextAction(action_key as keyof typeof actions)
-      if (action) {
-        return true
-      } else {
-        return false
-      }
+  if (action_key) {
+    const action = getNextAction(action_key as keyof typeof actions)
+    if (action) {
+      return true
+    } else {
+      return false
+    }
   } else {
     return false
   }
 }
 function getBtnIcon(action_key: keyof typeof actions) {
   const action = getNextAction(action_key)
-  
+
   if (action) {
     return actions[action as keyof typeof actions]?.icon
   } else {
@@ -125,7 +125,7 @@ async function handleSubmit(action: string) {
   loading.value = true
   try {
     // 请求API
-    const next_action = getNextAction(action as keyof typeof actions) 
+    const next_action = getNextAction(action as keyof typeof actions)
     if (next_action) {
       const api_url = getAction(action as keyof typeof actions)
       const actionName = getActionName(action as keyof typeof actions)
@@ -186,42 +186,26 @@ onMounted(() => {
         </VToolbar>
       </div>
       <VCardText class="d-flex flex-row  justify-center ">
-        <div
-          class="d-flex align-center justify-center flex-wrap mx-auto px-4"  
-    width="100%"
-          elevation="0"
-          > 
-          <VTimeline align="start" density="compact"
-          side="end">
-            <VTimelineItem
-              :dot-color="item.success?'success':'error'"
-              size="small"
-              v-for="(item, index) in progress"
-            >
+        <div class="d-flex align-center justify-center flex-wrap mx-auto px-4" width="100%" elevation="0">
+          <VTimeline align="start" density="compact" side="end">
+            <VTimelineItem :dot-color="item.success ? 'success' : 'error'" size="small" v-for="(item, index) in progress">
               <div class="d-flex">
                 <strong class="me-4"></strong>
                 <div>
-                  <strong>{{item.name}}</strong>
+                  <strong>{{ item.name }}</strong>
                   <div class="text-caption">
-                    {{item.created_at}}
+                    {{ item.created_at }}
                   </div>
                   <div class="text-caption" v-if="!item.success">
-                    {{item.error_msg}}
+                    {{ item.error_msg }}
                   </div>
                   <div class="text-caption">
-                    <VBtn
-                    v-if="showActionBtn(item.action)"
-          variant="elevated"
-          @click="handleSubmit(item.action)"
-          :disabled="loading"
-          :color="getActionColor(item.action)"
-          :prepend-icon="getBtnIcon(item.action)"
-          class="px-5"
-          size="small"
-        >
-          {{getActionName(item.action)}}
-        </VBtn>
-            </div>
+                    <VBtn v-if="showActionBtn(item.action)" variant="elevated" @click="handleSubmit(item.action)"
+                      :disabled="loading" :color="getActionColor(item.action)" :prepend-icon="getBtnIcon(item.action)"
+                      class="px-5" size="small">
+                      {{ getActionName(item.action) }}
+                    </VBtn>
+                  </div>
                 </div>
               </div>
             </VTimelineItem>

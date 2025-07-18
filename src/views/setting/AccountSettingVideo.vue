@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 
 // 提示框
@@ -63,30 +63,21 @@ onMounted(() => {
           <VCardSubtitle> 添加腾讯视频Cookie </VCardSubtitle>
         </VCardItem>
         <VCardText>
-          <VTextarea
-            v-model="tencentCookie"
-            auto-grow
-            placeholder="腾讯视频Cookie"
-            hint="腾讯视频Cookie"
-            persistent-hint
-          />
+          <VTextarea v-model="tencentCookie" auto-grow placeholder="腾讯视频Cookie" hint="腾讯视频Cookie" persistent-hint />
         </VCardText>
         <VCardText>
           <VAlert type="info" variant="tonal" title="获取方式：">
-            <span
-              v-html="
-                `
+            <span v-html="`
               访问https://film.qq.com/<br>
               打开控制台<br>
               复制请求头中完整的Cookie<br>
               复制到下面的输入框中<br>
               `
-              "
-            />
+              " />
           </VAlert>
         </VCardText>
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VForm @submit.prevent="() => { }">
             <div class="d-flex flex-wrap gap-4 mt-4">
               <VBtn type="submit" @click="saveTencentCookie"> 保存 </VBtn>
             </div>

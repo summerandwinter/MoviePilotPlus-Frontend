@@ -4,7 +4,7 @@ import { useDisplay, useTheme } from 'vuetify'
 import type { ThemeSwitcherTheme } from '@layouts/types'
 import api from '@/api'
 import { checkPrefersColorSchemeIsDark } from '@/@core/utils'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { saveLocalTheme } from '../utils/theme'
 
 // 显示器宽度
@@ -139,13 +139,8 @@ onMounted(() => {
     </template>
     <VList>
       <div class="px-2">
-        <VListItem
-          v-for="theme in props.themes"
-          :key="theme.name"
-          @click="changeTheme(theme.name)"
-          :active="currentThemeName === theme.name"
-          class="mb-1"
-        >
+        <VListItem v-for="theme in props.themes" :key="theme.name" @click="changeTheme(theme.name)"
+          :active="currentThemeName === theme.name" class="mb-1">
           <template #prepend>
             <VIcon :icon="theme.icon" />
           </template>

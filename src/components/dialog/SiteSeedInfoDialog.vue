@@ -2,7 +2,7 @@
 
 import api from '@/api'
 import { CollectProgress, SiteSeed } from '@/api/types'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 const progress = ref<Array<CollectProgress>>([])
 const siteSeed = ref<SiteSeed>()
 // 注册事件

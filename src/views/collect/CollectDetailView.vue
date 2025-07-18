@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
 import { tagOptions, categoryOptions } from '@/api/constants'
@@ -449,7 +449,7 @@ watch(() => addForm.value.cate,
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-              }}</span>
+                  }}</span>
               </div>
             </span>
           </div>

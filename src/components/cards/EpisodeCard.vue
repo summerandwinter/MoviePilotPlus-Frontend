@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps, PropType, ref } from 'vue'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import { formatRating } from '@/@core/utils/formatters'
 import { VideoEpisode } from '@/api/types'
 import router from '@/router'

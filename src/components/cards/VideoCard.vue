@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps, PropType, ref } from 'vue'
-import { useToast } from 'vue-toast-notification'
+import { useToast } from 'vue-toastification'
 import api from '@/api'
 import { VideoInfo, Site } from '@/api/types'
 import router, { registerAbortController } from '@/router'

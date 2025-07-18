@@ -3,6 +3,7 @@ import './ace-config'
 import '@/@core/utils/compatibility'
 import '@/@iconify/icons-bundle'
 import '@/plugins/webfontloader'
+
 // 2. 核心插件和 UI 框架
 import { createApp } from 'vue'
 import vuetify from '@/plugins/vuetify'
@@ -37,83 +38,26 @@ import TorrentCard from './components/cards/TorrentCard.vue'
 import MediaIdSelector from './components/misc/MediaIdSelector.vue'
 import CronField from './components/field/CronField.vue'
 import PathField from './components/field/PathField.vue'
-import VideoCard from './components/cards/VideoCard.vue'
 import HeaderTab from './layouts/components/HeaderTab.vue'
 
 // 7. 样式文件 - 合并为单一导入
 import '@/styles/main.scss'
 
-// 注册 tiptap 组件
-import useRichText from '@/plugins/useRichText'
 // 8. 状态恢复插件
 import stateRestorePlugin from '@/plugins/stateRestore'
 
 // 9. 后台优化工具
 import { backgroundManager } from '@/utils/backgroundManager'
 import { sseManagerSingleton } from '@/utils/sseManager'
-
+import useRichText from '@/plugins/useRichText'
 // 创建Vue实例
 const app = createApp(App)
 
 // 1. 注册pinia
 app.use(pinia)
 
-// 初始化配置
-async function initializeApp() {
-  try {
-    // 是否为PWA
-    const pwaMode = await isPWA()
-    app.provide('pwaMode', pwaMode)
+app.use(useRichText)
 
-    // 全局设置
-    const globalSettings = await fetchGlobalSettings()
-    app.provide('globalSettings', globalSettings)
-
-    // 加载并注册远程联邦组件
-    await loadRemoteComponents()
-  } catch (error) {
-    console.error('Failed to initialize app', error)
-  }
-}
-
-// 注册全局组件
-initializeApp().then(() => {
-  // 1. 注册 UI 框架
-  app.use(vuetify)
-
-  // 2. 注册路由
-  app.use(router)
-
-  // 3. 注册全局组件
-  app
-    .component('VAceEditor', VAceEditor)
-    .component('VApexChart', VueApexCharts)
-    .component('VCronVuetify', CronVuetify)
-    .component('VDialogCloseBtn', DialogCloseBtn)
-    .component('VScrollToTopBtn', ScrollToTopBtn)
-    .component('VMediaCard', MediaCard)
-    .component('VPosterCard', PosterCard)
-    .component('VBackdropCard', BackdropCard)
-    .component('VPersonCard', PersonCard)
-    .component('VMediaInfoCard', MediaInfoCard)
-    .component('VTorrentCard', TorrentCard)
-    .component('VMediaIdSelector', MediaIdSelector)
-    .component('VCronField', CronField)
-    .component('VPathField', PathField)
-    .component('VVideoCard', VideoCard)
-    .component('VHeaderTab', HeaderTab)
-    .component('VPageContentTitle', PageContentTitle)
-
-  // 5. 注册其他插件
-  app
-    .use(PerfectScrollbarPlugin)
-    .use(useRichText)
-    .use(ToastPlugin, {
-      position: 'bottom-right',
-    })
-    .use(ConfirmDialog)
-    .use(i18n)
-    .mount('#app')
 // 异步加载远程组件（不阻塞启动）
 loadRemoteComponents().catch(error => {
   console.error('Failed to load remote components', error)
