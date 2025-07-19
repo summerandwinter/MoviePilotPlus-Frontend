@@ -252,6 +252,20 @@ const router = createRouter({
     },
   ],
 })
+const abortControllers = new Set<AbortController>()
+
+// 注册中止控制器
+function registerAbortController(controller: AbortController) {
+  abortControllers.add(controller)
+}
+
+// 中止所有组件的任务
+function abortAllControllers() {
+  for (const controller of abortControllers) {
+    controller.abort()
+  }
+  abortControllers.clear()
+}
 
 // 路由导航守卫
 router.beforeEach(async (to: any, from: any, next: any) => {
@@ -282,3 +296,5 @@ router.afterEach(() => {
 
 // 导出默认对象
 export default router
+// 另行导出其他功能
+export { registerAbortController }
