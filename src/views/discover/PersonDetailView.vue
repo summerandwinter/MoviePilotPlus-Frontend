@@ -111,12 +111,9 @@ onBeforeMount(() => {
   <LoadingBanner v-if="!isRefreshed" class="mt-12" />
   <div v-if="personDetail.id" class="max-w-8xl mx-auto px-4">
     <div class="relative z-10 mt-4 mb-8 flex flex-col items-center flex-md-row">
-      <VAvatar
-        size="200"
-        :class="{
-          'ring-1 ring-gray-700': isImageLoaded,
-        }"
-      >
+      <VAvatar size="200" :class="{
+        'ring-1 ring-gray-700': isImageLoaded,
+      }">
         <VImg :src="getPersonImage()" cover @load="isImageLoaded = true" />
       </VAvatar>
       <div class="ms-3">
@@ -150,10 +147,6 @@ onBeforeMount(() => {
       <MediaCardListView :apipath="getPersonCreditsApiPath()" />
     </div>
   </div>
-  <NoDataFound
-    v-if="!personDetail.id && isRefreshed"
-    error-code="500"
-    :error-title="t('error.title')"
-    :error-description="t('error.networkError')"
-  />
+  <NoDataFound v-if="!personDetail.id && isRefreshed" error-code="500" :error-title="t('error.title')"
+    :error-description="t('error.networkError')" />
 </template>

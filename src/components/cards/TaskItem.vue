@@ -7,6 +7,7 @@ import api from '@/api'
 import { seedStatus, collectStatus, tagOptions } from '@/api/constants'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { useToast } from 'vue-toastification'
+import { useGlobalSettingsStore } from '@/stores'
 import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
@@ -22,7 +23,9 @@ const showSiteSeedInfo = ref(false)
 const showDescInfo = ref(false)
 const seedInfo = ref<SiteSeed>({} as SiteSeed)
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 const showCollectOperation = ref(false)
 const operationType = ref('')
 // 所有站点

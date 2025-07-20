@@ -245,17 +245,11 @@ onMounted(() => {
             <VTooltip activator="parent" location="bottom">{{ t('setting.cache.refresh') }}</VTooltip>
           </VBtn>
 
-          <VBtn
-            icon
-            color="warning"
-            :loading="loading"
-            :disabled="selectedItems.length === 0"
-            @click="deleteSelectedItems"
-          >
+          <VBtn icon color="warning" :loading="loading" :disabled="selectedItems.length === 0"
+            @click="deleteSelectedItems">
             <VIcon>mdi-delete-sweep</VIcon>
-            <VTooltip activator="parent" location="bottom"
-              >{{ t('setting.cache.deleteSelected') }} ({{ selectedItems.length }})</VTooltip
-            >
+            <VTooltip activator="parent" location="bottom">{{ t('setting.cache.deleteSelected') }} ({{
+              selectedItems.length }})</VTooltip>
           </VBtn>
 
           <VBtn icon color="error" :loading="loading" @click="clearAllCache">
@@ -270,72 +264,40 @@ onMounted(() => {
     <VCardText>
       <VRow>
         <VCol cols="6">
-          <VTextField
-            v-model="titleFilter"
-            :label="t('setting.cache.filterByTitle')"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            density="compact"
-          />
+          <VTextField v-model="titleFilter" :label="t('setting.cache.filterByTitle')" prepend-inner-icon="mdi-magnify"
+            clearable density="compact" />
         </VCol>
         <VCol cols="6">
-          <VAutocomplete
-            v-model="siteFilter"
-            :label="t('setting.cache.filterBySite')"
-            :items="siteOptions"
-            prepend-inner-icon="mdi-web"
-            clearable
-            density="compact"
-            :placeholder="t('setting.cache.selectSite')"
-          />
+          <VAutocomplete v-model="siteFilter" :label="t('setting.cache.filterBySite')" :items="siteOptions"
+            prepend-inner-icon="mdi-web" clearable density="compact" :placeholder="t('setting.cache.selectSite')" />
         </VCol>
       </VRow>
     </VCardText>
 
     <!-- 缓存列表 -->
-    <VDataTable
-      v-model="selectedItems"
-      :headers="[
-        { title: '', key: 'data-table-select', sortable: false, width: '48px' },
-        { title: t('setting.cache.poster'), key: 'poster', sortable: false, width: '80px' },
-        { title: t('setting.cache.torrentTitle'), key: 'title', sortable: true },
-        { title: t('setting.cache.site'), key: 'site_name', sortable: true, width: '120px' },
-        { title: t('setting.cache.size'), key: 'size', sortable: true, width: '100px' },
-        { title: t('setting.cache.publishTime'), key: 'pubdate', sortable: true, width: '150px' },
-        { title: t('setting.cache.recognitionResult'), key: 'media_info', sortable: false, width: '200px' },
-        { title: t('setting.cache.actions'), key: 'actions', sortable: false, width: '150px' },
-      ]"
-      :items="filteredData"
-      :loading="loading"
-      item-value="hash"
-      show-select
-      hover
-      fixed-header
-      :items-per-page-text="t('common.itemsPerPage')"
-      :no-data-text="t('common.noDataText')"
-      :loading-text="t('common.loadingText')"
-      :style="tableStyle"
-    >
+    <VDataTable v-model="selectedItems" :headers="[
+      { title: '', key: 'data-table-select', sortable: false, width: '48px' },
+      { title: t('setting.cache.poster'), key: 'poster', sortable: false, width: '80px' },
+      { title: t('setting.cache.torrentTitle'), key: 'title', sortable: true },
+      { title: t('setting.cache.site'), key: 'site_name', sortable: true, width: '120px' },
+      { title: t('setting.cache.size'), key: 'size', sortable: true, width: '100px' },
+      { title: t('setting.cache.publishTime'), key: 'pubdate', sortable: true, width: '150px' },
+      { title: t('setting.cache.recognitionResult'), key: 'media_info', sortable: false, width: '200px' },
+      { title: t('setting.cache.actions'), key: 'actions', sortable: false, width: '150px' },
+    ]" :items="filteredData" :loading="loading" item-value="hash" show-select hover fixed-header
+      :items-per-page-text="t('common.itemsPerPage')" :no-data-text="t('common.noDataText')"
+      :loading-text="t('common.loadingText')" :style="tableStyle">
       <!-- 全选复选框 -->
       <template #header.data-table-select="{ allSelected, selectAll, someSelected }">
-        <VCheckbox
-          :indeterminate="someSelected && !allSelected"
-          :model-value="allSelected"
-          @update:model-value="(value: boolean | null) => selectAll(value as boolean)"
-        />
+        <VCheckbox :indeterminate="someSelected && !allSelected" :model-value="allSelected"
+          @update:model-value="(value: boolean | null) => selectAll(value as boolean)" />
       </template>
 
       <!-- 海报列 -->
       <template #item.poster="{ item }">
         <div class="text-center">
-          <VImg
-            v-if="item.poster_path"
-            :src="item.poster_path"
-            :alt="item.media_name || item.title"
-            cover
-            rounded="md"
-            class="w-12 my-1 ms-auto"
-          />
+          <VImg v-if="item.poster_path" :src="item.poster_path" :alt="item.media_name || item.title" cover rounded="md"
+            class="w-12 my-1 ms-auto" />
           <VIcon v-else size="x-large" color="grey-lighten-1">
             {{ item.media_type === 'movie' ? 'mdi-movie-open' : 'mdi-television-play' }}
           </VIcon>
@@ -396,15 +358,8 @@ onMounted(() => {
             <VIcon size="16">mdi-delete</VIcon>
           </VBtn>
 
-          <VBtn
-            v-if="item.page_url"
-            icon
-            size="small"
-            color="info"
-            variant="text"
-            @click="openPageUrl(item.page_url || '')"
-            target="_blank"
-          >
+          <VBtn v-if="item.page_url" icon size="small" color="info" variant="text"
+            @click="openPageUrl(item.page_url || '')" target="_blank">
             <VIcon size="16">mdi-open-in-new</VIcon>
           </VBtn>
         </div>
@@ -437,24 +392,12 @@ onMounted(() => {
       <VCardText>
         <VRow>
           <VCol cols="12">
-            <VTextField
-              v-if="globalSettings.RECOGNIZE_SOURCE === 'themoviedb'"
-              v-model="tmdbId"
-              :label="t('setting.cache.reidentifyDialog.tmdbId')"
-              :hint="t('setting.cache.reidentifyDialog.tmdbIdHint')"
-              clearable
-              prepend-inner-icon="mdi-id-card"
-              persistent-hint
-            />
-            <VTextField
-              v-else
-              v-model="doubanId"
-              :label="t('setting.cache.reidentifyDialog.doubanId')"
-              :hint="t('setting.cache.reidentifyDialog.doubanIdHint')"
-              clearable
-              prepend-inner-icon="mdi-id-card"
-              persistent-hint
-            />
+            <VTextField v-if="globalSettings.RECOGNIZE_SOURCE === 'themoviedb'" v-model="tmdbId"
+              :label="t('setting.cache.reidentifyDialog.tmdbId')" :hint="t('setting.cache.reidentifyDialog.tmdbIdHint')"
+              clearable prepend-inner-icon="mdi-id-card" persistent-hint />
+            <VTextField v-else v-model="doubanId" :label="t('setting.cache.reidentifyDialog.doubanId')"
+              :hint="t('setting.cache.reidentifyDialog.doubanIdHint')" clearable prepend-inner-icon="mdi-id-card"
+              persistent-hint />
           </VCol>
         </VRow>
         <VAlert type="info" variant="tonal" class="mt-4">

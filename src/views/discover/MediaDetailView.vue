@@ -560,11 +560,8 @@ onBeforeMount(() => {
     <div class="media-page">
       <div class="media-header">
         <div class="media-poster">
-          <VImg
-            :src="getW500Image(mediaDetail.poster_path)"
-            cover
-            class="object-cover aspect-w-2 aspect-h-3 ring-1 ring-gray-500"
-          >
+          <VImg :src="getW500Image(mediaDetail.poster_path)" cover
+            class="object-cover aspect-w-2 aspect-h-3 ring-1 ring-gray-500">
             <template #placeholder>
               <div class="w-full h-full">
                 <VSkeletonLoader class="object-cover aspect-w-2 aspect-h-3" />
@@ -575,8 +572,7 @@ onBeforeMount(() => {
         <div class="media-title">
           <div v-if="existsItemId" class="media-status">
             <span
-              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden"
-            >
+              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false">
                 <span>{{ t('media.status.inLibrary') }}</span>
               </div>
@@ -591,9 +587,8 @@ onBeforeMount(() => {
             </div>
           </h1>
           <span class="media-attributes">
-            <span v-if="mediaDetail.runtime || mediaDetail.episode_run_time[0]"
-              >{{ mediaDetail.runtime || mediaDetail.episode_run_time[0] }} {{ t('media.minutes') }}</span
-            >
+            <span v-if="mediaDetail.runtime || mediaDetail.episode_run_time[0]">{{ mediaDetail.runtime ||
+              mediaDetail.episode_run_time[0] }} {{ t('media.minutes') }}</span>
             <span v-if="(mediaDetail.runtime || mediaDetail.episode_run_time[0]) && mediaDetail.genres" class="mx-1">
               |
             </span>
@@ -601,15 +596,10 @@ onBeforeMount(() => {
           </span>
         </div>
         <div class="media-actions">
-          <VBtn
-            v-if="
-              (mediaDetail.tmdb_id || mediaDetail.douban_id || mediaDetail.bangumi_id) &&
-              hasPermission({ is_superuser: userStore.superUser, ...userStore.permissions }, 'search')
-            "
-            variant="tonal"
-            color="info"
-            class="mb-2"
-          >
+          <VBtn v-if="
+            (mediaDetail.tmdb_id || mediaDetail.douban_id || mediaDetail.bangumi_id) &&
+            hasPermission({ is_superuser: userStore.superUser, ...userStore.permissions }, 'search')
+          " variant="tonal" color="info" class="mb-2">
             <template #prepend>
               <VIcon icon="mdi-magnify" />
             </template>
@@ -625,13 +615,8 @@ onBeforeMount(() => {
               </VList>
             </VMenu>
           </VBtn>
-          <VBtn
-            v-if="mediaDetail.type === '电影' || mediaDetail.douban_id || mediaDetail.bangumi_id"
-            class="ms-2 mb-2"
-            :color="getSubscribeColor"
-            variant="tonal"
-            @click="handleSubscribe(0)"
-          >
+          <VBtn v-if="mediaDetail.type === '电影' || mediaDetail.douban_id || mediaDetail.bangumi_id" class="ms-2 mb-2"
+            :color="getSubscribeColor" variant="tonal" @click="handleSubscribe(0)">
             <template #prepend>
               <VIcon :icon="getSubscribeIcon" />
             </template>
@@ -667,52 +652,39 @@ onBeforeMount(() => {
             </li>
           </ul>
           <div class="mt-6">
-            <a
-              v-if="mediaDetail.tmdb_id"
-              class="mb-2 mr-2 inline-flex last:mr-0"
-              :href="getTheMovieDbLink()"
-              target="_blank"
-            >
+            <a v-if="mediaDetail.tmdb_id" class="mb-2 mr-2 inline-flex last:mr-0" :href="getTheMovieDbLink()"
+              target="_blank">
               <div
-                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700"
-              >
+                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700">
                 <VIcon icon="mdi-link" />
                 <span class="ms-1">TheMovieDb</span>
               </div>
             </a>
             <div v-if="mediaDetail.douban_id" class="mb-2 mr-2 inline-flex last:mr-0" @click="handleDoubanClick">
               <div
-                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700"
-              >
+                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700">
                 <VIcon icon="mdi-link" />
                 <span class="ms-1">豆瓣</span>
               </div>
             </div>
             <a v-if="mediaDetail.imdb_id" class="mb-2 mr-2 inline-flex last:mr-0" :href="getImdbLink()" target="_blank">
               <div
-                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700"
-              >
+                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700">
                 <VIcon icon="mdi-link" />
                 <span class="ms-1">IMDb</span>
               </div>
             </a>
             <a v-if="mediaDetail.tvdb_id" class="mb-2 mr-2 inline-flex last:mr-0" :href="getTvdbLink()" target="_blank">
               <div
-                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700"
-              >
+                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700">
                 <VIcon icon="mdi-link" />
                 <span class="ms-1">TheTvDb</span>
               </div>
             </a>
-            <a
-              v-if="mediaDetail.bangumi_id"
-              class="mb-2 mr-2 inline-flex last:mr-0"
-              :href="getBangumiLink()"
-              target="_blank"
-            >
+            <a v-if="mediaDetail.bangumi_id" class="mb-2 mr-2 inline-flex last:mr-0" :href="getBangumiLink()"
+              target="_blank">
               <div
-                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700"
-              >
+                class="inline-flex cursor-pointer items-center rounded-full bg-gray-600 px-2 py-1 text-sm text-gray-200 ring-1 ring-gray-500 transition hover:bg-gray-700">
                 <VIcon icon="mdi-link" />
                 <span class="ms-1">Bangumi</span>
               </div>
@@ -721,17 +693,14 @@ onBeforeMount(() => {
           <h2 v-if="mediaDetail.type === '电视剧' && mediaDetail.tmdb_id" class="py-4">{{ t('media.seasons') }}</h2>
           <div v-if="mediaDetail.type === '电视剧' && mediaDetail.tmdb_id" class="flex w-full flex-col space-y-2">
             <VExpansionPanels>
-              <VExpansionPanel
-                v-for="season in getMediaSeasons"
-                :key="season.season_number"
-                @group:selected="loadSeasonEpisodes(season.season_number || 0)"
-              >
+              <VExpansionPanel v-for="season in getMediaSeasons" :key="season.season_number"
+                @group:selected="loadSeasonEpisodes(season.season_number || 0)">
                 <VExpansionPanelTitle>
                   <template #default>
                     <div class="flex flex-row items-center justify-between">
                       <span class="font-weight-bold">{{
                         t('media.seasonNumber', { number: season.season_number })
-                      }}</span>
+                        }}</span>
                       <VChip size="small" class="ms-1">
                         {{ t('media.episodeCount', { count: season.episode_count }) }}
                       </VChip>
@@ -739,15 +708,11 @@ onBeforeMount(() => {
                         <VChip v-if="seasonsNotExisted" :color="getExistColor(season.season_number || 0)" flat>
                           {{ getExistText(season.season_number || 0) }}
                         </VChip>
-                        <IconBtn
-                          class="ms-1"
-                          :color="seasonsSubscribed[season.season_number || 0] ? 'error' : 'warning'"
-                          variant="text"
-                          @click.stop="handleSubscribe(season.season_number)"
-                        >
+                        <IconBtn class="ms-1"
+                          :color="seasonsSubscribed[season.season_number || 0] ? 'error' : 'warning'" variant="text"
+                          @click.stop="handleSubscribe(season.season_number)">
                           <VIcon
-                            :icon="seasonsSubscribed[season.season_number || 0] ? 'mdi-heart' : 'mdi-heart-outline'"
-                          />
+                            :icon="seasonsSubscribed[season.season_number || 0] ? 'mdi-heart' : 'mdi-heart-outline'" />
                         </IconBtn>
                       </div>
                     </div>
@@ -757,41 +722,27 @@ onBeforeMount(() => {
                   <template #default>
                     <LoadingBanner v-if="!seasonEpisodesInfo[season.season_number || 0]" class="mt-3" />
                     <div class="flex flex-col justify-center divide-y divide-gray-700">
-                      <div
-                        v-for="episode in seasonEpisodesInfo[season.season_number || 0]"
+                      <div v-for="episode in seasonEpisodesInfo[season.season_number || 0]"
                         :key="episode.episode_number"
-                        class="flex flex-col space-y-4 py-4 xl:flex-row xl:space-y-4 xl:space-x-4"
-                      >
+                        class="flex flex-col space-y-4 py-4 xl:flex-row xl:space-y-4 xl:space-x-4">
                         <div class="flex-1">
                           <div class="flex flex-col space-y-2 lg:flex-row lg:items-center lg:space-y-0 lg:space-x-2">
                             <h3 class="text-lg">{{ episode.episode_number }} - {{ episode.name }}</h3>
                             <div class="flex items-center space-x-2">
                               <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap cursor-default bg-gray-700 !text-gray-300"
-                              >
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap cursor-default bg-gray-700 !text-gray-300">
                                 {{ episode.air_date }}
                               </span>
                             </div>
-                            <VIcon
-                              v-if="
-                                existsEpisodes[season.season_number || 0] &&
-                                existsEpisodes[season.season_number || 0].includes(episode.episode_number || 0)
-                              "
-                              color="success"
-                              icon="mdi-check-circle"
-                              class="ms-2"
-                              size="small"
-                            />
+                            <VIcon v-if="
+                              existsEpisodes[season.season_number || 0] &&
+                              existsEpisodes[season.season_number || 0].includes(episode.episode_number || 0)
+                            " color="success" icon="mdi-check-circle" class="ms-2" size="small" />
                           </div>
                           <p>{{ episode.overview }}</p>
                         </div>
-                        <VImg
-                          cover
-                          class="rounded-lg"
-                          max-width="15rem"
-                          :src="getEpisodeImage(episode.still_path || '')"
-                          alt=""
-                        />
+                        <VImg cover class="rounded-lg" max-width="15rem"
+                          :src="getEpisodeImage(episode.still_path || '')" alt="" />
                       </div>
                     </div>
                   </template>
@@ -821,20 +772,10 @@ onBeforeMount(() => {
               <span>{{ t('media.info.releaseDate') }}</span>
               <span class="media-fact-value">
                 <span class="flex items-center justify-end">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                    class="h-4 w-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" aria-hidden="true" class="h-4 w-4">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
                   </svg>
                   <span class="ml-1.5">{{ mediaDetail.release_date || mediaDetail.first_air_date }}</span>
                 </span>
@@ -847,11 +788,8 @@ onBeforeMount(() => {
             <div v-if="mediaDetail.production_countries" class="media-fact">
               <span>{{ t('media.info.productionCountries') }}</span>
               <span class="media-fact-value">
-                <span
-                  v-for="country in getProductionCountries"
-                  :key="country"
-                  class="flex items-center justify-end text-end"
-                >
+                <span v-for="country in getProductionCountries" :key="country"
+                  class="flex items-center justify-end text-end">
                   {{ country }}
                 </span>
               </span>
@@ -886,11 +824,8 @@ onBeforeMount(() => {
             <div v-if="mediaDetail.production_countries" class="media-fact border-b-0">
               <span>{{ t('media.info.productionCountries') }}</span>
               <span class="media-fact-value">
-                <span
-                  v-for="country in getProductionCountries"
-                  :key="country"
-                  class="flex items-center justify-end text-end"
-                >
+                <span v-for="country in getProductionCountries" :key="country"
+                  class="flex items-center justify-end text-end">
                   {{ country }}
                 </span>
               </span>
@@ -920,100 +855,57 @@ onBeforeMount(() => {
         </div>
       </div>
       <div v-if="mediaDetail.tmdb_id">
-        <PersonCardSlideView
-          :apipath="`tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}`"
-          :linkurl="`/credits/tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t(
-            'media.castAndCrew',
-          )}&type=tmdb`"
-          :title="t('media.castAndCrew')"
-          type="tmdb"
-        />
+        <PersonCardSlideView :apipath="`tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}`" :linkurl="`/credits/tmdb/credits/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t(
+          'media.castAndCrew',
+        )}&type=tmdb`" :title="t('media.castAndCrew')" type="tmdb" />
       </div>
       <div v-else-if="mediaDetail.douban_id">
-        <PersonCardSlideView
-          :apipath="`douban/credits/${mediaDetail.douban_id}/${mediaProps.type}`"
-          :linkurl="`/credits/douban/credits/${mediaDetail.douban_id}/${mediaProps.type}?title=${t(
-            'media.castAndCrew',
-          )}&type=douban`"
-          :title="t('media.castAndCrew')"
-          type="douban"
-        />
+        <PersonCardSlideView :apipath="`douban/credits/${mediaDetail.douban_id}/${mediaProps.type}`" :linkurl="`/credits/douban/credits/${mediaDetail.douban_id}/${mediaProps.type}?title=${t(
+          'media.castAndCrew',
+        )}&type=douban`" :title="t('media.castAndCrew')" type="douban" />
       </div>
       <div v-else-if="mediaDetail.bangumi_id">
-        <PersonCardSlideView
-          :apipath="`bangumi/credits/${mediaDetail.bangumi_id}`"
+        <PersonCardSlideView :apipath="`bangumi/credits/${mediaDetail.bangumi_id}`"
           :linkurl="`/credits/bangumi/credits/${mediaDetail.bangumi_id}?title=${t('media.castAndCrew')}&type=bangumi`"
-          :title="t('media.castAndCrew')"
-          type="bangumi"
-        />
+          :title="t('media.castAndCrew')" type="bangumi" />
       </div>
       <div v-if="mediaDetail.tmdb_id">
-        <MediaCardSlideView
-          :apipath="`tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}`"
-          :linkurl="`/browse/tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t(
-            'media.recommendations',
-          )}`"
-          :title="t('media.recommendations')"
-        />
+        <MediaCardSlideView :apipath="`tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}`" :linkurl="`/browse/tmdb/recommend/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t(
+          'media.recommendations',
+        )}`" :title="t('media.recommendations')" />
       </div>
       <div v-else-if="mediaDetail.douban_id">
-        <MediaCardSlideView
-          :apipath="`douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}`"
-          :linkurl="`/browse/douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}?title=${t(
-            'media.recommendations',
-          )}`"
-          :title="t('media.recommendations')"
-        />
+        <MediaCardSlideView :apipath="`douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}`" :linkurl="`/browse/douban/recommend/${mediaDetail.douban_id}/${mediaProps.type}?title=${t(
+          'media.recommendations',
+        )}`" :title="t('media.recommendations')" />
       </div>
       <div v-else-if="mediaDetail.bangumi_id">
-        <MediaCardSlideView
-          :apipath="`bangumi/recommend/${mediaDetail.bangumi_id}`"
+        <MediaCardSlideView :apipath="`bangumi/recommend/${mediaDetail.bangumi_id}`"
           :linkurl="`/browse/bangumi/recommend/${mediaDetail.bangumi_id}?title=${t('media.recommendations')}`"
-          :title="t('media.recommendations')"
-        />
+          :title="t('media.recommendations')" />
       </div>
       <div v-if="mediaDetail.tmdb_id">
-        <MediaCardSlideView
-          :apipath="`tmdb/similar/${mediaDetail.tmdb_id}/${mediaProps.type}`"
+        <MediaCardSlideView :apipath="`tmdb/similar/${mediaDetail.tmdb_id}/${mediaProps.type}`"
           :linkurl="`/browse/tmdb/similar/${mediaDetail.tmdb_id}/${mediaProps.type}?title=${t('media.similar')}`"
-          :title="t('media.similar')"
-        />
+          :title="t('media.similar')" />
       </div>
     </div>
   </div>
-  <NoDataFound
-    v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
-    error-code="500"
-    :error-title="t('media.error.title')"
-    :error-description="t('media.error.noMediaInfo')"
-  />
+  <NoDataFound v-if="!mediaDetail.tmdb_id && !mediaDetail.douban_id && !mediaDetail.bangumi_id && isRefreshed"
+    error-code="500" :error-title="t('media.error.title')" :error-description="t('media.error.noMediaInfo')" />
   <!-- 订阅编辑弹窗 -->
-  <SubscribeEditDialog
-    v-if="subscribeEditDialog"
-    v-model="subscribeEditDialog"
-    :subid="subscribeId"
-    @close="subscribeEditDialog = false"
-    @save="subscribeEditDialog = false"
-    @remove="onSubscribeEditRemove"
-  />
+  <SubscribeEditDialog v-if="subscribeEditDialog" v-model="subscribeEditDialog" :subid="subscribeId"
+    @close="subscribeEditDialog = false" @save="subscribeEditDialog = false" @remove="onSubscribeEditRemove" />
   <!-- 站点选择对话框 -->
-  <SearchSiteDialog
-    v-if="chooseSiteDialog"
-    v-model="chooseSiteDialog"
-    :sites="allSites"
-    :selected="selectedSites"
-    @search="searchSites"
-    @close="chooseSiteDialog = false"
-  />
+  <SearchSiteDialog v-if="chooseSiteDialog" v-model="chooseSiteDialog" :sites="allSites" :selected="selectedSites"
+    @search="searchSites" @close="chooseSiteDialog = false" />
 </template>
 
 <style lang="scss" scoped>
 .vue-media-back {
-  background-image: linear-gradient(
-      180deg,
+  background-image: linear-gradient(180deg,
       rgba(var(--v-theme-background), 0) 50%,
-      rgba(var(--v-theme-background), 1) 100%
-    ),
+      rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(90deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%),
     linear-gradient(270deg, rgba(var(--v-theme-background), 0) 50%, rgba(var(--v-theme-background), 1) 100%);
   margin-block-start: calc(-70px - env(safe-area-inset-top));
@@ -1036,7 +928,7 @@ onBeforeMount(() => {
   padding-block-start: 1rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-header {
     flex-direction: row;
     align-items: flex-end;
@@ -1049,7 +941,7 @@ onBeforeMount(() => {
   padding-block: 2rem 1rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview {
     flex-direction: row;
   }
@@ -1065,14 +957,14 @@ onBeforeMount(() => {
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-poster {
     inline-size: 13rem;
     margin-inline-end: 1rem;
   }
 }
 
-@media (width >= 768px) {
+@media (width >=768px) {
   .media-poster {
     border-radius: 0.5rem;
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -1091,7 +983,7 @@ onBeforeMount(() => {
   text-align: center;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-title {
     margin-block-start: 0;
     margin-inline-end: 1rem;
@@ -1099,14 +991,14 @@ onBeforeMount(() => {
   }
 }
 
-.media-title > h1 {
+.media-title>h1 {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 2rem;
 }
 
-@media (width >= 1280px) {
-  .media-title > h1 {
+@media (width >=1280px) {
+  .media-title>h1 {
     font-size: 2.25rem;
     line-height: 2.5rem;
   }
@@ -1119,13 +1011,13 @@ ul.media-crew {
   margin-block-start: 1.5rem;
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   ul.media-crew {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-ul.media-crew > li {
+ul.media-crew>li {
   display: flex;
   flex-direction: column;
   font-weight: 700;
@@ -1148,7 +1040,7 @@ a.crew-name {
   margin-block-start: 0.25rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-attributes {
     justify-content: flex-start;
     font-size: 1rem;
@@ -1157,7 +1049,7 @@ a.crew-name {
   }
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-attributes {
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -1174,13 +1066,13 @@ a.crew-name {
   margin-block-start: 1rem;
 }
 
-@media (width >= 1280px) {
+@media (width >=1280px) {
   .media-actions {
     margin-block-start: 0;
   }
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-actions {
     flex-wrap: nowrap;
     justify-content: flex-end;
@@ -1191,7 +1083,7 @@ a.crew-name {
   flex: 1 1 0%;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview-left {
     margin-inline-end: 2rem;
   }
@@ -1202,7 +1094,7 @@ a.crew-name {
   margin-block-start: 2rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .media-overview-right {
     inline-size: 20rem;
     margin-block-start: 0;
@@ -1252,7 +1144,7 @@ a.crew-name {
   line-height: 1.75rem;
 }
 
-@media (width >= 640px) {
+@media (width >=640px) {
   .media-overview h2 {
     font-size: 1.5rem;
     line-height: 2rem;
@@ -1266,7 +1158,7 @@ a.crew-name {
   margin-block-end: 1rem;
 }
 
-@media (width >= 1024px) {
+@media (width >=1024px) {
   .tagline {
     font-size: 1.5rem;
     line-height: 2rem;

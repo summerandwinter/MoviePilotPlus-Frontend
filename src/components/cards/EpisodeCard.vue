@@ -8,7 +8,7 @@ import noImage from '@images/no-image.jpeg'
 import tmdbImage from '@images/logos/tmdb.png'
 import doubanImage from '@images/logos/douban-black.png'
 import bangumiImage from '@images/logos/bangumi.png'
-import { useUserStore } from '@/stores'
+import { useUserStore, useGlobalSettingsStore } from '@/stores'
 
 // 输入参数
 const props = defineProps({
@@ -21,7 +21,9 @@ const props = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 用户 Store
 const userStore = useUserStore()

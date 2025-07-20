@@ -16,9 +16,7 @@ import ProgressInfoDialog from '@/components/dialog/ProgressInfoDialog.vue'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 import CollectOperationDialog from '@/components/dialog/CollectOperationDialog.vue'
-
-
-import { useUserStore } from '@/stores'
+import { useUserStore, useGlobalSettingsStore } from '@/stores'
 
 // 输入参数
 const collectProps = defineProps({
@@ -26,7 +24,9 @@ const collectProps = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 用户 Store
 const userStore = useUserStore()

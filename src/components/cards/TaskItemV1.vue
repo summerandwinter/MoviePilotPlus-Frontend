@@ -8,6 +8,7 @@ import { useToast } from 'vue-toastification'
 import AddSiteSeedDialog from '@/components/dialog/AddSiteSeedDialog.vue'
 import SiteSeedInfoDialog from '@/components/dialog/SiteSeedInfoDialog.vue'
 import VideoDescInfoDialog from '@/components/dialog/VideoDescInfoDialog.vue'
+import { useUserStore, useGlobalSettingsStore } from '@/stores'
 const $toast = useToast()
 
 // 定义触发的自定义事件
@@ -17,7 +18,9 @@ const showSiteSeedInfo = ref(false)
 const showDescInfo = ref(false)
 const seedInfo = ref<SiteSeed>({} as SiteSeed)
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 // 输入参数
 const props = defineProps({
   task: Object as PropType<Collect>,

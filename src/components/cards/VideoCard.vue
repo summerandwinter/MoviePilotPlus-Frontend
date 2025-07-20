@@ -7,7 +7,7 @@ import router, { registerAbortController } from '@/router'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import noImage from '@images/no-image.jpeg'
 import SiteSearchDialog from '../dialog/SiteSearchDialog.vue'
-import { useUserStore } from '@/stores'
+import { useUserStore, useGlobalSettingsStore } from '@/stores'
 
 // 输入参数
 const props = defineProps({
@@ -18,7 +18,9 @@ const props = defineProps({
 })
 
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 创建Intersection Observer实例
 const observer = ref<IntersectionObserver | null>(null)

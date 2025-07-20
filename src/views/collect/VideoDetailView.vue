@@ -10,7 +10,7 @@ import SlideView from '@/components/slide/SlideView.vue'
 import SiteSearchDialog from '@/components/dialog/SiteSearchDialog.vue'
 import { doneNProgress, startNProgress } from '@/api/nprogress'
 import router from '@/router'
-import { useUserStore } from '@/stores'
+import { useUserStore, useGlobalSettingsStore } from '@/stores'
 import { add } from 'lodash-es'
 
 // 输入参数
@@ -29,7 +29,9 @@ const mediaProps = defineProps({
 // 提供给子组件的属性
 provide('rankingPropsKey', reactive({ ...mediaProps }))
 // 从 provide 中获取全局设置
-const globalSettings: any = inject('globalSettings')
+// 全局设置
+const globalSettingsStore = useGlobalSettingsStore()
+const globalSettings = globalSettingsStore.globalSettings
 
 // 用户 Store
 const userStore = useUserStore()
