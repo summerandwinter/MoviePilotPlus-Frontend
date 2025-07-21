@@ -15,6 +15,35 @@ const allRelease = ref<any>([])
 // 支持站点
 const supportingSites = ref<any>({})
 
+// 支持站点折叠状态
+const sitesExpanded = ref(false)
+
+// 去重后的支持站点
+const uniqueSupportingSites = computed(() => {
+  const sitesMap = new Map()
+
+  Object.entries(supportingSites.value).forEach(([domain, site]: [string, any]) => {
+    if (!sitesMap.has(site.name)) {
+      sitesMap.set(site.name, {
+        name: site.name,
+        urls: [{ domain, url: site.url }],
+      })
+    } else {
+      sitesMap.get(site.name).urls.push({ domain, url: site.url })
+    }
+  })
+
+  return Array.from(sitesMap.values())
+})
+
+// 显示的支持站点（折叠时只显示前5个）
+const displayedSites = computed(() => {
+  if (sitesExpanded.value) {
+    return uniqueSupportingSites.value
+  }
+  return uniqueSupportingSites.value.slice(0, 5)
+})
+
 // 变更日志对话框
 const releaseDialog = ref(false)
 
@@ -66,6 +95,11 @@ async function querySupportingSites() {
   } catch (error) {
     console.log(error)
   }
+}
+
+// 切换站点列表展开状态
+function toggleSitesExpanded() {
+  sitesExpanded.value = !sitesExpanded.value
 }
 
 // 计算发布时间
@@ -173,20 +207,28 @@ onMounted(() => {
             <div class="max-w-6xl py-4 sm:grid sm:grid-cols-3 sm:gap-4">
               <dt class="block text-sm font-bold">{{ t('setting.about.supportingSites') }}</dt>
               <dd class="flex text-sm sm:col-span-2 sm:mt-0">
-                <div class="flex flex-wrap gap-2">
-                  <VChip
-                    v-for="(site, domain) in supportingSites"
-                    :key="domain"
-                    variant="outlined"
-                    size="small"
-                    :title="`${site.name} - ${site.url}`"
-                    :href="site.url"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span class="truncate max-w-32">{{ site.name }}</span>
-                    <VIcon icon="mdi-open-in-new" size="12" class="ml-1 flex-shrink-0" />
-                  </VChip>
+                <div class="flex flex-col gap-2">
+                  <div class="flex flex-wrap gap-2 mt-1 ms-1">
+                    <VChip v-for="site in displayedSites" :key="site.name" variant="outlined" size="small">
+                      <span class="truncate max-w-32">{{ site.name }}</span>
+                    </VChip>
+                    <VChip
+                      v-if="!sitesExpanded && uniqueSupportingSites.length > 5"
+                      variant="tonal"
+                      size="small"
+                      @click="toggleSitesExpanded"
+                    >
+                      <span> {{ uniqueSupportingSites.length }}+ ...</span>
+                    </VChip>
+                    <VChip
+                      v-if="sitesExpanded && uniqueSupportingSites.length > 5"
+                      variant="tonal"
+                      size="small"
+                      @click="toggleSitesExpanded"
+                    >
+                      <span>< {{ t('setting.about.collapse') }}</span>
+                    </VChip>
+                  </div>
                 </div>
               </dd>
             </div>
