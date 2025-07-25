@@ -85,6 +85,9 @@ const sortType = ref<'asc' | 'desc'>('desc')
 // 数据列表
 const dataList = ref<Array<Collect>>([])
 
+// 过滤后的数据列表
+const filteredDataList = ref<Array<Collect>>([])
+
 // 显示用的数据列表
 const displayDataList = ref<Array<Collect>>([])
 
@@ -242,7 +245,8 @@ function filterData() {
         });
       }
     }
-
+    filteredDataList.value = filteredData
+    console.log('filteredDataList.value:', filteredDataList.value.length)
     // 显示前20个
     displayDataList.value = filteredData.slice(0, 20)
     // 保存剩余数据
@@ -373,7 +377,7 @@ onMounted(() => {
       <VCard class="view-header mb-3">
         <div class="d-flex align-center flex-wrap pa-3">
           <VChip color="primary" variant="flat" size="small" class="search-count me-3" prepend-icon="mdi-magnify">
-            {{ props.items?.length || 0 }} {{ t('torrent.resources') }}
+            {{ filteredDataList?.length || 0 }} {{ t('torrent.resources') }}
           </VChip>
           <div class="filter-bar">
             <!-- 排序选择 -->
@@ -464,7 +468,7 @@ onMounted(() => {
           <div class="d-flex align-center w-100">
             <VChip color="primary" variant="elevated" size="small" class="search-count me-auto"
               prepend-icon="mdi-magnify">
-              {{ props.items?.length || 0 }} {{ t('torrent.resources') }}
+              {{ filteredDataList?.length || 0 }} {{ t('torrent.resources') }}
             </VChip>
 
             <!-- 排序选择 -->
