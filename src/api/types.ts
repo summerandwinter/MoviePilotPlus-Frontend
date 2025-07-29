@@ -165,6 +165,10 @@ export interface WorkflowShare {
   description?: string
   // 定时器
   timer?: string
+  // 触发类型：timer-定时触发 event-事件触发 manual-手动触发
+  trigger_type?: string
+  // 事件类型（当trigger_type为event时使用）
+  event_type?: string
   // 动作列表
   actions?: any[]
   // 动作流
@@ -1331,6 +1335,10 @@ export interface Workflow {
   description?: string
   // 定时器
   timer?: string
+  // 触发类型：timer-定时触发 event-事件触发 manual-手动触发
+  trigger_type?: string
+  // 事件类型（当trigger_type为event时使用）
+  event_type?: string
   // 状态
   state?: string
   // 当前执行动作

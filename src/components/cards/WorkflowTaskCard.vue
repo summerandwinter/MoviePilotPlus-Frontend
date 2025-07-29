@@ -16,6 +16,10 @@ const props = defineProps({
     required: true,
     type: Object as PropType<Workflow>,
   },
+  eventTypes: {
+    type: Array as PropType<Array<{ title: string; value: string }>>,
+    default: () => [],
+  },
 })
 
 // 定义事件
@@ -38,6 +42,12 @@ const shareDialog = ref(false)
 
 // 加载中
 const loading = ref(false)
+
+// 根据事件类型值获取显示文本
+const getEventTypeText = (eventTypeValue: string) => {
+  const eventType = props.eventTypes.find(item => item.value === eventTypeValue)
+  return eventType ? eventType.title : eventTypeValue
+}
 
 // 编辑任务
 function handleEdit(item: Workflow) {
@@ -165,11 +175,36 @@ async function handleReset(item: Workflow) {
 
 // 计算状态颜色
 const resolveStatusVariant = (status: string | undefined) => {
-  if (status === 'S') return { color: 'success', text: t('workflow.task.status.success') }
-  else if (status === 'R') return { color: 'primary', text: t('workflow.task.status.running') }
-  else if (status === 'F') return { color: 'error', text: t('workflow.task.status.failed') }
-  else if (status === 'P') return { color: 'secondary', text: t('workflow.task.status.paused') }
-  else return { color: 'info', text: t('workflow.task.status.waiting') }
+  if (status === 'S')
+    return {
+      color: 'success',
+      bgColor: 'linear-gradient(to bottom right, rgba(76, 175, 80, 0.9), rgba(76, 175, 80, 0.7))',
+      text: t('workflow.task.status.success'),
+    }
+  else if (status === 'R')
+    return {
+      color: 'primary',
+      bgColor: 'linear-gradient(to bottom right, rgba(33, 150, 243, 0.9), rgba(33, 150, 243, 0.7))',
+      text: t('workflow.task.status.running'),
+    }
+  else if (status === 'F')
+    return {
+      color: 'error',
+      bgColor: 'linear-gradient(to bottom right, rgba(244, 67, 54, 0.9), rgba(244, 67, 54, 0.7))',
+      text: t('workflow.task.status.failed'),
+    }
+  else if (status === 'P')
+    return {
+      color: 'warning',
+      bgColor: 'linear-gradient(to bottom right, rgba(255, 152, 0, 0.9), rgba(255, 152, 0, 0.7))',
+      text: t('workflow.task.status.paused'),
+    }
+  else
+    return {
+      color: 'info',
+      bgColor: 'linear-gradient(to bottom right, rgba(33, 150, 243, 0.9), rgba(33, 150, 243, 0.7))',
+      text: t('workflow.task.status.waiting'),
+    }
 }
 
 // 计算当前动作占比
@@ -190,11 +225,9 @@ const resolveProgress = (item: Workflow) => {
         :class="{ 'transition transform-cpu duration-300 -translate-y-1': hover.isHovering }"
       >
         <VCardItem
-          class="px-2"
-          :class="{
-            'py-0': workflow?.description,
-            'py-2': !workflow?.description,
-            [`bg-${resolveStatusVariant(workflow?.state).color}`]: true,
+          class="px-2 py-2"
+          :style="{
+            background: resolveStatusVariant(workflow?.state).bgColor,
           }"
         >
           <template #prepend>
@@ -209,9 +242,8 @@ const resolveProgress = (item: Workflow) => {
             </VAvatar>
           </template>
           <VCardTitle class="text-white text-lg">
-            {{ workflow?.name }}
+            <span :title="workflow?.description">{{ workflow?.name }}</span>
           </VCardTitle>
-          <VCardSubtitle class="text-white">{{ workflow?.description }}</VCardSubtitle>
           <template #append>
             <IconBtn>
               <VIcon icon="mdi-dots-vertical" />
@@ -272,15 +304,28 @@ const resolveProgress = (item: Workflow) => {
         </VCardItem>
         <VDivider />
         <VCardText class="pa-3">
-          <div class="d-flex flex-column gap-y-2">
+          <div class="d-flex flex-column gap-y-3">
             <div class="d-flex flex-wrap gap-x-3">
               <div class="flex-1">
-                <div class="mb-1">{{ t('workflow.task.info.timer') }}</div>
-                <h5 class="text-lg">{{ workflow?.timer }}</h5>
+                <div class="mb-1">{{ t('workflow.task.info.trigger') }}</div>
+                <h5>
+                  <span v-if="workflow?.trigger_type === 'timer' || !workflow?.trigger_type">
+                    <VIcon icon="mdi-clock-outline" size="small" class="me-1" />
+                    {{ workflow?.timer }}
+                  </span>
+                  <span v-else-if="workflow?.trigger_type === 'event'">
+                    <VIcon icon="mdi-calendar-check" size="small" class="me-1" />
+                    {{ getEventTypeText(workflow?.event_type || '') }}
+                  </span>
+                  <span v-else-if="workflow?.trigger_type === 'manual'">
+                    <VIcon icon="mdi-hand-pointing-up" size="small" class="me-1" />
+                    {{ t('workflow.task.info.manualTrigger') }}
+                  </span>
+                </h5>
               </div>
               <div class="flex-1">
                 <div class="mb-1">{{ t('workflow.task.info.status') }}</div>
-                <h5 class="text-lg" :class="`text-${resolveStatusVariant(workflow?.state).color}`">
+                <h5 :class="`text-${resolveStatusVariant(workflow?.state).color}`">
                   {{ resolveStatusVariant(workflow?.state).text }}
                 </h5>
               </div>
@@ -289,14 +334,14 @@ const resolveProgress = (item: Workflow) => {
               <div class="flex-1">
                 <div class="mb-1">{{ t('workflow.task.info.actionCount') }}</div>
                 <div>
-                  <VAvatar size="28" color="primary" variant="tonal">
-                    <span class="text-sm">{{ workflow?.actions?.length }}</span>
+                  <VAvatar size="24" color="primary" variant="tonal">
+                    <span class="text-xs">{{ workflow?.actions?.length }}</span>
                   </VAvatar>
                 </div>
               </div>
               <div class="flex-1">
                 <div class="mb-1">{{ t('workflow.task.info.runCount') }}</div>
-                <h5 class="text-lg">{{ workflow?.run_count }}</h5>
+                <h5>{{ workflow?.run_count }}</h5>
               </div>
             </div>
             <div class="d-flex flex-wrap gap-x-3">
