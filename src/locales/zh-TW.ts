@@ -1139,6 +1139,8 @@ export default {
       basicSaveSuccess: '基礎設置保存成功',
       mediaDir: '媒體目錄',
       mediaDirHint: '用於存放下載的媒體文件',
+      downloadDir: '下載目錄',
+      downloadDirHint: '用於存放下載媒體文件過程中產生的的臨時文件',
       downloaderThreadCount: '下載線程',
       downloaderThreadCountHint: '設置下載器單任務線程數',
       downloaderSpeed: '下載限速',

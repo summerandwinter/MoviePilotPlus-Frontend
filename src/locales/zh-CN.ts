@@ -1188,6 +1188,8 @@ export default {
       basicSaveSuccess: '基础设置保存成功',
       mediaDir: '媒体目录',
       mediaDirHint: '用于存放下载的媒体文件',
+      downloadDir: '下载目录',
+      downloadDirHint: '用于存放下载媒体文件过程中产生的临时文件',
       downloaderThreadCount: '下载线程',
       downloaderThreadCountHint: '设置下载器单任务线程数',
       downloaderSpeed: '下载限速',

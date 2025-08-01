@@ -1190,6 +1190,8 @@ export default {
       basicSaveSuccess: 'Basic settings saved successfully',
       mediaDir: 'Media Directory',
       mediaDirHint: 'Storage location for downloaded media files',
+      downloadDir: 'Download Directory',
+      downloadDirHint: 'Storage location for downloaded temp files',
       downloaderThreadCount: 'Download Threads',
       downloaderThreadCountHint: 'Thread count per download task',
       downloaderSpeed: 'Download Speed Limit',

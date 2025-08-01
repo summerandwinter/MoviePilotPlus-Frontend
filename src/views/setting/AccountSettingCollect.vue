@@ -19,6 +19,7 @@ const CollectSettings = ref<any>({
   // 基础设置
   Basic: {
     MEDIA_DIR: '',
+    DOWNLOAD_DIR: '',
     PTGEN_URL: '',
     SECOND_PTGEN_URL: '',
     DOWNLOADER_SLEEP_TIME: 60,
@@ -287,7 +288,11 @@ onDeactivated(() => {
                   :hint="t('setting.collect.mediaDirHint')" placeholder="/mnt/media" persistent-hint
                   prepend-inner-icon="mdi-folder-download" />
               </VCol>
-
+              <VCol cols="12" md="6">
+                <VTextField v-model="CollectSettings.Basic.DOWNLOAD_DIR" :label="t('setting.collect.downloadDir')"
+                  :hint="t('setting.collect.downloadDirHint')" placeholder="/mnt/media" persistent-hint
+                  prepend-inner-icon="mdi-folder-download" />
+              </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="CollectSettings.Basic.DOWNLOADER_THREAD_COUNT"
                   :label="t('setting.collect.downloaderThreadCount')"
