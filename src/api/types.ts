@@ -1609,6 +1609,8 @@ export interface Collect {
   audio_codec: string
   // 输出目录
   output_dir: string
+  // 媒体基础目录
+  media_base_dir: string
   // 描述
   description: string
   // 最后错误

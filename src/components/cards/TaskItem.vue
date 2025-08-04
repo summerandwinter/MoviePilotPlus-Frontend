@@ -284,6 +284,10 @@ onUnmounted(() => {
           <VChip class="chip-season rounded-sm font-weight-bold" variant="elevated" size="small">
             ↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}
           </VChip>
+          <VChip class="chip-codec rounded-sm font-weight-bold" variant="elevated" size="small">
+            {{ task?.media_base_dir }}
+          </VChip>
+
         </div>
 
         <div class="text-subtitle-2 font-weight-bold text-black mb-2 font-title" :title="task?.title || task?.name">
