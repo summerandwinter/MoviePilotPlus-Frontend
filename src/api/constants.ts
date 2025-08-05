@@ -121,6 +121,7 @@ export const teamOptions = [
 
 export const tagOptions = {
   'Official': '官方',
+  'Children': '儿童片',
   'Mandarin': '国语',
   'Cantonese': '粤语',
   'ChineseSubtitles': '中字',
