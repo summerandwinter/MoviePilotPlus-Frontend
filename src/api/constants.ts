@@ -120,16 +120,16 @@ export const teamOptions = [
 ]
 
 export const tagOptions = {
-  'Official': '官方',
-  'Children': '儿童片',
   'Mandarin': '国语',
-  'Cantonese': '粤语',
   'ChineseSubtitles': '中字',
+  'Completed': '完结',
+  'Original': '原创',
+  'Children': '儿童片',
+  'Official': '官方',
+  'Cantonese': '粤语',
   'DolbyVision': '杜比视界',
   'HDRVivid': 'HDRVivid',
   'HDR10+': 'HDR10+',
-  'Completed': '完结',
-  'Original': '原创',
   'HighBitrateHighFrameRate': '高比特率高帧率',
   'ThreeD': '3D',
   'Collection': '合集',
