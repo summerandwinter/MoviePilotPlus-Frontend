@@ -284,9 +284,6 @@ onUnmounted(() => {
           <VChip class="chip-season rounded-sm font-weight-bold" variant="elevated" size="small">
             ↓{{ task?.episodes_downloaded }}/{{ task?.episodes_total }}
           </VChip>
-          <VChip class="chip-codec rounded-sm font-weight-bold" variant="elevated" size="small">
-            {{ task?.media_base_dir }}
-          </VChip>
 
         </div>
 
@@ -298,6 +295,9 @@ onUnmounted(() => {
           {{ task?.sub_title || '暂无描述' }}
         </div>
         <div class="d-flex flex-wrap gap-1 mb-2">
+          <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
+            {{ task?.type }}
+          </VChip>
           <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.resolution }}
           </VChip>
