@@ -2,7 +2,7 @@
 import { useToast } from 'vue-toastification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
-import { tagOptions, categoryOptions } from '@/api/constants'
+import { tagOptions, categoryOptions, mediaCateOptions } from '@/api/constants'
 import type { Collect, CollectCreate, DownloadTask, SiteSeed, Site } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import GroupTile from '@/components/GroupTitle.vue'
@@ -391,7 +391,18 @@ const updateCateDebounced = useDebounceFn(async (newCate) => {
       cate: newCate
     })
   } catch (error) {
-    console.error('标签类型失败:', error)
+    console.error('媒体类型更新失败:', error)
+  }
+}, 500);
+
+const updateTypeDebounced = useDebounceFn(async (newType) => {
+  try {
+    await api.put(`collect/`, {
+      id: collectDetail.value.id,
+      type: newType
+    })
+  } catch (error) {
+    console.error('命名类型更新失败:', error)
   }
 }, 500);
 
@@ -422,6 +433,14 @@ watch(() => addForm.value.cate,
   },
   { deep: true, immediate: false }
 )
+watch(() => addForm.value.type,
+  (newType, oldType) => {
+    if (!isRefreshed.value || !newType) return;
+    updateTypeDebounced(newType);
+  },
+  { deep: true, immediate: false }
+)
+
 </script>
 
 <template>
@@ -646,6 +665,16 @@ watch(() => addForm.value.cate,
         <VChipGroup column v-model="addForm.tags" multiple>
           <template v-for="(value, key) in tagOptions" :key="key">
             <VChip :color="addForm.tags.includes(key) ? 'primary' : ''" filter variant="outlined" :value="key">
+              {{ value }}
+            </VChip>
+          </template>
+        </VChipGroup>
+      </div>
+      <div class="mt-6">
+        <GroupTile title="命名类型" />
+        <VChipGroup column v-model="addForm.type">
+          <template v-for="(value, key) in mediaCateOptions" :key="key">
+            <VChip :color="addForm.type === key ? 'primary' : ''" filter variant="outlined" :value="key">
               {{ value }}
             </VChip>
           </template>
