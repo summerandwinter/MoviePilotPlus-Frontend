@@ -168,6 +168,7 @@ async function getDetail() {
     addForm.value.season = collectDetail.value.season ?? 1
     addForm.value.episodes_all = collectDetail.value.episodes_all ?? 1
     addForm.value.cate = collectDetail.value.cate ?? ''
+    addForm.value.type = collectDetail.value.type ?? ''
     // 等待 tags 更新完 watch 事件触发以后再设置加载完成，避免触发更新标签
     setTimeout(() => {
       isRefreshed.value = true
