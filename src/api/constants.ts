@@ -116,7 +116,7 @@ export const seedStatus = {
 
 export const teamOptions = [
   { team: 'ZimaWeb', copyright: 'Zima' },
-  { team: 'AilMWeb', copyright: 'Panda' },
+  { team: 'NoGroup', copyright: 'NoGroup' },
 ]
 
 export const tagOptions = {
