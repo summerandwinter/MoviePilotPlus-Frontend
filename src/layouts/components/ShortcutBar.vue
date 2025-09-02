@@ -50,6 +50,9 @@ const sendButtonDisabled = ref(false)
 // 消息对话框引用
 const messageDialogRef = ref<any>(null)
 
+// 消息视图引用
+const messageViewRef = ref<any>(null)
+
 // 滚动容器引用
 const messageContentRef = ref<any>()
 
@@ -115,6 +118,12 @@ async function openMessageDialog() {
   setTimeout(() => {
     forceScrollToEnd()
   }, 600)
+  // 等待对话框打开后恢复SSE连接
+  nextTick(() => {
+    if (messageViewRef.value && typeof messageViewRef.value.resumeSSE === 'function') {
+      messageViewRef.value.resumeSSE()
+    }
+  })
 }
 
 // 智能滚动到底部（只有用户在底部附近时才滚动）
@@ -184,6 +193,14 @@ defineExpose({
   openMessageDialog: openMessageDialogFromExternal,
 })
 
+// 监听消息对话框状态变化
+watch(messageDialog, newValue => {
+  if (!newValue && messageViewRef.value && typeof messageViewRef.value.pauseSSE === 'function') {
+    // 对话框关闭时暂停SSE连接
+    messageViewRef.value.pauseSSE()
+  }
+})
+
 onMounted(() => {
   const shortcut = getQueryValue('shortcut')
   if (shortcut) {
@@ -248,7 +265,7 @@ onMounted(() => {
     </VCard>
   </VMenu>
   <!-- 名称测试弹窗 -->
-  <DialogWrapper
+  <VDialog
     v-if="nameTestDialog"
     v-model="nameTestDialog"
     max-width="45rem"
@@ -268,9 +285,9 @@ onMounted(() => {
         <NameTestView />
       </VCardText>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
   <!-- 网络测试弹窗 -->
-  <DialogWrapper
+  <VDialog
     v-if="netTestDialog"
     v-model="netTestDialog"
     max-width="35rem"
@@ -290,9 +307,9 @@ onMounted(() => {
         <NetTestView />
       </VCardText>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
   <!-- 实时日志弹窗 -->
-  <DialogWrapper
+  <VDialog
     v-if="loggingDialog"
     v-model="loggingDialog"
     scrollable
@@ -318,9 +335,9 @@ onMounted(() => {
         <LoggingView logfile="moviepilot.log" />
       </VCardText>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
   <!-- 过滤规则弹窗 -->
-  <DialogWrapper
+  <VDialog
     v-if="ruleTestDialog"
     v-model="ruleTestDialog"
     max-width="35rem"
@@ -340,9 +357,9 @@ onMounted(() => {
         <RuleTestView />
       </VCardText>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
   <!-- 系统健康检查弹窗 -->
-  <DialogWrapper
+  <VDialog
     v-if="systemTestDialog"
     v-model="systemTestDialog"
     max-width="35rem"
@@ -362,9 +379,9 @@ onMounted(() => {
         <ModuleTestView />
       </VCardText>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
   <!-- 消息中心弹窗 -->
-  <DialogWrapper
+  <VDialog
     v-if="messageDialog"
     v-model="messageDialog"
     max-width="50rem"
@@ -407,5 +424,5 @@ onMounted(() => {
         </div>
       </VCardActions>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
 </template>

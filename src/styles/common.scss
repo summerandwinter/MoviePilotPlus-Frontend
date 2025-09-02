@@ -3,16 +3,15 @@
 @tailwind components;
 @tailwind utilities;
 
-// 基础样式
 html.v-overlay-scroll-blocked {
-  position: fixed;
-  position: relative;
-
-  --v-body-scroll-y: 0px !important;
+  position: static;
 }
 
-body {
-  overscroll-behavior: none;
+html.v-overlay-scroll-blocked body {
+  position: fixed;
+  overflow: hidden;
+  inset: 0;
+  inset-block-start: var(--v-body-scroll-y);
 }
 
 @mixin hide-scrollbar {

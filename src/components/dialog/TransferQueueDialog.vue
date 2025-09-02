@@ -1,10 +1,12 @@
 <script lang="ts" setup>
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { formatFileSize } from '@/@core/utils/formatters'
 import api from '@/api'
 import { FileItem, TransferQueue } from '@/api/types'
 import { useDisplay } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useBackgroundOptimization } from '@/composables/useBackgroundOptimization'
+import CryptoJS from 'crypto-js'
 
 // 多语言支持
 const { t } = useI18n()
@@ -18,11 +20,14 @@ const emit = defineEmits(['close'])
 // 数据列表
 const dataList = ref<TransferQueue[]>([])
 
-// 整理进度文本
-const progressText = ref(t('dialog.transferQueue.processing'))
+// 整体进度相关 - 根据完成的文件计算
+const overallProgress = ref({
+  value: 0,
+  text: t('dialog.transferQueue.processing'),
+})
 
-// 整理进度
-const progressValue = ref(0)
+// 文件进度映射
+const fileProgressMap = ref<Map<string, { enable: boolean; value: number }>>(new Map())
 
 // 数据可刷新标志
 const refreshFlag = ref(false)
@@ -32,6 +37,9 @@ const progressActive = ref(false)
 
 // 活动标签
 const activeTab = ref('')
+
+// 定时器引用
+const queueTimer = ref<NodeJS.Timeout | null>(null)
 
 // 状态标签
 const stateDict: { [key: string]: string } = {
@@ -50,9 +58,18 @@ function getStateColor(state: string) {
   else return 'error'
 }
 
-// 从dataList中提取所有的媒体信息
+// 从dataList中提取所有的媒体信息，合并相同title_year的记录
 const mediaList = computed(() => {
-  return dataList.value.map(item => item.media)
+  const mediaMap = new Map<string, any>()
+
+  dataList.value.forEach(item => {
+    const titleYear = item.media.title_year || ''
+    if (!mediaMap.has(titleYear)) {
+      mediaMap.set(titleYear, item.media)
+    }
+  })
+
+  return Array.from(mediaMap.values())
 })
 
 // 按media计算总数和完成数，返回 x/x
@@ -66,10 +83,32 @@ function getMediaCount(title_year: string) {
   return `${completed} / ${total}`
 }
 
-// 根据媒体信息获取对应的整理任务
+// 根据媒体信息获取对应的整理任务，合并相同title_year的所有任务
 const activeTasks = computed(() => {
-  return dataList.value.find(item => item.media.title_year === activeTab.value)?.tasks
+  const tasks = dataList.value.filter(item => item.media.title_year === activeTab.value).flatMap(item => item.tasks)
+  return tasks
 })
+
+// 根据媒体title_year获取对应的任务列表
+function getTasksByMedia(title_year: string) {
+  return dataList.value.filter(item => item.media.title_year === title_year).flatMap(item => item.tasks)
+}
+
+// 计算整体进度
+const overallProgressComputed = computed(() => {
+  if (dataList.value.length === 0) return 0
+
+  const allTasks = dataList.value.flatMap(item => item.tasks)
+  const totalTasks = allTasks.length
+  const completedTasks = allTasks.filter(task => task.state === 'completed').length
+
+  return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
+})
+
+// 获取文件进度
+function getFileProgress(filePath: string) {
+  return fileProgressMap.value.get(filePath) || { enable: false, value: 0 }
+}
 
 // 调用API获取队列信息
 async function get_transfer_queue() {
@@ -77,6 +116,16 @@ async function get_transfer_queue() {
     dataList.value = await api.get('transfer/queue')
     if (dataList.value.length > 0) {
       if (!activeTab.value || activeTasks.value?.length == 0) activeTab.value = dataList.value[0].media.title_year || ''
+
+      // 如果有数据且SSE未启动，则启动SSE监听
+      if (!progressActive.value) {
+        startLoadingProgress()
+      }
+    } else {
+      // 如果没有数据，停止SSE监听
+      if (progressActive.value) {
+        stopLoadingProgress()
+      }
     }
   } catch (error) {
     console.error(error)
@@ -93,85 +142,164 @@ async function remove_queue_task(fileitem: FileItem) {
   }
 }
 
-// 进度SSE消息处理函数
-function handleProgressMessage(event: MessageEvent) {
-  const progress = JSON.parse(event.data)
-  if (progress) {
-    if (!progress.enable) {
-      progressText.value = t('dialog.transferQueue.processing')
-      progressValue.value = 0
-      if (refreshFlag.value) {
-        refreshFlag.value = false
-        get_transfer_queue()
+// 文件进度SSE消息处理函数
+function createFileProgressHandler(filePath: string) {
+  return function handleFileProgressMessage(event: MessageEvent) {
+    try {
+      const progress = JSON.parse(event.data)
+      if (progress) {
+        fileProgressMap.value.set(filePath, {
+          enable: progress.enable || false,
+          value: progress.value || 0,
+        })
       }
-      return
-    }
-    progressText.value = progress.text
-    progressValue.value = progress.value
-    if (progress.value >= 100 && refreshFlag.value) {
-      refreshFlag.value = false
-      get_transfer_queue()
-    } else {
-      if (progress.value > 0 && refreshFlag.value && progress.text?.includes('整理完成')) {
-        refreshFlag.value = false
-        get_transfer_queue()
-      } else {
-        refreshFlag.value = true
-      }
+    } catch (error) {
+      console.error('解析文件进度消息失败:', error)
     }
   }
 }
 
-// 使用优化的进度SSE连接
-const progressSSE = useProgressSSE(
-  `${import.meta.env.VITE_API_BASE_URL}system/progress/filetransfer`,
-  handleProgressMessage,
-  'transfer-queue-progress',
-  progressActive
+// 文件进度SSE连接映射
+const fileProgressSSEMap = ref<Map<string, any>>(new Map())
+
+// 启动文件进度监听
+function startFileProgress(filePath: string) {
+  if (fileProgressSSEMap.value.has(filePath)) {
+    return // 已经存在连接
+  }
+
+  // filePath计算md5
+  const filePathMd5 = CryptoJS.MD5(filePath).toString()
+  // 使用包含文件路径的唯一监听器ID
+  const uniqueListenerId = `transfer-queue-file-progress-${filePathMd5}`
+  const fileProgressUrl = `${import.meta.env.VITE_API_BASE_URL}system/progress/${filePathMd5}`
+
+  const fileProgressSSE = useProgressSSE(
+    fileProgressUrl,
+    createFileProgressHandler(filePath),
+    uniqueListenerId,
+    progressActive,
+  )
+
+  fileProgressSSE.start()
+  fileProgressSSEMap.value.set(filePath, fileProgressSSE)
+}
+
+// 停止所有文件进度监听
+function stopAllFileProgress() {
+  fileProgressSSEMap.value.forEach((sse, filePath) => {
+    sse.stop()
+  })
+  fileProgressSSEMap.value.clear()
+  fileProgressMap.value.clear()
+}
+
+// 监听队列变化，自动管理文件进度SSE
+watch(
+  dataList,
+  newDataList => {
+    // 获取当前正在运行的文件路径集合
+    const currentRunningFiles = new Set<string>()
+    newDataList.forEach(item => {
+      item.tasks.forEach(task => {
+        if (task.state === 'running') {
+          currentRunningFiles.add(task.fileitem.path)
+        }
+      })
+    })
+
+    // 获取当前已建立SSE连接的文件路径集合
+    const currentSSEFiles = new Set(fileProgressSSEMap.value.keys())
+
+    // 停止不再需要的SSE连接
+    currentSSEFiles.forEach(filePath => {
+      if (!currentRunningFiles.has(filePath)) {
+        const sse = fileProgressSSEMap.value.get(filePath)
+        if (sse) {
+          sse.stop()
+          fileProgressSSEMap.value.delete(filePath)
+        }
+        // 清除对应的进度数据
+        fileProgressMap.value.delete(filePath)
+      }
+    })
+
+    // 为新的运行中文件建立SSE连接
+    currentRunningFiles.forEach(filePath => {
+      if (!fileProgressSSEMap.value.has(filePath)) {
+        startFileProgress(filePath)
+      }
+    })
+  },
+  { deep: true },
 )
 
 // 使用SSE监听加载进度
 function startLoadingProgress() {
-  progressText.value = t('dialog.transferQueue.processing')
+  overallProgress.value.text = t('dialog.transferQueue.processing')
   progressActive.value = true
-  progressSSE.start()
 }
 
 // 停止监听加载进度
 function stopLoadingProgress() {
   progressActive.value = false
-  progressSSE.stop()
+  // 只有在没有数据时才停止所有文件进度监听
+  if (dataList.value.length === 0) {
+    stopAllFileProgress()
+  }
+}
+
+// 启动定时获取队列
+function startQueueTimer() {
+  // 清除可能存在的定时器
+  if (queueTimer.value) {
+    clearInterval(queueTimer.value)
+  }
+
+  // 立即执行一次
+  get_transfer_queue()
+
+  // 设置3秒定时器
+  queueTimer.value = setInterval(() => {
+    get_transfer_queue()
+  }, 3000)
+}
+
+// 停止定时获取队列
+function stopQueueTimer() {
+  if (queueTimer.value) {
+    clearInterval(queueTimer.value)
+    queueTimer.value = null
+  }
 }
 
 onMounted(() => {
-  get_transfer_queue()
-  startLoadingProgress()
+  startQueueTimer()
 })
 
 onUnmounted(() => {
+  stopQueueTimer()
   stopLoadingProgress()
 })
 </script>
 
 <template>
-  <DialogWrapper scrollable max-width="50rem" :fullscreen="!display.mdAndUp.value">
+  <VDialog scrollable max-width="60rem" :fullscreen="!display.mdAndUp.value">
     <VCard class="mx-auto" width="100%">
       <VCardItem>
         <VCardTitle>{{ t('dialog.transferQueue.title') }}</VCardTitle>
       </VCardItem>
       <VDialogCloseBtn @click="emit('close')" />
-      <VDivider />
-      <VProgressLinear
-        v-if="dataList.length > 0 && progressValue > 0"
-        :value="progressValue"
-        color="primary"
-        indeterminate
-      />
-      <VCardItem v-if="dataList.length > 0 && progressValue > 0" class="text-center pt-2">
-        <span class="text-sm">{{ progressText }}</span>
-      </VCardItem>
-      <VCardText v-if="dataList.length === 0" class="text-center"> {{ t('dialog.transferQueue.noTasks') }} </VCardText>
-      <VCardText>
+
+      <!-- 整体进度显示 -->
+      <VProgressLinear v-if="dataList.length > 0" :model-value="overallProgressComputed" color="primary" />
+      <VDivider v-else />
+
+      <VCardText v-if="dataList.length === 0" class="text-center">
+        {{ t('dialog.transferQueue.noTasks') }}
+      </VCardText>
+
+      <VCardText v-if="dataList.length > 0">
         <VTabs v-model="activeTab" show-arrows class="v-tabs-pill" stacked>
           <VTab
             v-for="media in mediaList"
@@ -185,16 +313,34 @@ onUnmounted(() => {
         <VWindow v-model="activeTab" class="mt-5 disable-tab-transition" :touch="false">
           <VWindowItem v-for="media in mediaList" :value="media.title_year">
             <VList>
-              <VListItem v-for="task in activeTasks">
+              <VListItem v-for="task in getTasksByMedia(media.title_year || '')" :key="task.fileitem.path">
                 <VListItemTitle>{{ task.fileitem.name }}</VListItemTitle>
-                <VListItemSubtitle>
+                <VListItemSubtitle class="py-1">
                   {{ t('dialog.transferQueue.sizeTitle') }}：{{ formatFileSize(task.fileitem.size || 0) }}
-                  <VChip size="small" :color="getStateColor(task.state)" class="ms-2">
+                  <VChip size="small" :color="getStateColor(task.state)" class="mx-2">
                     {{ stateDict[task.state] }}
                   </VChip>
                 </VListItemSubtitle>
+
+                <!-- 文件进度显示 -->
+                <div v-if="task.state === 'running' && getFileProgress(task.fileitem.path).enable" class="mt-2">
+                  <VProgressLinear
+                    :model-value="getFileProgress(task.fileitem.path).value"
+                    color="success"
+                    class="mb-1"
+                    :height="3"
+                  />
+                  <div class="text-xs text-medium-emphasis text-center">
+                    {{ getFileProgress(task.fileitem.path).value.toFixed(1) }}%
+                  </div>
+                </div>
                 <template #append>
-                  <IconBtn size="small" icon="mdi-cancel" @click="remove_queue_task(task.fileitem)" />
+                  <IconBtn
+                    size="small"
+                    icon="mdi-cancel"
+                    @click="remove_queue_task(task.fileitem)"
+                    :disabled="task.state === 'completed'"
+                  />
                 </template>
               </VListItem>
             </VList>
@@ -202,5 +348,5 @@ onUnmounted(() => {
         </VWindow>
       </VCardText>
     </VCard>
-  </DialogWrapper>
+  </VDialog>
 </template>
