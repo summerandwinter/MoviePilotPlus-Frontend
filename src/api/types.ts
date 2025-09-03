@@ -1712,7 +1712,7 @@ export interface CollectCreate {
     poster: string
   }>
   // 站点列表
-  site_list: string[]
+  site_list: number[]
   // TMDB ID
   tmdb_id?: number
   // 收藏时间

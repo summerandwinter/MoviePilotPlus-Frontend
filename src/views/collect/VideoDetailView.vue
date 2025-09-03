@@ -89,11 +89,10 @@ const addForm = ref<CollectCreate>({
   auto_publish: true,
   anon_publish: true,
   source: "WEB-DL",
-  tags: [],
+  tags: ['Mandarin', 'Original', 'Children'],
   episode_list: [],
   site_list: []
 })
-
 // 调用API查询详情
 async function getMediaDetail() {
   if (mediaProps.mediaid && mediaProps.type) {
@@ -130,6 +129,9 @@ async function getMediaDetail() {
     addForm.value.episodes_all = mediaDetail.value.episode_all
       ? Math.max(Number(mediaDetail.value.episode_all), episodeListLength)  // 取较大值
       : episodeListLength  // 无episode_all时使用列表长度
+    if (addForm.value.episodes_all == 1) {
+      addForm.value.type = "Movie"
+    }
     isRefreshed.value = true
     if (mediaDetail.value.douban_id) {
       const douban_url = `https://movie.douban.com/subject/${mediaDetail.value.douban_id}/`
@@ -176,6 +178,10 @@ async function getPtgen(url: string) {
 async function getSites() {
   try {
     siteList.value = await api.get('site/')
+    // 设置默认选中第一个站点
+    if (siteList.value.length > 0 && addForm.value.site_list.length === 0) {
+      addForm.value.site_list = [siteList.value[0].id]
+    }
   } catch (error) {
     console.error(error)
   }
@@ -864,7 +870,7 @@ function handleIgnore() {
           <GroupTile title="站点" />
           <VChipGroup column v-model="addForm.site_list" multiple>
             <template v-for="(site, index) in siteList" :key="index">
-              <VChip :color="addForm.site_list.includes(site.name) ? 'primary' : ''" filter variant="outlined"
+              <VChip :color="addForm.site_list.includes(site.id) ? 'primary' : ''" filter variant="outlined"
                 :value="site.id">
                 {{ site.name }}
               </VChip>
