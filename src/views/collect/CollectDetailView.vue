@@ -3,7 +3,7 @@ import { useToast } from 'vue-toastification'
 import { collectStatus } from '@/api/constants'
 import api from '@/api'
 import { tagOptions, categoryOptions, mediaCateOptions } from '@/api/constants'
-import type { Collect, CollectCreate, DownloadTask, SiteSeed, Site } from '@/api/types'
+import type { Collect, CollectCreate, DownloadTask, SiteSeed, Site, PtgenInfo } from '@/api/types'
 import NoDataFound from '@/components/NoDataFound.vue'
 import GroupTile from '@/components/GroupTitle.vue'
 import TaskCardSlideView from '@/views/collect/TaskCardSlideView.vue'
@@ -50,7 +50,8 @@ const showProgressInfo = ref(false)
 const showSiteSeedInfo = ref(false)
 const showAddSiteSedd = ref(false)
 const showCollectOperation = ref(false)
-
+const ptgen = ref<PtgenInfo>({} as PtgenInfo)
+const isLoading = ref(false)
 const showSaveIcons = ref({
   en_title: false,
   cn_title: false,
@@ -419,6 +420,37 @@ async function updateCollect(field: string) {
   }
 }
 
+function onClickDouban() {
+  if (addForm.value.douban_id) {
+    isLoading.value = true
+    const url = `https://movie.douban.com/subject/${addForm.value.douban_id}/`
+    getPtgen(url)
+  }
+}
+function onClickImdb() {
+  if (addForm.value.imdb_id) {
+    isLoading.value = true
+    const url = `https://www.imdb.com/title/${addForm.value.imdb_id}/`
+    getPtgen(url)
+  }
+}
+async function getPtgen(url: string) {
+  try {
+    ptgen.value = await api.get('collect/ptgen/info?url=' + url) as PtgenInfo
+    addForm.value.en_title = ptgen.value.en_title
+    addForm.value.cn_title = ptgen.value.cn_title
+    addForm.value.sub_title = ptgen.value.sub_title
+    addForm.value.imdb_id = ptgen.value.imdb_id || ''
+    addForm.value.season = ptgen.value.season || 1
+    // 处理可能为 null 的情况，确保赋值给 addForm.value.overview 的是 string 类型
+    addForm.value.overview = ptgen.value.description || collectDetail.value.overview
+    isLoading.value = false
+  } catch (error) {
+    isLoading.value = false
+    console.error(error)
+  }
+}
+
 watch(() => addForm.value.tags,
   (newTags, oldTags) => {
     if (!isRefreshed.value || JSON.stringify(newTags) === JSON.stringify(oldTags)) return;
@@ -702,7 +734,8 @@ watch(() => addForm.value.type,
                 <div class="absolute-icon-container">
                   <transition name="fade">
                     <v-icon v-if="showSaveIcons.episodes_all" icon="mdi-content-save"
-                      @click="updateCollect('episodes_all')" class="cursor-pointer save-icon" color="primary" />
+                      @mousedown.stop="updateCollect('episodes_all')" class="cursor-pointer save-icon"
+                      color="primary" />
                   </transition>
                 </div>
               </template>
@@ -715,8 +748,8 @@ watch(() => addForm.value.type,
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.season" icon="mdi-content-save" @click="updateCollect('season')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.season" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('season')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
@@ -728,17 +761,17 @@ watch(() => addForm.value.type,
         <v-row>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.douban_id" placeholder="请手动输入豆瓣ID" label="豆瓣ID" variant="plain" persistent-hint
-              class="max-w mt-1" density="compact" @focus="showSaveIcons.douban_id = true"
+              class="max-w mt-1" :loading="isLoading" density="compact" @focus="showSaveIcons.douban_id = true"
               @blur="showSaveIcons.douban_id = false">
               <template #prepend-inner v-if="addForm.douban_id">
-                <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg mt-1"
-                  @click="addForm.douban_id && openDoubanDetail(addForm.douban_id)" />
+                <VIcon icon="mdi-magnify" class="cursor-pointer text-lg mt-1"
+                  @click="addForm.douban_id && onClickDouban()" />
               </template>
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.douban_id" icon="mdi-content-save" @click="updateCollect('douban_id')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.douban_id" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('douban_id')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
@@ -746,17 +779,17 @@ watch(() => addForm.value.type,
           </v-col>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.imdb_id" placeholder="请手动输入IMDB ID" label="IMDB ID" variant="plain"
-              persistent-hint class="max-w mt-1" density="compact" @focus="showSaveIcons.imdb_id = true"
-              @blur="showSaveIcons.imdb_id = false">
+              persistent-hint class="max-w mt-1" :loading="isLoading" density="compact"
+              @focus="showSaveIcons.imdb_id = true" @blur="showSaveIcons.imdb_id = false">
               <template #prepend-inner v-if="addForm.imdb_id">
-                <VIcon icon="mdi-cloud-outline" class="cursor-pointer text-lg mt-1"
-                  @click="addForm.imdb_id && openImdbDetail(addForm.imdb_id)" />
+                <VIcon icon="mdi-magnify" class="cursor-pointer text-lg mt-1"
+                  @click="addForm.imdb_id && onClickImdb()" />
               </template>
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.imdb_id" icon="mdi-content-save" @click="updateCollect('imdb_id')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.imdb_id" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('imdb_id')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
@@ -768,13 +801,13 @@ watch(() => addForm.value.type,
         <v-row>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.cn_title" placeholder="请手动输入中文标题" label="中文标题" variant="plain" persistent-hint
-              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.cn_title = true"
-              @blur="showSaveIcons.cn_title = false">
+              class="max-w mt-1 input-style" :loading="isLoading" density="compact"
+              @focus="showSaveIcons.cn_title = true" @blur="showSaveIcons.cn_title = false">
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.cn_title" icon="mdi-content-save" @click="updateCollect('cn_title')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.cn_title" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('cn_title')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
@@ -782,13 +815,13 @@ watch(() => addForm.value.type,
           </v-col>
           <v-col cols="6" md="6">
             <VTextField v-model="addForm.en_title" placeholder="请手动输入英文标题" label="英文标题" variant="plain" persistent-hint
-              class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.en_title = true"
-              @blur="showSaveIcons.en_title = false">
+              class="max-w mt-1 input-style" :loading="isLoading" density="compact"
+              @focus="showSaveIcons.en_title = true" @blur="showSaveIcons.en_title = false">
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.en_title" icon="mdi-content-save" @click="updateCollect('en_title')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.en_title" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('en_title')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
@@ -800,13 +833,13 @@ watch(() => addForm.value.type,
         <v-row>
           <v-col cols="12" md="12">
             <VTextarea v-model="addForm.sub_title" placeholder="请手动输入副标题" label="副标题" rows="3" variant="plain"
-              persistent-hint class="max-w mt-1 input-style" density="compact" @focus="showSaveIcons.sub_title = true"
-              @blur="showSaveIcons.sub_title = false">
+              persistent-hint class="max-w mt-1 input-style" :loading="isLoading" density="compact"
+              @focus="showSaveIcons.sub_title = true" @blur="showSaveIcons.sub_title = false">
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.sub_title" icon="mdi-content-save" @click="updateCollect('sub_title')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.sub_title" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('sub_title')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
@@ -818,13 +851,13 @@ watch(() => addForm.value.type,
         <v-row>
           <v-col cols="12" md="12">
             <VTextarea v-model="addForm.overview" placeholder="请手动输入简介" label="简介" rows="3" variant="plain"
-              persistent-hint class="max-w mt-1 relative input-style" density="compact"
+              persistent-hint class="max-w mt-1 relative input-style" :loading="isLoading" density="compact"
               @focus="showSaveIcons.overview = true" @blur="showSaveIcons.overview = false">
               <template #append-inner>
                 <div class="absolute-icon-container">
                   <transition name="fade">
-                    <v-icon v-if="showSaveIcons.overview" icon="mdi-content-save" @click="updateCollect('overview')"
-                      class="cursor-pointer save-icon" color="primary" />
+                    <v-icon v-if="showSaveIcons.overview" icon="mdi-content-save"
+                      @mousedown.stop="updateCollect('overview')" class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
