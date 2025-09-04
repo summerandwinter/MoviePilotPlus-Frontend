@@ -88,19 +88,19 @@ function handleSearch() {
 }
 function goDetail() {
   // 跳转到媒体详情页（新标签页）
-  const route = router.resolve({
-    path: '/cdetail',
-    query: {
-      id: props.task?.id
-    },
-  })
-  window.open(route.href, '_blank')
-  // router.push({
+  // const route = router.resolve({
   //   path: '/cdetail',
   //   query: {
   //     id: props.task?.id
   //   },
   // })
+  // window.open(route.href, '_blank')
+  router.push({
+    path: '/cdetail',
+    query: {
+      id: props.task?.id
+    },
+  })
 }
 // 删除任务成功
 function deleteSiteSeedSuccess() {
@@ -295,7 +295,7 @@ onUnmounted(() => {
           {{ task?.sub_title || '暂无描述' }}
         </div>
         <div class="d-flex flex-wrap gap-1 mb-2">
-          <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
+          <VChip v-if="task?.type" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.type }}
           </VChip>
           <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
