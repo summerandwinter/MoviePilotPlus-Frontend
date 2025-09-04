@@ -88,19 +88,19 @@ function handleSearch() {
 }
 function goDetail() {
   // 跳转到媒体详情页（新标签页）
-  // const route = router.resolve({
-  //   path: '/cdetail',
-  //   query: {
-  //     id: props.task?.id
-  //   },
-  // })
-  // window.open(route.href, '_blank')
-  router.push({
+  const route = router.resolve({
     path: '/cdetail',
     query: {
       id: props.task?.id
     },
   })
+  window.open(route.href, '_blank')
+  // router.push({
+  //   path: '/cdetail',
+  //   query: {
+  //     id: props.task?.id
+  //   },
+  // })
 }
 // 删除任务成功
 function deleteSiteSeedSuccess() {
