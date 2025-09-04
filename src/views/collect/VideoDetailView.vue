@@ -775,6 +775,20 @@ function handleIgnore() {
         </div>
         <div class="mt-6">
           <v-row>
+            <!-- 年份输入框 -->
+            <v-col cols="6" md="6">
+              <VTextField v-model="addForm.year" placeholder="请手动输入年份" hint="如：2025" label="年份" :loading="isLoading"
+                variant="outlined" persistent-hint class="max-w-sm mt-1" density="compact">
+                <!-- 修复图标绑定逻辑：根据douban_id是否存在动态显示图标 -->
+                <template #prepend-inner>
+                  <VIcon icon="mdi-calendar" class="cursor-pointer text-lg" />
+                </template>
+              </VTextField>
+            </v-col>
+          </v-row>
+        </div>
+        <div class="mt-6">
+          <v-row>
             <!-- 豆瓣ID输入框 -->
             <v-col cols="12" md="12">
               <VTextarea v-model="addForm.sub_title" :loading="isLoading" placeholder="请手动输入副标题"

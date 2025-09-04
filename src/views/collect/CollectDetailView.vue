@@ -59,6 +59,7 @@ const showSaveIcons = ref({
   douban_id: false,
   imdb_id: false,
   season: false,
+  year: false,
   sub_title: false,
   episodes_all: false
 });
@@ -501,7 +502,7 @@ watch(() => addForm.value.type,
             <span
               class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap transition !no-underline bg-green-500 bg-opacity-80 border border-green-500 !text-green-100 hover:bg-green-500 hover:bg-opacity-100 false overflow-hidden">
               <div class="relative z-20 flex items-center false"><span>{{ getCollectStatus(collectDetail.status)
-                  }}</span>
+              }}</span>
               </div>
             </span>
           </div>
@@ -822,6 +823,24 @@ watch(() => addForm.value.type,
                   <transition name="fade">
                     <v-icon v-if="showSaveIcons.en_title" icon="mdi-content-save"
                       @mousedown.stop="updateCollect('en_title')" class="cursor-pointer save-icon" color="primary" />
+                  </transition>
+                </div>
+              </template>
+            </VTextField>
+          </v-col>
+        </v-row>
+      </div>
+      <div class="mt-6">
+        <v-row>
+          <v-col cols="6" md="6">
+            <VTextField v-model="addForm.year" placeholder="请手动输入年份" label="年份" variant="plain" persistent-hint
+              class="max-w mt-1 input-style" :loading="isLoading" density="compact" @focus="showSaveIcons.year = true"
+              @blur="showSaveIcons.year = false">
+              <template #append-inner>
+                <div class="absolute-icon-container">
+                  <transition name="fade">
+                    <v-icon v-if="showSaveIcons.year" icon="mdi-content-save" @mousedown.stop="updateCollect('year')"
+                      class="cursor-pointer save-icon" color="primary" />
                   </transition>
                 </div>
               </template>
