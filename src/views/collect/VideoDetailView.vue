@@ -132,6 +132,10 @@ async function getMediaDetail() {
     if (addForm.value.episodes_all == 1) {
       addForm.value.type = "Movie"
     }
+    // 新增：当剧集数等于列表长度时添加Completed标签
+    if (addForm.value.episodes_all > 1 && addForm.value.episodes_all == mediaDetail.value.episode_list?.length) {
+      addForm.value.tags.push("Completed")
+    }
     isRefreshed.value = true
     if (mediaDetail.value.douban_id) {
       const douban_url = `https://movie.douban.com/subject/${mediaDetail.value.douban_id}/`
