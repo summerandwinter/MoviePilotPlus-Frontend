@@ -29,6 +29,12 @@ const CollectSettings = ref<any>({
     RAISE_EXCEPTION: false,
     API_DEBUG: false,
     DOWNLOADER_DELETE_AFTER_DONE: true,
+    TV_FILE_FORMAT: '',
+    MOVIE_FILE_FORMAT: '',
+    TV_TITLE_FORMAT: '',
+    MOVIE_TITLE_FORMAT: '',
+    TV_FOLDER_FORMAT: '',
+    MOVIE_FOLDER_FORMAT: '',
   },
   ImageHosting: {
     ipic: {
@@ -338,7 +344,36 @@ onDeactivated(() => {
                 <VSwitch v-model="CollectSettings.Basic.API_DEBUG" :label="t('setting.collect.apiDebug')"
                   :hint="t('setting.collect.apiDebugHint')" persistent-hint />
               </VCol>
-
+              <VCol cols="12" md="12">
+                <VTextarea v-model="CollectSettings.Basic.TV_FILE_FORMAT" auto-grow
+                  :placeholder="t('setting.collect.tvFileFormat')" :hint="t('setting.collect.tvFileFormatHint')"
+                  rows="3" persistent-hint />
+              </VCol>
+              <VCol cols="12" md="12">
+                <VTextarea v-model="CollectSettings.Basic.TV_FOLDER_FORMAT" auto-grow
+                  :placeholder="t('setting.collect.tvFolderFormat')" :hint="t('setting.collect.tvFolderFormatHint')"
+                  rows="3" persistent-hint />
+              </VCol>
+              <VCol cols="12" md="12">
+                <VTextarea v-model="CollectSettings.Basic.TV_TITLE_FORMAT" auto-grow
+                  :placeholder="t('setting.collect.tvTitleFormat')" :hint="t('setting.collect.tvTitleFormatHint')"
+                  rows="3" persistent-hint />
+              </VCol>
+              <VCol cols="12" md="12">
+                <VTextarea v-model="CollectSettings.Basic.MOVIE_FOLDER_FORMAT" auto-grow
+                  :placeholder="t('setting.collect.movieFolderFormat')"
+                  :hint="t('setting.collect.movieFolderFormatHint')" rows="3" persistent-hint />
+              </VCol>
+              <VCol cols="12" md="12">
+                <VTextarea v-model="CollectSettings.Basic.MOVIE_FILE_FORMAT" auto-grow
+                  :placeholder="t('setting.collect.movieFileFormat')" :hint="t('setting.collect.movieFileFormatHint')"
+                  rows="3" persistent-hint />
+              </VCol>
+              <VCol cols="12" md="12">
+                <VTextarea v-model="CollectSettings.Basic.MOVIE_TITLE_FORMAT" auto-grow
+                  :placeholder="t('setting.collect.movieTitleFormat')" :hint="t('setting.collect.movieTitleFormatHint')"
+                  rows="3" persistent-hint />
+              </VCol>
             </VRow>
           </VForm>
         </VCardText>
