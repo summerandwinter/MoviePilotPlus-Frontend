@@ -8,7 +8,7 @@ import type { Site, SiteSeed } from '@/api/types'
 const emit = defineEmits(['remove'])
 // 设备模式
 const display = useDisplay()
-import { collectStatus } from '@/api/constants'
+import { collectStatus, categoryOptions } from '@/api/constants'
 
 
 // 国际化
@@ -38,30 +38,23 @@ const filterForm: Record<string, string[]> = reactive({
   resolution: [] as string[],
   // 状态
   status: [] as string[],
+  // 媒体类型
+  cate: [] as string[],
+  // 文件大小范围
+  fileSizeRange: [] as string[],
 })
 function getFilterItemName(key: string, option: string) {
   if (key == 'status') {
     return collectStatus[option as keyof typeof collectStatus]
+  } else if (key == 'fileSizeRange') {
+    // 文件大小范围显示名称使用国际化翻译
+    return t(`file.fileSizeRange.${option}`) || option
+  } else if (key == 'cate') {
+    // 使用 categoryOptions 常量显示媒体类型的中文名称
+    return categoryOptions[option as keyof typeof categoryOptions] || option
   } else {
     return option
   }
-}
-// 过滤项映射（保持中文标题）
-const filterTitles: Record<string, string> = {
-  keyword: t('torrent.keyword'),
-  site: t('torrent.siteInclude'),
-  siteNotInclude: t('torrent.siteNotInclude'),
-  status: t('torrent.status'),
-  videoCode: t('torrent.filterVideoCode'),
-  edition: t('torrent.filterEdition'),
-  resolution: t('torrent.filterResolution'),
-  releaseGroup: t('torrent.filterReleaseGroup'),
-}
-
-// 排序中文名
-const sortTitles: Record<string, string> = {
-  default: t('torrent.sortDefault'),
-  size: t('torrent.sortSize')
 }
 
 // 统一存储过滤选项
@@ -74,8 +67,31 @@ const filterOptions: Record<string, string[]> = reactive({
   releaseGroup: [] as string[],
   status: [] as string[],
   keyword: [] as string[],
+  // 使用 categoryOptions 中的键作为媒体类型选项
+  cate: Object.keys(categoryOptions),
+  fileSizeRange: ['tiny', 'small', 'medium', 'large', 'xlarge'],
 })
 
+// 过滤项映射
+const filterTitles: Record<string, string> = {
+  keyword: t('torrent.keyword'),
+  site: t('torrent.siteInclude'),
+  siteNotInclude: t('torrent.siteNotInclude'),
+  status: t('torrent.status'),
+  videoCode: t('torrent.filterVideoCode'),
+  edition: t('torrent.filterEdition'),
+  resolution: t('torrent.filterResolution'),
+  releaseGroup: t('torrent.filterReleaseGroup'),
+  // 媒体类型和文件大小使用国际化翻译
+  cate: t('filterRule.mediaType'),
+  fileSizeRange: t('workflow.filterTorrents.size'),
+}
+
+// 排序中文名
+const sortTitles: Record<string, string> = {
+  default: t('torrent.sortDefault'),
+  size: t('torrent.sortSize')
+}
 
 // 排序字段
 const sortField = ref('default')
@@ -169,6 +185,7 @@ function filterData() {
   // 不包含站点匹配
   const matchSiteNotInclude = (filter: Array<string>, value: Array<SiteSeed>) =>
     filter.length === 0 || value.length === 0 || (value && filter.every(item => value.every(site => !site.site_name.includes(item))))
+  // 关键字搜索
   const search = (filter: string[], value?: string) => {
     if (!filter.length) return true;
     if (!value) return false;
@@ -176,6 +193,32 @@ function filterData() {
       value.toLowerCase().includes(item.toLowerCase())
     );
   }
+  // 文件大小范围匹配函数
+  const matchFileSizeRange = (filter: Array<string>, value: number | null) => {
+    if (filter.length === 0) return true;
+    if (value === null || value === undefined) return false;
+
+    const sizeInGB = value / (1024 * 1024 * 1024);
+
+    // 只要有一个范围匹配就返回true
+    return filter.some(range => {
+      switch (range) {
+        case 'tiny':
+          return sizeInGB < 0.5;  // 小于500MB
+        case 'small':
+          return sizeInGB >= 0.5 && sizeInGB < 2;  // 500MB-2GB
+        case 'medium':
+          return sizeInGB >= 2 && sizeInGB < 10;
+        case 'large':
+          return sizeInGB >= 10 && sizeInGB < 30;
+        case 'xlarge':
+          return sizeInGB >= 30;
+        default:
+          return false;
+      }
+    });
+  }
+
   // 先收集所有过滤选项，再过滤数据
   if (props.items?.length) {
     // 首先收集所有过滤选项
@@ -187,9 +230,6 @@ function filterData() {
     let filteredData: Collect[] = []
     // 然后根据过滤条件筛选数据
     props.items.forEach(data => {
-      console.warn('filterForm.status:', filterForm.status)
-      console.warn('data.status:', data.status)
-      console.warn('match(filterForm.status, data.status):', match(filterForm.status, data.status))
       if (
         // 关键字过滤
         search(filterForm.keyword, data.cn_title) &&
@@ -205,7 +245,11 @@ function filterData() {
         // 状态过滤
         match(filterForm.status, data.status) &&
         // 质量过滤
-        match(filterForm.edition, data.hdr_format)
+        match(filterForm.edition, data.hdr_format) &&
+        // 媒体类型过滤
+        match(filterForm.cate, data.cate) &&
+        // 文件大小范围过滤
+        matchFileSizeRange(filterForm.fileSizeRange, data.file_size)
       ) {
         filteredData.push(data)
       }
@@ -246,7 +290,6 @@ function filterData() {
       }
     }
     filteredDataList.value = filteredData
-    console.log('filteredDataList.value:', filteredDataList.value.length)
     // 显示前20个
     displayDataList.value = filteredData.slice(0, 20)
     // 保存剩余数据
@@ -280,6 +323,9 @@ function getFilterIcon(key: string) {
     videoCode: 'mdi-video-vintage',
     edition: 'mdi-quality-high',
     releaseGroup: 'mdi-account-group-outline',
+    // 为新的过滤项添加图标
+    cate: 'mdi-filmstrip',
+    fileSizeRange: 'mdi-database',
   }
   return icons[key] || 'mdi-filter-variant'
 }

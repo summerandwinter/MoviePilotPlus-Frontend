@@ -2421,6 +2421,13 @@ export default {
     createFolder: 'Create Folder',
     fileName: 'File Name',
     fileSize: 'File Size',
+  fileSizeRange: {
+    tiny: 'Tiny File (< 500MB)',
+    small: 'Small File (500MB-2GB)',
+    medium: 'Medium File (2GB-10GB)',
+    large: 'Large File (10GB-30GB)',
+    xlarge: 'Extra Large File (> 30GB)'
+  },
     fileType: 'File Type',
     lastModified: 'Last Modified',
     actions: 'Actions',

@@ -2397,6 +2397,13 @@ export default {
     createFolder: '创建文件夹',
     fileName: '文件名',
     fileSize: '文件大小',
+  fileSizeRange: {
+    tiny: '超小文件 (< 500MB)',
+    small: '小文件 (500MB-2GB)',
+    medium: '中等文件 (2GB-10GB)',
+    large: '大文件 (10GB-30GB)',
+    xlarge: '超大文件 (> 30GB)'
+  },
     fileType: '文件类型',
     lastModified: '修改时间',
     actions: '操作',
