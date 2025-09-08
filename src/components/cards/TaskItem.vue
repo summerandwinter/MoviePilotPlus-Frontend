@@ -4,7 +4,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import router from '@/router'
 import type { Collect, SiteSeed, Site } from '@/api/types'
 import api from '@/api'
-import { seedStatus, collectStatus, tagOptions } from '@/api/constants'
+import { seedStatus, collectStatus, tagOptions, categoryOptions } from '@/api/constants'
 import { formatFileSize } from '@/@core/utils/formatters'
 import { useToast } from 'vue-toastification'
 import { useGlobalSettingsStore } from '@/stores'
@@ -157,6 +157,9 @@ function showSeedStatus(status: string) {
 function getCollectStatus(status: string | undefined) {
   return collectStatus[status as keyof typeof collectStatus]
 }
+function getCategory(status: string | undefined) {
+  return categoryOptions[status as keyof typeof categoryOptions]
+}
 async function getSiteSeedList() {
   try {
     siteSeedList.value = await api.get(`collect/seed/${props.task?.id}`)
@@ -297,6 +300,9 @@ onUnmounted(() => {
         <div class="d-flex flex-wrap gap-1 mb-2">
           <VChip v-if="task?.type" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.type }}
+          </VChip>
+          <VChip v-if="task?.cate" label class="ml-1" variant="outlined" size="x-small" color="primary">
+            {{ getCategory(task?.cate) }}
           </VChip>
           <VChip v-if="task?.resolution" label class="ml-1" variant="outlined" size="x-small" color="primary">
             {{ task?.resolution }}
