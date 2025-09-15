@@ -125,6 +125,7 @@ export const tagOptions = {
   'Completed': '完结',
   'Original': '原创',
   'Children': '儿童片',
+  'Comedy': '喜剧',
   'Official': '官方',
   'Cantonese': '粤语',
   'DolbyVision': '杜比视界',
