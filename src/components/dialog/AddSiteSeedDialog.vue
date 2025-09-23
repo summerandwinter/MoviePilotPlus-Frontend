@@ -21,6 +21,7 @@ const $toast = useToast()
 const allSites = ref<Site[]>([])
 // 选中的站点
 const selectedSites = ref<number[]>([])
+const autoPublish = ref(true)
 
 // 是否正在加载
 const loading = ref(false)
@@ -55,7 +56,8 @@ async function addDownload() {
     }
     result = await api.post('collect/addSiteSeed', {
       site_list: selectedSites.value,
-      collect_id: props.collect.id
+      collect_id: props.collect.id,
+      next_step: autoPublish.value
     })
     if (result && result.success) {
       // 添加做种任务成功！
@@ -94,6 +96,10 @@ onMounted(() => {
       </VCardText>
       <VCardText v-else class="text-center">
         没有需要发布的站点
+      </VCardText>
+      <VCardText v-if="allSites.length > 0" class="flex items-center justify-between">
+        <span>自动发布</span>
+        <VSwitch v-model="autoPublish" color="primary" />
       </VCardText>
       <VCardText class="text-center mt-4">
         <VBtn variant="elevated" :disabled="loading" @click="addDownload" prepend-icon="mdi-progress-upload"
