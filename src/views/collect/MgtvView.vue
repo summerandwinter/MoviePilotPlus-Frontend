@@ -24,7 +24,6 @@ const defaultSort = 'c2'
 const cate = ref('TV')
 
 const filterParams = reactive({
-    "page": '1',
     "kind": '',
     "chargeInfo": '',
     "area": '',
@@ -138,7 +137,7 @@ watch(filterParams, () => {
             <MediaSearchView v-if="isSearch" :key="currentKey" :apipath="`mgtv/search`" :keyword="searchWord || ''"
                 :cate="cate" />
             <MediaCardListView v-show="!isSearch" :key="currentKey" :apipath="`mgtv/page_data`" :params="filterParams"
-                :cate="cate" />
+                :cate="cate" :firstPage="1" />
         </div>
     </div>
 </template>

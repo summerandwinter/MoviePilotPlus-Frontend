@@ -10,6 +10,7 @@ const props = defineProps({
   apipath: String,
   params: Object as PropType<{ [key: string]: any }>,
   cate: String,
+  firstPage: Number,
 })
 
 
@@ -19,7 +20,7 @@ function hasScroll() {
 }
 
 // 当前页码
-const page = ref(0)
+const page = ref(props.firstPage || 0)
 
 // 是否加载中
 const loading = ref(false)
