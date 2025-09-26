@@ -51,7 +51,7 @@ const ptgen = ref<PtgenInfo>({} as PtgenInfo)
 const selectedCount = computed(() => {
   let count = 0
   mediaDetail.value.episode_list?.forEach(episode => {
-    if (episode.selected) {
+    if (episode.selected && episode.show) {
       count++
     }
   })
@@ -71,6 +71,7 @@ const selectedEpisode = computed(() => {
 // 是否已加载完成
 const isRefreshed = ref(false)
 const isLoading = ref(true)
+const onlyShowMainEpisodes = ref(true)
 
 
 // 采集任务添加表单
@@ -98,7 +99,7 @@ const addForm = ref<CollectCreate>({
   auto_publish: true,
   anon_publish: true,
   source: "WEB-DL",
-  tags: ['Mandarin', 'Original', 'Children'],
+  tags: ['Original'],
   episode_list: [],
   site_list: []
 })
@@ -111,13 +112,23 @@ async function getMediaDetail() {
       },
     })
     // 默认选中所有剧集
+    let episodeIndex = 0
     mediaDetail.value.episode_list?.forEach(episode => {
       //episode.selected = true
       // 新增：当只有1集且集数未设置时，默认设为1
       if (mediaDetail.value.episode_list?.length === 1 && !episode.episode) {
         episode.episode = 1
       }
+      if (onlyShowMainEpisodes.value && mediaProps.source == 'MgTV' && episode.pay_type != '0') {
+        episode.show = false
+      } else {
+        episode.show = true
+        episode.selected = true
+        episodeIndex += 1
+        episode.episode = episodeIndex
+      }
     })
+    // mediaDetail.value.episode_all = episodeIndex.toString()
     // 设置默认选中第一个清晰度
     if (mediaDetail.value.definition_list?.length > 0) {
       addForm.value.defn = mediaDetail.value.definition_list[0].name
@@ -134,7 +145,7 @@ async function getMediaDetail() {
     addForm.value.poster = mediaDetail.value.new_pic_vt ?? ''
     addForm.value.overview = mediaDetail.value.overview ?? ''
     // 设置总集数（修改核心逻辑）
-    const episodeListLength = mediaDetail.value.episode_list?.length || 1 // 剧集列表长度（至少1）
+    const episodeListLength = episodeIndex || 1 // 剧集列表长度（至少1）
     addForm.value.episodes_all = mediaDetail.value.episode_all
       ? Math.max(Number(mediaDetail.value.episode_all), episodeListLength)  // 取较大值
       : episodeListLength  // 无episode_all时使用列表长度
@@ -485,7 +496,7 @@ function update_subtitle() {
     }
     // 插入播放标题
     if (play_title) {
-      subTitleParts.splice(2, 0, play_title) // 在第三位插入play_title
+      subTitleParts.splice(1, 0, play_title) // 在第三位插入play_title
     }
     addForm.value.sub_title = subTitleParts.join(' | ')
   } else {
@@ -511,13 +522,13 @@ function autoSetEpisodeNumbers() {
     return
   }
 
-  // 先清空所有未选中剧集的编号
+  // 先清空所有未选中或隐藏剧集的编号
   allEpisodes.forEach(ep => {
-    if (!ep.selected) ep.episode = 0 // 或根据实际需求设置为 null/0 等空值
+    if (!ep.selected || !ep.show) ep.episode = 0 // 或根据实际需求设置为 null/0 等空值
   })
 
   // 再处理选中剧集的自增编号
-  const selectedEpisodes = allEpisodes.filter(ep => ep.selected)
+  const selectedEpisodes = allEpisodes.filter(ep => ep.selected && ep.show)
   if (selectedEpisodes.length === 0) {
     $toast.warning('请先选择需要设置编号的剧集！')
     return
@@ -529,17 +540,23 @@ function autoSetEpisodeNumbers() {
   })
 }
 
-// 选择正片剧集
-function selectMainEpisodes() {
+// 切换是否只显示正片剧集
+function toggleMainEpisodes() {
   const allEpisodes = mediaDetail.value.episode_list || []
-  if (allEpisodes.length === 0) {
-    $toast.warning('没有可用的剧集列表！')
-    return
-  }
+  onlyShowMainEpisodes.value = !onlyShowMainEpisodes.value
 
-  allEpisodes.forEach(ep => {
-    ep.selected = ep.pay_type === '0'
+  let episodeIndex = 0
+  allEpisodes.forEach(episode => {
+    if (onlyShowMainEpisodes.value && mediaProps.source == 'MgTV' && episode.pay_type != '0') {
+      episode.show = false
+    } else {
+      episode.show = true
+      episode.selected = true
+      episodeIndex += 1
+      episode.episode = episodeIndex
+    }
   })
+  addForm.value.episodes_all = episodeIndex
 }
 
 // 全选所有剧集
@@ -555,7 +572,7 @@ function selectAllEpisodes() {
   })
 }
 
-// 反选所有剧集
+// 全不选所有剧集
 function invertSelectEpisodes() {
   const allEpisodes = mediaDetail.value.episode_list || []
   if (allEpisodes.length === 0) {
@@ -564,7 +581,7 @@ function invertSelectEpisodes() {
   }
 
   allEpisodes.forEach(ep => {
-    ep.selected = !ep.selected
+    ep.selected = false
   })
 }
 // 打开豆瓣详情页
@@ -965,14 +982,15 @@ function handleIgnore() {
       <div v-if="mediaDetail.episode_list" class="relative mt-6">
         <div class="absolute right-0 -top-5 flex gap-2">
 
-          <VBtn color="#5865f2" size="x-small" variant="flat" @click="selectMainEpisodes">
-            正片
+          <VBtn v-if="mediaProps.source == 'MgTV'" color="#5865f2" size="x-small" variant="flat"
+            @click="toggleMainEpisodes">
+            {{ onlyShowMainEpisodes ? '显示所有剧集' : '只看正片' }}
           </VBtn>
           <VBtn color="#5865f2" size="x-small" variant="flat" @click="selectAllEpisodes">
             全选
           </VBtn>
           <VBtn color="#5865f2" size="x-small" variant="flat" @click="invertSelectEpisodes">
-            反选
+            全不选
           </VBtn>
           <VBtn color="#5865f2" size="x-small" variant="flat" @click="autoSetEpisodeNumbers">
             自动设置集数
@@ -982,7 +1000,7 @@ function handleIgnore() {
         <SlideView>
           <template #content>
             <template v-for="data in mediaDetail.episode_list" :key="data.vid">
-              <EpisodeCard :episode="data" height="9rem" width="16rem" />
+              <EpisodeCard v-if="data.show" :episode="data" height="9rem" width="16rem" />
             </template>
           </template>
         </SlideView>

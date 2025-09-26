@@ -1375,8 +1375,9 @@ export interface CategoryItem {
 // 视频集信息
 export interface VideoEpisode {
   title: string
-  // 7 单片付费 8 免费 6 vip免费
+  // 7 单片付费 8 免费 6 vip免费 0 正片（MgTV）
   pay_type: string
+  show: boolean
   play_title: string
   web_play_url: string
   image_url: string
