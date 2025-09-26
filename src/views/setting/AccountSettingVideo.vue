@@ -7,6 +7,8 @@ const $toast = useToast()
 
 // 腾讯视频Cookie
 const tencentCookie = ref('')
+const mgTvTicket = ref('')
+const mgAppTicket = ref('')
 
 // 查询已设置的腾讯视频Cookie
 async function queryTencentCookie() {
@@ -17,7 +19,24 @@ async function queryTencentCookie() {
     console.log(error)
   }
 }
-
+// 查询已设置的腾讯视频Cookie
+async function queryTvAppTicket() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/MgTvTicket')
+    if (result && result.data && result.data.value) mgTvTicket.value = result.data.value
+  } catch (error) {
+    console.log(error)
+  }
+}
+// 查询已设置的腾讯视频Cookie
+async function queryMgAppTicket() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/MgAppTicket')
+    if (result && result.data && result.data.value) mgAppTicket.value = result.data.value
+  } catch (error) {
+    console.log(error)
+  }
+}
 // 重载系统生效配置
 async function reloadSystem() {
   try {
@@ -43,6 +62,41 @@ async function saveTencentCookie() {
       await reloadSystem()
     }
     else $toast.error('腾讯视频Cookie保存失败！')
+  } catch (error) {
+    console.log(error)
+  }
+}
+async function saveMgTvTicket() {
+  try {
+    // 用户名密码
+    const result: { [key: string]: any } = await api.post(
+      'system/setting/MgTvTicket',
+      mgTvTicket.value,
+    )
+
+    if (result.success) {
+      $toast.success('芒果TV 电视端Ticket保存成功')
+      await reloadSystem()
+    }
+    else $toast.error('芒果TV 电视端Ticket保存失败！')
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+async function saveMgAppTicket() {
+  try {
+    // 用户名密码
+    const result: { [key: string]: any } = await api.post(
+      'system/setting/MgAppTicket',
+      mgAppTicket.value,
+    )
+
+    if (result.success) {
+      $toast.success('芒果TV App端Ticket保存成功')
+      await reloadSystem()
+    }
+    else $toast.error('芒果TV App端Ticket保存失败！')
   } catch (error) {
     console.log(error)
   }
