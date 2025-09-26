@@ -2,6 +2,7 @@
 import { CollectTabs } from '@/router/menu'
 import router from '@/router'
 import { default as TencentView } from '@/views/collect/TencentView.vue'
+import { default as MgtvView } from '@/views/collect/MgtvView.vue'
 import { default as YoukuView } from '@/views/collect/YoukuView.vue'
 import { default as IQiyiView } from '@/views/collect/IQiyiView.vue'
 import { default as ExtraSourceView } from '@/views/collect/ExtraSourceView.vue'
@@ -45,12 +46,8 @@ onActivated(async () => {
         </div>
       </VTab>
 
-      <VTab
-        v-for="item in extraDiscoverSources"
-        :key="item.mediaid_prefix"
-        :value="item.mediaid_prefix"
-        @to="jumpTab(item.mediaid_prefix)"
-      >
+      <VTab v-for="item in extraDiscoverSources" :key="item.mediaid_prefix" :value="item.mediaid_prefix"
+        @to="jumpTab(item.mediaid_prefix)">
         <div class="min-w-24">
           {{ item.name }}
         </div>
@@ -62,6 +59,13 @@ onActivated(async () => {
         <transition name="fade-slide" appear>
           <div>
             <TencentView />
+          </div>
+        </transition>
+      </VWindowItem>
+      <VWindowItem value="mgtv">
+        <transition name="fade-slide" appear>
+          <div>
+            <MgtvView />
           </div>
         </transition>
       </VWindowItem>

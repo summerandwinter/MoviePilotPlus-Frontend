@@ -141,10 +141,10 @@ function getYear(airDate: string) {
             </VTooltip>
           </VCardTitle>
           <VChip
-            v-if="props.episode?.pay_type === '7' || props.episode?.pay_type === '6' || props.episode?.pay_type === '6'"
+            v-if="props.episode?.pay_type === '7' || props.episode?.pay_type === '6' || props.episode?.pay_type === '0'"
             variant="elevated" size="small"
             class="border-red-500 bg-red-600 absolute left-2 top-2 bg-opacity-90 shadow-md text-white font-bold">
-            {{ props.episode?.pay_type === '7' ? '付费' : 'VIP' }}
+            {{ props.episode?.pay_type === '7' ? '付费' : (props.episode?.pay_type === '0' ? '正片' : 'VIP') }}
           </VChip>
           <!--来源图标-->
           <VIcon v-if="props.episode?.selected" icon="mdi-check" color="success" class="absolute top-1 right-1" />

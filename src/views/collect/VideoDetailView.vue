@@ -3,7 +3,7 @@ import { useToast } from 'vue-toastification'
 
 import api from '@/api'
 import { tagOptions, teamOptions, mediaCateOptions, categoryOptions } from '@/api/constants'
-import type { VideoInfo, CollectCreate, Site, PtgenInfo } from '@/api/types'
+import type { VideoInfo, CollectCreate, Site, PtgenInfo, VideoEpisode } from '@/api/types'
 import GroupTile from '@/components/GroupTitle.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
 import SlideView from '@/components/slide/SlideView.vue'
@@ -58,6 +58,15 @@ const selectedCount = computed(() => {
   return count
 })
 
+const selectedEpisode = computed(() => {
+  let selectedEpisodes: VideoEpisode[] = []
+  mediaDetail.value.episode_list?.forEach(episode => {
+    if (episode.selected) {
+      selectedEpisodes.push(episode)
+    }
+  })
+  return selectedEpisodes
+})
 
 // 是否已加载完成
 const isRefreshed = ref(false)
@@ -103,7 +112,7 @@ async function getMediaDetail() {
     })
     // 默认选中所有剧集
     mediaDetail.value.episode_list?.forEach(episode => {
-      episode.selected = true
+      //episode.selected = true
       // 新增：当只有1集且集数未设置时，默认设为1
       if (mediaDetail.value.episode_list?.length === 1 && !episode.episode) {
         episode.episode = 1
@@ -415,7 +424,13 @@ async function handlePlay() {
   try {
     if (mediaProps.mediaid) {
       // 打开链接地址
-      window.open(`https://v.qq.com/x/cover/${mediaProps.mediaid}.html`, '_blank')
+      if (mediaProps.source == 'MgTV') {
+        window.open(`https://www.mgtv.com/b/${mediaProps.mediaid}.html`, '_blank')
+      } else if (mediaProps.source == 'Tencent') {
+        window.open(`https://v.qq.com/x/cover/${mediaProps.mediaid}.html`, '_blank')
+      } else {
+        $toast.error(`不支持的播放源！`)
+      }
     } else {
       $toast.error(`获取播放链接失败！`)
     }
@@ -432,11 +447,16 @@ onBeforeMount(() => {
 })
 function update_subtitle() {
   let name = ''
+  let play_title = ''
   if (addForm.value.episodes_all > 1) {
     if (addForm.value.episodes_all == selectedCount.value) {
       name = `全${addForm.value.episodes_all}集`
     } else if (selectedCount.value == 1) {
-      name = `第${addForm.value.episode_list[0] ? addForm.value.episode_list[0].episode : 1}集`
+      if (mediaProps.source == 'MgTV') {
+        play_title = selectedEpisode.value[0]?.play_title || ''
+      } else {
+        name = `第${addForm.value.episode_list[0] ? addForm.value.episode_list[0].episode : 1}集`
+      }
     } else {
       const selectedEpisodes = mediaDetail.value.episode_list?.filter(ep => ep.selected) || []
       const episodes = selectedEpisodes
@@ -458,13 +478,20 @@ function update_subtitle() {
       }
     }
   }
-  if (name && ptgen.value.sub_title) {
+  if (ptgen.value.sub_title) {
     const subTitleParts = ptgen.value.sub_title.split(' | ')
-    subTitleParts.splice(1, 0, name) // 在第二位插入name
+    if (name) {
+      subTitleParts.splice(1, 0, name) // 在第二位插入name
+    }
+    // 插入播放标题
+    if (play_title) {
+      subTitleParts.splice(2, 0, play_title) // 在第三位插入play_title
+    }
     addForm.value.sub_title = subTitleParts.join(' | ')
   } else {
     addForm.value.sub_title = ptgen.value.sub_title
   }
+
   // 插入原始标题
   addForm.value.sub_title = fill_subtile(addForm.value.sub_title, mediaDetail.value.title)
 }
@@ -499,6 +526,45 @@ function autoSetEpisodeNumbers() {
   // 按顺序设置自增编号（从1开始）
   selectedEpisodes.forEach((ep, index) => {
     ep.episode = index + 1
+  })
+}
+
+// 选择正片剧集
+function selectMainEpisodes() {
+  const allEpisodes = mediaDetail.value.episode_list || []
+  if (allEpisodes.length === 0) {
+    $toast.warning('没有可用的剧集列表！')
+    return
+  }
+
+  allEpisodes.forEach(ep => {
+    ep.selected = ep.pay_type === '0'
+  })
+}
+
+// 全选所有剧集
+function selectAllEpisodes() {
+  const allEpisodes = mediaDetail.value.episode_list || []
+  if (allEpisodes.length === 0) {
+    $toast.warning('没有可用的剧集列表！')
+    return
+  }
+
+  allEpisodes.forEach(ep => {
+    ep.selected = true
+  })
+}
+
+// 反选所有剧集
+function invertSelectEpisodes() {
+  const allEpisodes = mediaDetail.value.episode_list || []
+  if (allEpisodes.length === 0) {
+    $toast.warning('没有可用的剧集列表！')
+    return
+  }
+
+  allEpisodes.forEach(ep => {
+    ep.selected = !ep.selected
   })
 }
 // 打开豆瓣详情页
@@ -897,10 +963,21 @@ function handleIgnore() {
         </div>
       </div>
       <div v-if="mediaDetail.episode_list" class="relative mt-6">
-        <VBtn class="absolute right-0 -top-5" color="#5865f2" size="x-small" variant="flat"
-          @click="autoSetEpisodeNumbers">
-          自动设置集数
-        </VBtn>
+        <div class="absolute right-0 -top-5 flex gap-2">
+
+          <VBtn color="#5865f2" size="x-small" variant="flat" @click="selectMainEpisodes">
+            正片
+          </VBtn>
+          <VBtn color="#5865f2" size="x-small" variant="flat" @click="selectAllEpisodes">
+            全选
+          </VBtn>
+          <VBtn color="#5865f2" size="x-small" variant="flat" @click="invertSelectEpisodes">
+            反选
+          </VBtn>
+          <VBtn color="#5865f2" size="x-small" variant="flat" @click="autoSetEpisodeNumbers">
+            自动设置集数
+          </VBtn>
+        </div>
 
         <SlideView>
           <template #content>

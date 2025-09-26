@@ -278,6 +278,11 @@ export const CollectTabs = [
     icon: 'themoviedb',
   },
   {
+    title: 'MgTV',
+    tab: 'mgtv',
+    icon: 'douban',
+  },
+  {
     title: 'Youku',
     tab: 'youku',
     icon: 'douban',
