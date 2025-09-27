@@ -71,7 +71,7 @@ const selectedEpisode = computed(() => {
 // 是否已加载完成
 const isRefreshed = ref(false)
 const isLoading = ref(true)
-const onlyShowMainEpisodes = ref(true)
+const onlyShowMainEpisodes = ref(false)
 
 
 // 采集任务添加表单
