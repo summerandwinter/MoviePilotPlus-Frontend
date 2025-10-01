@@ -1358,7 +1358,7 @@ export interface Workflow {
 }
 
 // 腾讯视频分类
-export interface TencentCategoryInfo {
+export interface CategoryInfo {
   level: string
   option_value: string
   option_name: string

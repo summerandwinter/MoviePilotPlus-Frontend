@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import api from '@/api'
 import { ref, reactive, watch, onMounted } from 'vue'
-import type { TencentCategoryInfo, CategoryItem } from '@/api/types'
+import type { CategoryInfo, CategoryItem } from '@/api/types'
 import { default as MediaCardListView } from '@/views/collect/MediaCardListView.vue'
 import { default as MediaSearchView } from '@/views/collect/MediaSearchView.vue'
 import { VTextField } from 'vuetify/components'
@@ -12,7 +12,7 @@ const type = ref('1')
 // 当前Key
 const currentKey = ref(0)
 
-const cates = ref<Record<string, TencentCategoryInfo[]>>({})
+const cates = ref<Record<string, CategoryInfo[]>>({})
 // 搜索词
 const searchWord = ref<string | null>(null)
 const isSearch = ref(false)
@@ -49,7 +49,7 @@ const cateDictArray: CategoryItem[] = [
 // 分类信息
 async function queryCate(type: string) {
     try {
-        const data: TencentCategoryInfo[] = await api.get('mgtv/category', {
+        const data: CategoryInfo[] = await api.get('mgtv/category', {
             params: {
                 type: type
             }
@@ -60,8 +60,8 @@ async function queryCate(type: string) {
             }
         })
 
-        const groupedData: Record<string, TencentCategoryInfo[]> = {};
-        data.forEach((item: TencentCategoryInfo) => {
+        const groupedData: Record<string, CategoryInfo[]> = {};
+        data.forEach((item: CategoryInfo) => {
             const filter_key = item.filter_key;
             if (!groupedData[filter_key]) {
                 groupedData[filter_key] = [];

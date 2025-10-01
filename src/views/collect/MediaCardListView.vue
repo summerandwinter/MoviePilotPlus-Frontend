@@ -31,15 +31,15 @@ const isRefreshed = ref(false)
 // 数据列表
 const dataList = ref<VideoInfo[]>([])
 const currData = ref<VideoInfo[]>([])
-
+const session = ref('')
 // 拼装参数
 function getParams() {
   let params = {
     page: page.value,
+    session: session.value,
   }
   console.log('page.value', page.value)
   if (props.params) params = { ...params, ...props.params }
-
   return params
 }
 
@@ -61,9 +61,11 @@ async function fetchData({ done }: { done: any }) {
         // 设置加载中
         loading.value = true
         // 请求API
-        currData.value = await api.get(props.apipath, {
+        const result: { [key: string]: any } = await api.get(props.apipath, {
           params: getParams(),
         })
+        currData.value = result.data
+        session.value = result?.message || ''
         // 取消加载中
         loading.value = false
         // 标计为已请求完成
@@ -85,9 +87,11 @@ async function fetchData({ done }: { done: any }) {
       // 设置加载中
       loading.value = true
       // 请求API
-      currData.value = await api.get(props.apipath, {
+      const result: { [key: string]: any } = await api.get(props.apipath, {
         params: getParams(),
       })
+      currData.value = result.data
+      session.value = result?.message || ''
       // 标计为已请求完成
       isRefreshed.value = true
       if (currData.value.length === 0) {
