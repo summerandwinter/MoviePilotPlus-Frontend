@@ -4,7 +4,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import type { CategoryInfo, CategoryItem } from '@/api/types'
 import { default as MediaCardListView } from '@/views/collect/MediaCardListView.vue'
 import { default as MediaSearchView } from '@/views/collect/MediaSearchView.vue'
-import { VTextField } from 'vuetify/components'
+
 
 // 排序 类型 资费 出品 地区 年份 状态 画风 年龄 全部 性别 语言  动画明星 剧场 奖项 其他-characteristic
 // 电影或者电视剧 movies/tvs
@@ -116,6 +116,7 @@ async function queryCate(type: string) {
     });
 
     cates.value = groupedData;
+    console.log('cates.value', cates.value)
   } catch (error) {
     console.log(error)
   }
@@ -178,7 +179,7 @@ watch(type, () => {
       <div class="flex justify-start align-center" v-for="(item, key) in cates" :key="key">
         <VChipGroup v-model="groupSelections[key]" column mandatory>
           <VChip :color="getChipColor(option, key)" tile :value="option.option_value" v-for="option in item"
-            :key="option.option_value" size="small">
+            :key="option.option_name + option.option_value" size="small">
             {{ option.option_name }}
           </VChip>
         </VChipGroup>
