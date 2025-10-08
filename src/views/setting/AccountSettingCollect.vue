@@ -80,6 +80,8 @@ const progressDialog = ref(false)
 const tencentCookie = ref('')
 const mgTvTicket = ref('')
 const mgAppTicket = ref('')
+const iqiyiCookie = ref('')
+const youkuCookie = ref('')
 
 // 查询已设置的腾讯视频Cookie
 async function queryTencentCookie() {
@@ -103,6 +105,26 @@ async function queryMgAppTicket() {
   try {
     const result: { [key: string]: any } = await api.get('system/setting/MgAppTicket')
     if (result && result.data && result.data.value) mgAppTicket.value = result.data.value
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// 查询已设置的爱奇艺Cookie
+async function queryIqiyiCookie() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/IQiyiCookie')
+    if (result && result.data && result.data.value) iqiyiCookie.value = result.data.value
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// 查询已设置的优酷Cookie
+async function queryYoukuCookie() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/YoukuCookie')
+    if (result && result.data && result.data.value) youkuCookie.value = result.data.value
   } catch (error) {
     console.log(error)
   }
@@ -167,6 +189,42 @@ async function saveMgAppTicket() {
       await reloadSystem()
     }
     else $toast.error('芒果TV App端Ticket保存失败！')
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// 保存用户设置的爱奇艺Cookie
+async function saveIqiyiCookie() {
+  try {
+    const result: { [key: string]: any } = await api.post(
+      'system/setting/IQiyiCookie',
+      iqiyiCookie.value,
+    )
+
+    if (result.success) {
+      $toast.success('爱奇艺Cookie保存成功')
+      await reloadSystem()
+    }
+    else $toast.error('爱奇艺Cookie保存失败！')
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// 保存用户设置的优酷Cookie
+async function saveYoukuCookie() {
+  try {
+    const result: { [key: string]: any } = await api.post(
+      'system/setting/YoukuCookie',
+      youkuCookie.value,
+    )
+
+    if (result.success) {
+      $toast.success('优酷Cookie保存成功')
+      await reloadSystem()
+    }
+    else $toast.error('优酷Cookie保存失败！')
   } catch (error) {
     console.log(error)
   }
@@ -315,6 +373,8 @@ onMounted(() => {
   queryTencentCookie()
   queryTvAppTicket()
   queryMgAppTicket()
+  queryIqiyiCookie()
+  queryYoukuCookie()
   loadImageHostingSetting()
   loadMediaServerSetting()
   loadSystemSettings()
@@ -630,6 +690,58 @@ onDeactivated(() => {
           <VForm @submit.prevent="() => { }">
             <div class="d-flex flex-wrap gap-4 mt-4">
               <VBtn type="submit" @click="saveMgAppTicket"> {{ t('common.save') }} </VBtn>
+            </div>
+          </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+  </VRow>
+  <VRow>
+    <VCol cols="12">
+      <VCard>
+        <VCardItem>
+          <VCardTitle> {{ t('setting.collect.iqiyiCookie') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.collect.iqiyiCookieHint') }} </VCardSubtitle>
+        </VCardItem>
+        <VCardText>
+          <VTextarea v-model="iqiyiCookie" auto-grow :placeholder="t('setting.collect.iqiyiCookie')"
+            :hint="t('setting.collect.iqiyiCookieHint')" rows="3" persistent-hint />
+        </VCardText>
+        <VCardText>
+          <VAlert type="info" variant="tonal" :title="t('setting.collect.iqiyiCookieTipsTitle')">
+            <span v-html="t('setting.collect.iqiyiCookieTips')" />
+          </VAlert>
+        </VCardText>
+        <VCardText>
+          <VForm @submit.prevent="() => { }">
+            <div class="d-flex flex-wrap gap-4 mt-4">
+              <VBtn type="submit" @click="saveIqiyiCookie"> {{ t('common.save') }} </VBtn>
+            </div>
+          </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+  </VRow>
+  <VRow>
+    <VCol cols="12">
+      <VCard>
+        <VCardItem>
+          <VCardTitle> {{ t('setting.collect.youkuCookie') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.collect.youkuCookieHint') }} </VCardSubtitle>
+        </VCardItem>
+        <VCardText>
+          <VTextarea v-model="youkuCookie" auto-grow :placeholder="t('setting.collect.youkuCookie')"
+            :hint="t('setting.collect.youkuCookieHint')" rows="3" persistent-hint />
+        </VCardText>
+        <VCardText>
+          <VAlert type="info" variant="tonal" :title="t('setting.collect.youkuCookieTipsTitle')">
+            <span v-html="t('setting.collect.youkuCookieTips')" />
+          </VAlert>
+        </VCardText>
+        <VCardText>
+          <VForm @submit.prevent="() => { }">
+            <div class="d-flex flex-wrap gap-4 mt-4">
+              <VBtn type="submit" @click="saveYoukuCookie"> {{ t('common.save') }} </VBtn>
             </div>
           </VForm>
         </VCardText>
