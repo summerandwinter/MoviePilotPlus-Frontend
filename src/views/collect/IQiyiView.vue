@@ -164,7 +164,7 @@ watch(type, () => {
     <div class="px-3 flex justify-start align-center">
       <VCombobox ref="searchWordInput" v-model="searchWord" density="comfortable" variant="outlined"
         class="search-input" prepend-inner-icon="mdi-magnify" append-inner-icon="mdi-close"
-        @click:append-inner="searchClear()" placeholder="搜索腾讯视频" @keydown.enter="searchMedia()" hide-details />
+        @click:append-inner="searchClear()" placeholder="搜索爱奇艺" @keydown.enter="searchMedia()" hide-details />
     </div>
     <div class="px-3" v-show="!isSearch">
       <div class="flex justify-start align-center">

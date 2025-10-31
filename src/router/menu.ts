@@ -292,4 +292,9 @@ export const CollectTabs = [
     tab: 'iqiyi',
     icon: 'bangumi',
   },
+  {
+    title: 'Bilibili',
+    tab: 'bilibili',
+    icon: 'bangumi',
+  },
 ]

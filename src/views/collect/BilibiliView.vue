@@ -20,36 +20,44 @@ const isSearch = ref(false)
 
 // 过滤参数
 const defaultType = '1'
-const defaultSort = 'c2'
+const defaultSort = '2'
 const cate = ref('TV')
 
 const filterParams = reactive({
-  "kind": '',
-  "chargeInfo": '',
-  "area": '',
-  "feature": '',
-  "year": '',
-  "fitAge": '',
-  "edition": '',
-  'type': defaultType,
-  'sort': defaultSort,
-
+  'type': type.value,
+  "season_version": "-1",
+  "spoken_language_type": "-1",
+  "area": "-1",
+  "is_finish": "-1",
+  "copyright": "-1",
+  "season_status": "-1",
+  "season_month": "-1",
+  "year": "-1",
+  "style_id": "-1",
+  "release_date": "-1",
+  "producer_id": "-1",
+  "order": defaultSort,
 })
 
+// 1 番剧 https://www.bilibili.com/anime/index
+// 2 电影 https://www.bilibili.com/movie/index
+// 3 纪录片 https://www.bilibili.com/documentary/index
+// 4 国创 https://www.bilibili.com/guochuang/index
+// 5 电视剧 https://www.bilibili.com/tv/index
+// 7 综艺 https://www.bilibili.com/variety/index
 // 分类字典
 const cateDictArray: CategoryItem[] = [
-  { "key": "1", "value": "综艺", "cate": "Show" },
-  { "key": "2", "value": "电视剧", "cate": "TV" },
-  { "key": "3", "value": "电影", "cate": "Movie" },
-  { "key": "10", "value": "少儿", "cate": "TV" },
-  { "key": "51", "value": "纪录片", "cate": "Documentary" },
-  { "key": "50", "value": "动漫", "cate": "Comic" },
-  { "key": "115", "value": "教育", "cate": "Others" }
+  { "value": "番剧", "key": "1", "cate": "Comic" },
+  { "value": "电影", "key": "2", "cate": "Movie" },
+  { "value": "纪录片", "key": "3", "cate": "Documentary" },
+  { "value": "电视剧", "key": "5", "cate": "TV" },
+  { "value": "国创", "key": "4", "cate": "Movie" },
+  { "value": "综艺", "key": "7", "cate": "Show" },
 ]
 // 分类信息
 async function queryCate(type: string) {
   try {
-    const data: CategoryInfo[] = await api.get('mgtv/category', {
+    const data: CategoryInfo[] = await api.get('bilibili/category', {
       params: {
         type: type
       }
@@ -93,11 +101,11 @@ watch(type, () => {
 
 // 过滤参数变化
 watch(filterParams, () => {
-  if (!filterParams.sort) {
-    filterParams.sort = 'c2'
+  if (!filterParams.order) {
+    filterParams.order = defaultSort
   }
   if (!filterParams.type) {
-    filterParams.type = '1'
+    filterParams.type = defaultType
   }
   currentKey.value++
 })
@@ -108,7 +116,7 @@ watch(filterParams, () => {
     <div class="px-3 flex justify-start align-center">
       <VCombobox ref="searchWordInput" v-model="searchWord" density="comfortable" variant="outlined"
         class="search-input" prepend-inner-icon="mdi-magnify" append-inner-icon="mdi-close"
-        @click:append-inner="searchClear()" placeholder="搜索芒果TV视频" @keydown.enter="searchMedia()" hide-details />
+        @click:append-inner="searchClear()" placeholder="搜索哔哩哔哩" @keydown.enter="searchMedia()" hide-details />
     </div>
     <div class="px-3" v-show="!isSearch">
       <div class="flex justify-start align-center">
@@ -132,10 +140,10 @@ watch(filterParams, () => {
 
 
     <div class="pt-3">
-      <MediaSearchView v-if="isSearch" :key="currentKey" :apipath="`mgtv/search`" :keyword="searchWord || ''"
+      <MediaSearchView v-if="isSearch" :key="currentKey" :apipath="`bilibili/search`" :keyword="searchWord || ''"
         :cate="cate" />
-      <MediaCardListView v-show="!isSearch" :key="currentKey" :apipath="`mgtv/page_data`" :params="filterParams"
-        :cate="cate" :firstPage="1" />
+      <MediaCardListView v-show="!isSearch" :key="currentKey" :apipath="`bilibili/page_data`" :params="filterParams"
+        :cate="cate" :first-page="1" />
     </div>
   </div>
 </template>

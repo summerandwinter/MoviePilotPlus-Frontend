@@ -5,6 +5,7 @@ import { default as TencentView } from '@/views/collect/TencentView.vue'
 import { default as MgtvView } from '@/views/collect/MgtvView.vue'
 import { default as YoukuView } from '@/views/collect/YoukuView.vue'
 import { default as IQiyiView } from '@/views/collect/IQiyiView.vue'
+import { default as BilibiliView } from '@/views/collect/BilibiliView.vue'
 import { default as ExtraSourceView } from '@/views/collect/ExtraSourceView.vue'
 import { DiscoverSource } from '@/api/types'
 import api from '@/api'
@@ -80,6 +81,13 @@ onActivated(async () => {
         <transition name="fade-slide" appear>
           <div>
             <YoukuView />
+          </div>
+        </transition>
+      </VWindowItem>
+      <VWindowItem value="bilibili">
+        <transition name="fade-slide" appear>
+          <div>
+            <BilibiliView />
           </div>
         </transition>
       </VWindowItem>
