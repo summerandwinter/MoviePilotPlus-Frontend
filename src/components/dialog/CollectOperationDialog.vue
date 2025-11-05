@@ -2,7 +2,7 @@
 
 import { useToast } from 'vue-toastification'
 import api from '@/api'
-import { teamOptions } from '@/api/constants'
+// 从API获取teamOptions数据
 import { CollectProgress, Collect } from '@/api/types'
 const progress = ref<Array<CollectProgress>>([])
 // 输入参数
@@ -19,10 +19,31 @@ const skip_if_exists = ref(false)
 const delete_old_file = ref(false)
 
 const team = ref('')
+// 制作组列表
+const teamList = ref<any[]>([])
+
+// 加载制作组数据
+async function loadTeamOptions() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/TEAM_PARAMS')
+    teamList.value = result.data?.value ?? []
+    // 按照order排序
+    teamList.value.sort((a, b) => (a.order || 0) - (b.order || 0))
+    // 设置默认选中的制作组
+    const defaultTeam = teamList.value.find(item => item.default) || teamList.value[0]
+    if (defaultTeam) {
+      team.value = defaultTeam.team
+    }
+  } catch (error) {
+    console.error('加载制作组数据失败:', error)
+    // 加载失败时使用默认值
+    teamList.value = [{ team: 'ZimaWeb', copyright: 'Zima' }, { team: 'NoGroup', copyright: 'NoGroup' }]
+  }
+}
 
 function getCopyright() {
   if (team.value) {
-    return teamOptions.find((item) => item.team === team.value)?.copyright
+    return teamList.value.find((item) => item.team === team.value)?.copyright
   }
 }
 function getIcon() {
@@ -126,8 +147,10 @@ async function handleSubmit() {
     emit('close')
   }
 }
-onMounted(() => {
-
+onMounted(async () => {
+  if (props.operation === 'remake_torrent') {
+    await loadTeamOptions()
+  }
 })
 </script>
 <template>
@@ -136,7 +159,7 @@ onMounted(() => {
 
       <div class="mb-6 ml-5" v-if="props.operation == 'remake_torrent'">
         <VChipGroup column v-model="team">
-          <template v-for="(teamOption, index) in teamOptions" :key="index">
+          <template v-for="(teamOption, index) in teamList" :key="index">
             <VChip filter variant="outlined" :value="teamOption.team">
               {{ teamOption.team }}
             </VChip>

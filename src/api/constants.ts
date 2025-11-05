@@ -114,11 +114,6 @@ export const seedStatus = {
   'TorrentPublished': '种',
 }
 
-export const teamOptions = [
-  { team: 'ZimaWeb', copyright: 'Zima' },
-  { team: 'NoGroup', copyright: 'NoGroup' },
-]
-
 export const tagOptions = {
   'Mandarin': '国语',
   'ChineseSubtitles': '中字',
@@ -134,13 +129,13 @@ export const tagOptions = {
   'HighBitrateHighFrameRate': '高比特率高帧率',
   'ThreeD': '3D',
   'Collection': '合集',
-  'SHD':'4K',
+  'SHD': '4K',
   'UHD': '8K',
-  'HLG': 'HLG'
+  'HLG': 'HLG',
 }
 export const mediaCateOptions = {
   'Movie': '电影',
-  'TV': '剧集'
+  'TV': '剧集',
 }
 
 export const categoryOptions = {

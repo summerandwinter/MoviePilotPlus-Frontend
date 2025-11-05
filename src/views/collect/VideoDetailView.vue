@@ -2,7 +2,7 @@
 import { useToast } from 'vue-toastification'
 
 import api from '@/api'
-import { tagOptions, teamOptions, mediaCateOptions, categoryOptions } from '@/api/constants'
+import { tagOptions, mediaCateOptions, categoryOptions } from '@/api/constants'
 import type { VideoInfo, CollectCreate, Site, PtgenInfo, VideoEpisode } from '@/api/types'
 import GroupTile from '@/components/GroupTitle.vue'
 import EpisodeCard from '@/components/cards/EpisodeCard.vue'
@@ -45,6 +45,9 @@ const mediaDetail = ref<VideoInfo>({} as VideoInfo)
 const siteList = ref<Site[]>([])
 
 const ptgen = ref<PtgenInfo>({} as PtgenInfo)
+
+// 制作组列表
+const teamList = ref<any[]>([])
 
 
 // 选中的剧集数量
@@ -104,6 +107,26 @@ const addForm = ref<CollectCreate>({
   site_list: []
 })
 // 调用API查询详情
+// 加载制作组数据
+async function loadTeamOptions() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/TEAM_PARAMS')
+    teamList.value = result.data?.value ?? []
+    // 按照order排序
+    teamList.value.sort((a, b) => (a.order || 0) - (b.order || 0))
+    // 设置默认选中的制作组
+    const defaultTeam = teamList.value.find(item => item.default) || teamList.value[0]
+    if (defaultTeam) {
+      addForm.value.team = defaultTeam.team
+      addForm.value.copyright = defaultTeam.copyright
+    }
+  } catch (error) {
+    console.error('加载制作组数据失败:', error)
+    // 加载失败时使用默认值
+    teamList.value = [{ team: 'ZimaWeb', copyright: 'Zima' }, { team: 'NoGroup', copyright: 'NoGroup' }]
+  }
+}
+
 async function getMediaDetail() {
   if (mediaProps.mediaid && mediaProps.type) {
     mediaDetail.value = await api.get(`${mediaProps.source?.toLowerCase()}/detail`, {
@@ -157,6 +180,9 @@ async function getMediaDetail() {
       addForm.value.tags.push("Completed")
     }
     isRefreshed.value = true
+    
+    // 加载制作组数据
+    await loadTeamOptions()
     if (mediaDetail.value.douban_id) {
       const douban_url = `https://movie.douban.com/subject/${mediaDetail.value.douban_id}/`
       getPtgen(douban_url)
@@ -254,12 +280,10 @@ async function addCollect() {
     console.log('addForm.value.episodes_all: ', addForm.value.episodes_all)
     // 处理版权和制作组信息
     if (addForm.value.team) {
-      teamOptions.forEach(option => {
-        if (option.team === addForm.value.team) {
-          addForm.value.copyright = option.copyright
-          return
-        }
-      })
+      const teamItem = teamList.value.find(item => item.team === addForm.value.team)
+      if (teamItem) {
+        addForm.value.copyright = teamItem.copyright
+      }
     }
     // 提交前检查参数
     console.log(addForm.value)
@@ -929,7 +953,7 @@ function handleIgnore() {
         <div class="mt-6">
           <GroupTile title="制作组" />
           <VChipGroup column v-model="addForm.team">
-            <template v-for="(teamOption, index) in teamOptions" :key="index">
+            <template v-for="(teamOption, index) in teamList" :key="index">
               <VChip :color="addForm.team === teamOption.team ? 'primary' : ''" filter variant="outlined"
                 :value="teamOption.team">
                 {{ teamOption.team }}
