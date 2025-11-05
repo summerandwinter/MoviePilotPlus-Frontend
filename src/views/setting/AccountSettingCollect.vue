@@ -82,6 +82,7 @@ const mgTvTicket = ref('')
 const mgAppTicket = ref('')
 const iqiyiCookie = ref('')
 const youkuCookie = ref('')
+const bilibiliCookie = ref('')
 
 // 查询已设置的腾讯视频Cookie
 async function queryTencentCookie() {
@@ -125,6 +126,16 @@ async function queryYoukuCookie() {
   try {
     const result: { [key: string]: any } = await api.get('system/setting/YoukuCookie')
     if (result && result.data && result.data.value) youkuCookie.value = result.data.value
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// 查询已设置的哔哩哔哩Cookie
+async function queryBilibiliCookie() {
+  try {
+    const result: { [key: string]: any } = await api.get('system/setting/BilibiliCookie')
+    if (result && result.data && result.data.value) bilibiliCookie.value = result.data.value
   } catch (error) {
     console.log(error)
   }
@@ -225,6 +236,24 @@ async function saveYoukuCookie() {
       await reloadSystem()
     }
     else $toast.error('优酷Cookie保存失败！')
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// 保存用户设置的哔哩哔哩Cookie
+async function saveBilibiliCookie() {
+  try {
+    const result: { [key: string]: any } = await api.post(
+      'system/setting/BilibiliCookie',
+      bilibiliCookie.value,
+    )
+
+    if (result.success) {
+      $toast.success('哔哩哔哩Cookie保存成功')
+      await reloadSystem()
+    }
+    else $toast.error('哔哩哔哩Cookie保存失败！')
   } catch (error) {
     console.log(error)
   }
@@ -375,6 +404,7 @@ onMounted(() => {
   queryMgAppTicket()
   queryIqiyiCookie()
   queryYoukuCookie()
+  queryBilibiliCookie()
   loadImageHostingSetting()
   loadMediaServerSetting()
   loadSystemSettings()
@@ -742,6 +772,32 @@ onDeactivated(() => {
           <VForm @submit.prevent="() => { }">
             <div class="d-flex flex-wrap gap-4 mt-4">
               <VBtn type="submit" @click="saveYoukuCookie"> {{ t('common.save') }} </VBtn>
+            </div>
+          </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+  </VRow>
+  <VRow>
+    <VCol cols="12">
+      <VCard>
+        <VCardItem>
+          <VCardTitle> {{ t('setting.collect.bilibiliCookie') }}</VCardTitle>
+          <VCardSubtitle>{{ t('setting.collect.bilibiliCookieHint') }} </VCardSubtitle>
+        </VCardItem>
+        <VCardText>
+          <VTextarea v-model="bilibiliCookie" auto-grow :placeholder="t('setting.collect.bilibiliCookie')"
+            :hint="t('setting.collect.bilibiliCookieHint')" rows="3" persistent-hint />
+        </VCardText>
+        <VCardText>
+          <VAlert type="info" variant="tonal" :title="t('setting.collect.bilibiliCookieTipsTitle')">
+            <span v-html="t('setting.collect.bilibiliCookieTips')" />
+          </VAlert>
+        </VCardText>
+        <VCardText>
+          <VForm @submit.prevent="() => { }">
+            <div class="d-flex flex-wrap gap-4 mt-4">
+              <VBtn type="submit" @click="saveBilibiliCookie"> {{ t('common.save') }} </VBtn>
             </div>
           </VForm>
         </VCardText>
