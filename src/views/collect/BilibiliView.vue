@@ -4,7 +4,7 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import type { CategoryInfo, CategoryItem } from '@/api/types'
 import { default as MediaCardListView } from '@/views/collect/MediaCardListView.vue'
 import { default as MediaSearchView } from '@/views/collect/MediaSearchView.vue'
-import { VTextField, VDialog, VCard, VCardTitle, VCardText, VCardActions, VBtn, VImg, VRow, VCol, VChip } from 'vuetify/components'
+import { VTextField, VDialog, VCard, VCardTitle, VCardText, VCardActions, VBtn, VImg, VRow, VCol, VChip, VMenu, VIcon } from 'vuetify/components'
 import { useToast } from 'vue-toastification'
 
 // 排序 类型 资费 出品 地区 年份 状态 画风 年龄 全部 性别 语言  动画明星 剧场 奖项 其他-characteristic
@@ -161,7 +161,7 @@ async function checkLoginStatus(type: 'tv' | 'web') {
     const userInfo = response.data
     let statusRef = type === 'tv' ? tvLoginStatus : webLoginStatus
     let userInfoRef = type === 'tv' ? tvUserInfo : webUserInfo
-    
+
     userInfoRef.value = userInfo
 
     // 显示用户状态信息
@@ -225,7 +225,11 @@ async function getQRCode() {
 
 // 开始轮询登录状态
 function startPolling() {
-  stopPolling() // 先停止之前的轮询
+  // 确保先停止之前的轮询
+  if (pollingTimer.value) {
+    clearInterval(pollingTimer.value)
+    pollingTimer.value = null
+  }
 
   pollingTimer.value = window.setInterval(async () => {
     try {
@@ -237,7 +241,7 @@ function startPolling() {
 
       if (response.data.status === 0) {
         // 登录成功
-        stopPolling()
+        stopPolling() // 立即关闭轮询
         loginDialogVisible.value = false
         $toast.success('登录成功')
         // 重新获取对应类型的用户信息
@@ -246,7 +250,7 @@ function startPolling() {
         updateCurrentUserInfo(loginType.value)
       } else if (response.data.status === 3) {
         // 二维码过期
-        stopPolling()
+        stopPolling() // 立即关闭轮询
         pollingStatus.value = '二维码已过期'
         $toast.error('二维码已过期，请重新获取')
       }
@@ -297,30 +301,55 @@ watch(filterParams, () => {
 <template>
   <div>
     <div class="px-3 flex justify-between items-center mb-3">
-        <VCombobox ref="searchWordInput" v-model="searchWord" density="comfortable" variant="outlined"
-          class="search-input" style="flex: 1; margin-inline-end: 10px;" prepend-inner-icon="mdi-magnify"
-          append-inner-icon="mdi-close" @click:append-inner="searchClear()" placeholder="搜索哔哩哔哩"
-          @keydown.enter="searchMedia()" hide-details />
-        <div class="flex items-center">
-          <!-- 登录类型切换 -->
-          <VBtn-toggle v-model="loginType" class="mr-2" size="small">
-            <VBtn :value="'web'" @click="updateCurrentUserInfo('web')">网页端</VBtn>
-            <VBtn :value="'tv'" @click="updateCurrentUserInfo('tv')">TV端</VBtn>
-          </VBtn-toggle>
-          
-          <!-- 当前登录类型的用户信息 -->
-          <div v-if="currentUserInfo.isLogin" class="flex items-center mr-3">
-            <VImg :src="currentUserInfo.face" class="rounded-full mr-2" style=" block-size: 32px;inline-size: 32px;" />
-            <span class="mr-2">{{ currentUserInfo.nickname }}</span>
-            <VChip v-if="currentLoginStatus !== '普通用户'" variant="flat" color="primary" size="small">
-              {{ currentLoginStatus }}
-            </VChip>
-          </div>
-          <VBtn v-if="!currentUserInfo.isLogin" color="primary" @click="openLoginDialog(loginType)">
-            登录{{ loginType === 'tv' ? 'TV端' : '网页端' }}
+      <VCombobox ref="searchWordInput" v-model="searchWord" density="comfortable" variant="outlined"
+        class="search-input" style="flex: 1; margin-inline-end: 10px;" prepend-inner-icon="mdi-magnify"
+        append-inner-icon="mdi-close" @click:append-inner="searchClear()" placeholder="搜索哔哩哔哩"
+        @keydown.enter="searchMedia()" hide-details />
+      <div class="flex items-center">
+        <!-- 登录类型切换 -->
+        <VBtn-toggle v-model="loginType" class="mr-2" size="small">
+
+          <VBtn :value="'web'" @click="loginType = 'web'; updateCurrentUserInfo('web')" class="relative">
+            网页端
+            <template #append>
+              <VBadge v-if="webUserInfo.isLogin" color="success" dot
+                class="absolute top-1 right-1 transform -translate-x-1/2 -translate-y-1/2" />
+            </template>
           </VBtn>
-        </div>
+          <VBtn :value="'tv'" @click="loginType = 'tv'; updateCurrentUserInfo('tv')" class="relative">
+            TV端
+            <template #append>
+              <VBadge v-if="tvUserInfo.isLogin" color="success" dot
+                class="absolute top-1 right-1 transform -translate-x-1/2 -translate-y-1/2" />
+            </template>
+          </VBtn>
+        </VBtn-toggle>
+
+        <!-- 当前登录类型的用户信息 -->
+        <VMenu v-if="currentUserInfo.isLogin" location="bottom center" transition="scale-transition" nudge-bottom="10">
+          <template #activator="{ props }">
+            <div v-bind="props" class="relative cursor-pointer mr-3" role="button" tabindex="0">
+              <VImg :src="currentUserInfo.face" class="rounded-full" style="block-size: 32px; inline-size: 32px;" />
+              <VIcon size="20" color="warning" class="absolute -top-2 -right-2  rounded-full">mdi-crown
+              </VIcon>
+            </div>
+          </template>
+          <VCard class="p-3 min-w-[200px]">
+            <div class="flex flex-col items-center">
+              <VImg :src="currentUserInfo.face" class="rounded-full mb-2"
+                style="block-size: 64px; inline-size: 64px;" />
+              <span class="font-medium">{{ currentUserInfo.nickname }}</span>
+              <VChip v-if="currentLoginStatus !== '普通用户'" variant="flat" color="primary" size="small" class="mt-1">
+                {{ currentLoginStatus }}
+              </VChip>
+            </div>
+          </VCard>
+        </VMenu>
+        <VBtn v-if="!currentUserInfo.isLogin" color="primary" @click="openLoginDialog(loginType)">
+          登录{{ loginType === 'tv' ? 'TV端' : '网页端' }}
+        </VBtn>
       </div>
+    </div>
     <div class="px-3" v-show="!isSearch">
       <div class="flex justify-start align-center">
         <VChipGroup v-model="type" column mandatory>
