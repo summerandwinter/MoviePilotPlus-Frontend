@@ -1,4 +1,3 @@
-
 // 订阅
 export interface Subscribe {
   // 订阅ID
@@ -1371,6 +1370,15 @@ export interface CategoryItem {
   value: string
   cate: string
 }
+export interface UserInfo {
+  is_login: boolean
+  vip_status: number
+  vip_type: number
+  vip_type_name: string
+  due_date: string
+  nickname: string
+  face: string
+}
 
 // 视频集信息
 export interface VideoEpisode {
@@ -1424,36 +1432,35 @@ export interface VideoDefinition {
   audiobbandwidth: number
 }
 export interface PtgenInfo {
-  
   cn_title: string
-  
+
   en_title: string
-  
+
   year: string
 
   season: number
-  
+
   sub_title: string
-  
+
   douban_id: string
-  
+
   imdb_id: string | null
-  
+
   description: string
 }
 
 export interface SiteSchema {
-  id: number,
-  name: string,
-  domain: string,
-  download_page: string,
-  upload_page: string,
-  update_api: string,
-  upload_api: string,
-  tracker_api: string,
-  detail_page: string,
-  is_https: boolean,
-  cookie_required: boolean,
+  id: number
+  name: string
+  domain: string
+  download_page: string
+  upload_page: string
+  update_api: string
+  upload_api: string
+  tracker_api: string
+  detail_page: string
+  is_https: boolean
+  cookie_required: boolean
   template: string
 }
 // 视频信息
@@ -1658,14 +1665,18 @@ export interface CollectProgress {
   id: number
   type: string
   name: string
-  action: "prepare_download" | "collect_mediainfo" | "screenshot" | "collect_desc" | "task_rename" | "create_download_task"
+  action:
+    | 'prepare_download'
+    | 'collect_mediainfo'
+    | 'screenshot'
+    | 'collect_desc'
+    | 'task_rename'
+    | 'create_download_task'
   subject_id: number
   success: boolean
   params: string | null
   error_msg: string | null
   created_at: string
-  
-  
 }
 
 export interface CollectCreate {
@@ -1698,9 +1709,9 @@ export interface CollectCreate {
   auto_publish: boolean
   anon_publish: boolean
   tags: string[]
-  cover: string,
-  poster: string,
-  episodes_all: number,
+  cover: string
+  poster: string
+  episodes_all: number
   // 剧集列表
   episode_list: Array<{
     // 剧集ID
@@ -1721,7 +1732,7 @@ export interface CollectCreate {
   // 用户ID
   user_id?: string
   copyright?: string
-  team?: string,
+  team?: string
 }
 
 export interface DownloadTask {
@@ -1802,7 +1813,6 @@ export interface Progress {
 }
 
 export interface SiteSeed {
-  
   id: number
   collect_id: number
   site_id: number
@@ -1818,10 +1828,10 @@ export interface SiteSeed {
   layout: string
   torrent_uploaded: boolean
   torrent_downloaded: boolean
-  torrent_seeded: boolean 
+  torrent_seeded: boolean
   deleted: boolean
 }
-  
+
 // 种子缓存项
 export interface TorrentCacheItem {
   // 种子hash（用于操作标识）

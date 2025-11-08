@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import api from '@/api'
 import { ref, reactive, watch, onMounted } from 'vue'
-import type { CategoryInfo, CategoryItem } from '@/api/types'
+import type { CategoryInfo, CategoryItem, UserInfo } from '@/api/types'
 import { default as MediaCardListView } from '@/views/collect/MediaCardListView.vue'
 import { default as MediaSearchView } from '@/views/collect/MediaSearchView.vue'
 import { VTextField, VDialog, VCard, VCardTitle, VCardText, VCardActions, VBtn, VImg, VRow, VCol, VChip, VMenu, VIcon } from 'vuetify/components'
@@ -18,36 +18,29 @@ const cates = ref<Record<string, CategoryInfo[]>>({})
 const searchWord = ref<string | null>(null)
 const isSearch = ref(false)
 
-// 用户信息 - 分开管理TV端和web端
-type BilibiliUserInfo = {
-  isLogin: boolean
-  vipStatus: number
-  vipType: number
-  vipTypeName: string
-  nickname: string
-  face: string
-}
 
-const tvUserInfo = ref<BilibiliUserInfo>({
-  isLogin: false,
-  vipStatus: 0,
-  vipType: 0,
-  vipTypeName: '',
+const tvUserInfo = ref<UserInfo>({
+  is_login: false,
+  vip_status: 0,
+  vip_type: 0,
+  vip_type_name: '',
+  due_date: '',
   nickname: '',
   face: ''
 })
 
-const webUserInfo = ref<BilibiliUserInfo>({
-  isLogin: false,
-  vipStatus: 0,
-  vipType: 0,
-  vipTypeName: '',
+const webUserInfo = ref<UserInfo>({
+  is_login: false,
+  vip_status: 0,
+  vip_type: 0,
+  vip_type_name: '',
+  due_date: '',
   nickname: '',
   face: ''
 })
 
 // 当前显示的用户信息（根据登录类型切换）
-const currentUserInfo = ref<BilibiliUserInfo>(webUserInfo.value)
+const currentUserInfo = ref<UserInfo>(webUserInfo.value)
 
 // 登录弹窗相关
 const loginDialogVisible = ref(false)
@@ -157,36 +150,19 @@ function updateCurrentUserInfo(type: 'tv' | 'web') {
 // 检测用户登录状态
 async function checkLoginStatus(type: 'tv' | 'web') {
   try {
-    const response = await api.get(`bilibili/user/info/${type}`)
-    const userInfo = response.data
+    const userInfo: UserInfo = await api.get(`bilibili/user/info/${type}`)
     let statusRef = type === 'tv' ? tvLoginStatus : webLoginStatus
     let userInfoRef = type === 'tv' ? tvUserInfo : webUserInfo
 
     userInfoRef.value = userInfo
-
-    // 显示用户状态信息
-    if (!userInfo.isLogin) {
-      statusRef.value = '未登录'
-    } else if (userInfo.vipStatus === 0) {
-      statusRef.value = '普通用户'
-    } else if (userInfo.vipStatus === 1) {
-      if (userInfo.vipType === 1) {
-        statusRef.value = 'VIP用户'
-      } else if (userInfo.vipType === 2) {
-        statusRef.value = 'SVIP用户'
-      } else {
-        statusRef.value = '普通用户'
-      }
-    } else {
-      statusRef.value = '未知状态'
-    }
+    statusRef.value = userInfo.vip_type_name || '未知状态'
   } catch (error) {
     console.error(`获取哔哩哔哩${type === 'tv' ? 'TV端' : 'web端'}用户信息失败:`, error)
     if (type === 'tv') {
-      tvUserInfo.value.isLogin = false
+      tvUserInfo.value.is_login = false
       tvLoginStatus.value = '未登录'
     } else {
-      webUserInfo.value.isLogin = false
+      webUserInfo.value.is_login = false
       webLoginStatus.value = '未登录'
     }
   }
@@ -216,7 +192,7 @@ async function getQRCode() {
       stopPolling()
       pollingStatus.value = '登录超时'
       $toast.error('登录超时，请重新扫码')
-    }, 30000)
+    }, 300000)
   } catch (error) {
     console.error('获取二维码失败:', error)
     $toast.error('获取二维码失败')
@@ -312,25 +288,26 @@ watch(filterParams, () => {
           <VBtn :value="'web'" @click="loginType = 'web'; updateCurrentUserInfo('web')" class="relative">
             网页端
             <template #append>
-              <VBadge v-if="webUserInfo.isLogin" color="success" dot
+              <VBadge v-if="webUserInfo.is_login" color="success" dot
                 class="absolute top-1 right-1 transform -translate-x-1/2 -translate-y-1/2" />
             </template>
           </VBtn>
           <VBtn :value="'tv'" @click="loginType = 'tv'; updateCurrentUserInfo('tv')" class="relative">
             TV端
             <template #append>
-              <VBadge v-if="tvUserInfo.isLogin" color="success" dot
+              <VBadge v-if="tvUserInfo.is_login" color="success" dot
                 class="absolute top-1 right-1 transform -translate-x-1/2 -translate-y-1/2" />
             </template>
           </VBtn>
         </VBtn-toggle>
 
         <!-- 当前登录类型的用户信息 -->
-        <VMenu v-if="currentUserInfo.isLogin" location="bottom center" transition="scale-transition" nudge-bottom="10">
+        <VMenu v-if="currentUserInfo.is_login" location="bottom center" transition="scale-transition" nudge-bottom="10">
           <template #activator="{ props }">
             <div v-bind="props" class="relative cursor-pointer mr-3" role="button" tabindex="0">
               <VImg :src="currentUserInfo.face" class="rounded-full" style="block-size: 32px; inline-size: 32px;" />
-              <VIcon size="20" color="warning" class="absolute -top-2 -right-2  rounded-full">mdi-crown
+              <VIcon v-if="currentUserInfo.vip_status === 1" size="20" color="warning"
+                class="absolute -top-2 -right-2  rounded-full">mdi-crown
               </VIcon>
             </div>
           </template>
@@ -339,13 +316,14 @@ watch(filterParams, () => {
               <VImg :src="currentUserInfo.face" class="rounded-full mb-2"
                 style="block-size: 64px; inline-size: 64px;" />
               <span class="font-medium">{{ currentUserInfo.nickname }}</span>
-              <VChip v-if="currentLoginStatus !== '普通用户'" variant="flat" color="primary" size="small" class="mt-1">
-                {{ currentLoginStatus }}
+              <span class="font-medium text-sm text-gray-500">{{ currentUserInfo.due_date }}</span>
+              <VChip v-if="currentUserInfo.vip_status === 1" variant="flat" color="primary" size="small" class="mt-1">
+                {{ currentUserInfo.vip_type_name }}
               </VChip>
             </div>
           </VCard>
         </VMenu>
-        <VBtn v-if="!currentUserInfo.isLogin" color="primary" @click="openLoginDialog(loginType)">
+        <VBtn v-if="!currentUserInfo.is_login" color="primary" @click="openLoginDialog(loginType)">
           登录{{ loginType === 'tv' ? 'TV端' : '网页端' }}
         </VBtn>
       </div>
