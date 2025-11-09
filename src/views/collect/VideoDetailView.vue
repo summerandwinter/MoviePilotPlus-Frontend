@@ -102,7 +102,7 @@ const addForm = ref<CollectCreate>({
   auto_publish: true,
   anon_publish: true,
   source: "WEB-DL",
-  tags: ['Original'],
+  tags: [],
   episode_list: [],
   site_list: []
 })
@@ -180,7 +180,7 @@ async function getMediaDetail() {
       addForm.value.tags.push("Completed")
     }
     isRefreshed.value = true
-    
+
     // 加载制作组数据
     await loadTeamOptions()
     if (mediaDetail.value.douban_id) {
