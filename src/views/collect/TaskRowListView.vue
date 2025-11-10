@@ -1,19 +1,25 @@
 <script lang="ts" setup>
-import type { Collect } from '@/api/types'
-import TaskItem from '@/components/cards/TaskItem.vue'
-import { useI18n } from 'vue-i18n'
+// 核心导入
+import { PropType, ref, reactive, computed, watch, onMounted, getCurrentInstance } from 'vue'
 import { useDisplay } from 'vuetify'
+import { useI18n } from 'vue-i18n'
+import { useToast } from 'vue-toastification'
+
+// API和类型导入
 import api from '@/api'
-import type { Site, SiteSeed } from '@/api/types'
-const emit = defineEmits(['remove'])
-// 设备模式
-const display = useDisplay()
+import type { Collect, Site, SiteSeed } from '@/api/types'
 import { collectStatus, categoryOptions } from '@/api/constants'
 
+// 组件导入
+import TaskItem from '@/components/cards/TaskItem.vue'
 
-// 国际化
+// 初始化
 const { t } = useI18n()
-
+const display = useDisplay()
+const { proxy } = getCurrentInstance()!
+const emit = defineEmits(['remove'])
+// 提示框
+const $toast = useToast()
 // 定义输入参数
 const props = defineProps({
   items: Array as PropType<Collect[]>,
@@ -21,6 +27,8 @@ const props = defineProps({
 // 所有站点
 const allSites = ref<Site[]>([])
 const keyword = ref('')
+// 控制选择框显示/隐藏的开关
+const showSelectionControls = ref(false)
 // 过滤表单
 const filterForm: Record<string, string[]> = reactive({
   keyword: [] as string[],
@@ -74,14 +82,14 @@ const filterOptions: Record<string, string[]> = reactive({
 
 // 过滤项映射
 const filterTitles: Record<string, string> = {
-  keyword: t('torrent.keyword'),
-  site: t('torrent.siteInclude'),
-  siteNotInclude: t('torrent.siteNotInclude'),
-  status: t('torrent.status'),
-  videoCode: t('torrent.filterVideoCode'),
-  edition: t('torrent.filterEdition'),
-  resolution: t('torrent.filterResolution'),
-  releaseGroup: t('torrent.filterReleaseGroup'),
+  keyword: t('collect.keyword'),
+  site: t('collect.siteInclude'),
+  siteNotInclude: t('collect.siteNotInclude'),
+  status: t('collect.status'),
+  videoCode: t('collect.filterVideoCode'),
+  edition: t('collect.filterEdition'),
+  resolution: t('collect.filterResolution'),
+  releaseGroup: t('collect.filterReleaseGroup'),
   // 媒体类型和文件大小使用国际化翻译
   cate: t('filterRule.mediaType'),
   fileSizeRange: t('workflow.filterTorrents.size'),
@@ -89,8 +97,8 @@ const filterTitles: Record<string, string> = {
 
 // 排序中文名
 const sortTitles: Record<string, string> = {
-  default: t('torrent.sortDefault'),
-  size: t('torrent.sortSize')
+  default: t('collect.sortDefault'),
+  size: t('collect.sortSize')
 }
 
 // 排序字段
@@ -106,6 +114,16 @@ const filteredDataList = ref<Array<Collect>>([])
 
 // 显示用的数据列表
 const displayDataList = ref<Array<Collect>>([])
+const selectedItems = ref<number[]>([])
+const showDeleteConfirm = ref(false)
+const deleteOptions = ref({
+  delete_file: true,
+  remove_seed: true
+})
+// 全选状态的计算属性
+const isAllSelected = computed(() => {
+  return filteredDataList.value.length > 0 && selectedItems.value.length === filteredDataList.value.length
+})
 
 // 计算已选择的过滤条件数量
 const getFilterCount = computed(() => {
@@ -132,6 +150,14 @@ function removeFilter(key: string, value: string) {
   const index = filterForm[key].indexOf(value)
   if (index !== -1) {
     filterForm[key].splice(index, 1)
+  }
+}
+
+// 从选中列表中移除单个任务
+function removeSelectedItem(id: number) {
+  const index = selectedItems.value.indexOf(id)
+  if (index !== -1) {
+    selectedItems.value.splice(index, 1)
   }
 }
 
@@ -169,7 +195,13 @@ async function querySites() {
   }
 }
 // 修改watch监听，同时监听排序字段的变化
-watch([filterForm, sortField, sortType], filterData)
+watch([filterForm, sortField, sortType], () => {
+  // 筛选条件改变时，清空选中状态
+  if (selectedItems.value.length > 0) {
+    selectedItems.value = []
+  }
+  filterData()
+})
 
 // 计算过滤后的列表
 function filterData() {
@@ -400,6 +432,79 @@ function remove(collect_id: number) {
   }
   displayDataList.value.splice(idx, 1)
 
+  // 从选中列表中移除
+  const selectedIdx = selectedItems.value.indexOf(collect_id)
+  if (selectedIdx !== -1) {
+    selectedItems.value.splice(selectedIdx, 1)
+  }
+}
+
+// 切换选中状态
+function toggleSelect(id: number) {
+  const idx = selectedItems.value.indexOf(id)
+  if (idx !== -1) {
+    selectedItems.value.splice(idx, 1)
+  } else {
+    selectedItems.value.push(id)
+  }
+}
+
+// 全选/反选
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    // 如果已全选，则取消全选
+    selectedItems.value = []
+  } else {
+    // 全选筛选后的所有项目
+    selectedItems.value = filteredDataList.value.map(item => item.id)
+  }
+}
+
+// 显示删除确认对话框
+function showDeleteConfirmDialog() {
+  if (selectedItems.value.length === 0) {
+    $toast.warning('请先选择要删除的任务')
+    return
+  }
+  showDeleteConfirm.value = true
+}
+
+// 确认删除
+async function confirmDelete() {
+  // 检查是否有选中的任务
+  if (!selectedItems.value || selectedItems.value.length === 0) {
+    $toast.error('请先选择要删除的任务')
+    showDeleteConfirm.value = false
+    return
+  }
+
+  try {
+    const response = await api.post('collect/batchDelete', {
+      collect_ids: selectedItems.value,
+      delete_file: deleteOptions.value.delete_file,
+      remove_seed: deleteOptions.value.remove_seed
+    })
+    $toast.success('删除成功')
+    // 从显示列表中移除已删除的项目
+    selectedItems.value.forEach(id => {
+      const idx = displayDataList.value.findIndex(item => item.id === id)
+      if (idx !== -1) {
+        displayDataList.value.splice(idx, 1)
+      }
+    })
+    // 清空选中列表
+    selectedItems.value = []
+  } catch (error) {
+    $toast.error('删除失败')
+    console.error('删除任务失败:', error)
+  } finally {
+    showDeleteConfirm.value = false
+    // 重置删除选项
+    deleteOptions.value = {
+      delete_file: true,
+      remove_seed: true
+    }
+  }
 }
 function filterSiteSeed() {
   props.items?.forEach(item => {
@@ -421,10 +526,28 @@ onMounted(() => {
     <div class="search-header d-none d-sm-block">
       <!-- PC端页面头部和筛选栏 -->
       <VCard class="view-header mb-3">
-        <div class="d-flex align-center flex-wrap pa-3">
-          <VChip color="primary" variant="flat" size="small" class="search-count me-3" prepend-icon="mdi-magnify">
-            {{ filteredDataList?.length || 0 }} {{ t('torrent.resources') }}
-          </VChip>
+        <div class="pa-3">
+          <!-- 第一行：VChip和批量操作区域 -->
+          <div class="d-flex align-center mb-2">
+            <VChip color="primary" variant="flat" size="small" class="search-count" prepend-icon="mdi-magnify">
+              {{ filteredDataList?.length || 0 }} {{ t('collect.resources') }}
+            </VChip>
+            <!-- 批量操作区域 -->
+            <div class="batch-operations mr-0">
+
+              <VBtn v-if="showSelectionControls && selectedItems.length > 0" color="error" variant="flat" size="small"
+                @click="showDeleteConfirmDialog" prepend-icon="mdi-delete" class="ml-2">
+                {{ t('collect.batchDelete') }} ({{ selectedItems.length }})
+              </VBtn>
+              <VCheckbox v-if="showSelectionControls" v-model="isAllSelected" @change="toggleSelectAll"
+                :label="t('collect.selectAll')" density="compact" hide-details class="me-2 ml-2" />
+            </div>
+            <VBtn variant="tonal" size="small" @click="showSelectionControls = !showSelectionControls"
+              :prepend-icon="showSelectionControls ? 'mdi-checkbox-blank-off-outline' : 'mdi-checkbox-marked-outline'">
+              {{ showSelectionControls ? t('collect.hideSelectionControls') : t('collect.showSelectionControls') }}
+            </VBtn>
+          </div>
+          <!-- 第二行：筛选区域 -->
           <div class="filter-bar">
             <!-- 排序选择 -->
             <VSelect v-model="sortField"
@@ -451,11 +574,11 @@ onMounted(() => {
                   <VCardText class="filter-menu-content">
                     <div class="flex justify-between">
                       <VBtn variant="text" size="small" color="primary" @click="selectAll(key)">
-                        {{ t('torrent.selectAll') }}
+                        {{ t('collect.selectAll') }}
                       </VBtn>
                       <VBtn v-if="filterForm[key].length > 0" variant="text" size="small" color="error"
                         @click="clearFilter(key)">
-                        {{ t('torrent.clear') }}
+                        {{ t('collect.clear') }}
                       </VBtn>
                     </div>
                     <VChipGroup v-model="filterForm[key]" column multiple class="filter-options">
@@ -472,7 +595,7 @@ onMounted(() => {
             <!-- 全部筛选按钮 -->
             <VBtn variant="tonal" size="small" color="primary" class="filter-btn me-2" prepend-icon="mdi-filter-variant"
               rounded="pill" @click="toggleAllFilterMenu">
-              {{ t('torrent.allFilters') }}
+              {{ t('collect.allFilters') }}
               <VChip v-if="getFilterCount > 0" size="small" color="primary" class="ms-1" variant="elevated">
                 {{ getFilterCount }}
               </VChip>
@@ -481,13 +604,13 @@ onMounted(() => {
             <!-- 清除全部筛选按钮 -->
             <VBtn v-if="getFilterCount > 0" variant="text" size="small" color="error" @click="clearAllFilters"
               class="filter-btn" prepend-icon="mdi-close-circle-outline">
-              {{ t('torrent.clearFilters') }}
+              {{ t('collect.clearFilters') }}
             </VBtn>
           </div>
 
         </div>
         <div class="search-bar">
-          <VTextField v-model="keyword" :label="filterTitles.keyword" :placeholder="t('torrent.searchHint')"
+          <VTextField v-model="keyword" :label="filterTitles.keyword" :placeholder="t('collect.searchHint')"
             append-inner-icon="mdi-close" prepend-inner-icon="mdi-magnify" density="compact" variant="solo" hide-details
             single-line @click:append-inner="keywordClear" @blur="keywordSearch" @keyup.enter="keywordSearch" />
         </div>
@@ -514,7 +637,7 @@ onMounted(() => {
           <div class="d-flex align-center w-100">
             <VChip color="primary" variant="elevated" size="small" class="search-count me-auto"
               prepend-icon="mdi-magnify">
-              {{ filteredDataList?.length || 0 }} {{ t('torrent.resources') }}
+              {{ filteredDataList?.length || 0 }} {{ t('collect.resources') }}
             </VChip>
 
             <!-- 排序选择 -->
@@ -530,13 +653,32 @@ onMounted(() => {
             </VSelect>
           </div>
 
+          <!-- 批量操作区域 - 移动端 -->
+          <div class="batch-operations-mobile w-100">
+            <div class="d-flex justify-between align-center">
+
+              <div class="d-flex">
+                <VCheckbox v-if="showSelectionControls" v-model="isAllSelected" @change="toggleSelectAll"
+                  :label="t('collect.selectAll')" density="compact" hide-details class="me-2" />
+                <VBtn v-if="showSelectionControls && selectedItems.length > 0" color="error" variant="flat" size="small"
+                  @click="showDeleteConfirmDialog" prepend-icon="mdi-delete">
+                  {{ t('collect.deleteSelected') }}({{ selectedItems.length }})
+                </VBtn>
+              </div>
+              <VBtn variant="tonal" size="small" @click="showSelectionControls = !showSelectionControls"
+                :prepend-icon="showSelectionControls ? 'mdi-checkbox-blank-off-outline' : 'mdi-checkbox-marked-outline'">
+                {{ showSelectionControls ? t('collect.hideSelectionControls') : t('collect.showSelectionControls') }}
+              </VBtn>
+            </div>
+          </div>
+
           <!-- 筛选图标按钮区域 -->
           <div class="filter-buttons-grid w-100 mt-2">
             <!-- 全部筛选按钮 -->
             <VBtn variant="text" color="primary" class="filter-btn-mobile" @click="toggleAllFilterMenu">
               <VIcon icon="mdi-filter-variant" class="filter-icon me-1"></VIcon>
               <span class="filter-label">
-                {{ t('torrent.allFilters') }}
+                {{ t('collect.allFilters') }}
               </span>
               <VBadge v-if="getFilterCount > 0" :content="getFilterCount" color="primary" location="top end"
                 offset-x="-10" offset-y="-10"></VBadge>
@@ -554,7 +696,7 @@ onMounted(() => {
           </div>
         </div>
         <div class="search-bar">
-          <VTextField v-model="keyword" :label="filterTitles.keyword" :placeholder="t('torrent.searchHint')"
+          <VTextField v-model="keyword" :label="filterTitles.keyword" :placeholder="t('collect.searchHint')"
             append-inner-icon="mdi-close" prepend-inner-icon="mdi-magnify" density="compact" variant="solo" hide-details
             single-line @click:append-inner="keywordClear" @blur="keywordSearch" @keyup.enter="keywordSearch" />
         </div>
@@ -568,11 +710,11 @@ onMounted(() => {
         <VDialogCloseBtn @click="allFilterMenuOpen = false" />
         <VCardTitle class="py-3 d-flex align-center">
           <VIcon icon="mdi-filter-variant" class="me-2"></VIcon>
-          <span>{{ t('torrent.allFilters') }}</span>
+          <span>{{ t('collect.allFilters') }}</span>
           <VSpacer />
           <VBtn v-if="getFilterCount > 0" class="me-10" variant="text" size="small" color="error"
             @click="clearAllFilters">
-            {{ t('torrent.clearAll') }}
+            {{ t('collect.clearAll') }}
           </VBtn>
         </VCardTitle>
         <VDivider />
@@ -587,11 +729,11 @@ onMounted(() => {
                 <VCardTitle>{{ title }}</VCardTitle>
                 <template #append>
                   <VBtn variant="text" size="small" color="primary" @click="selectAll(key)">
-                    {{ t('torrent.selectAll') }}
+                    {{ t('collect.selectAll') }}
                   </VBtn>
                   <VBtn v-if="filterForm[key].length > 0" variant="text" size="small" color="error"
                     @click="clearFilter(key)">
-                    {{ t('torrent.clear') }}
+                    {{ t('collect.clear') }}
                   </VBtn>
                 </template>
               </VCardItem>
@@ -618,10 +760,10 @@ onMounted(() => {
           <VSpacer />
           <VBtn v-if="filterForm[currentFilter].length > 0" variant="text" size="small" color="error"
             @click="clearFilter(currentFilter)">
-            {{ t('torrent.clear') }}
+            {{ t('collect.clear') }}
           </VBtn>
           <VBtn variant="text" size="small" color="primary" @click="selectAll(currentFilter)">
-            {{ t('torrent.selectAll') }}
+            {{ t('collect.selectAll') }}
           </VBtn>
         </VCardTitle>
         <VDivider />
@@ -636,7 +778,7 @@ onMounted(() => {
         <VCardActions>
           <VSpacer />
           <VBtn color="primary" prepend-icon="mdi-check" class="px-5" @click="filterMenuOpen = false">
-            {{ t('torrent.confirm') }}
+            {{ t('collect.confirm') }}
           </VBtn>
         </VCardActions>
       </VCard>
@@ -654,12 +796,55 @@ onMounted(() => {
         class="resource-list overflow-visible" @load="loadMore">
         <template #loading />
         <template #empty />
-        <div v-for="(item, index) in displayDataList" :key="item.id">
-          <TaskItem :task="item" :key="item.id" @remove="remove" />
+        <div v-for="(item, index) in displayDataList" :key="item.id" class="resource-item-container">
+          <div class="selection-checkbox" v-if="showSelectionControls">
+            <VCheckbox v-model="selectedItems" :value="item.id" density="compact" hide-details />
+          </div>
+          <div class="task-content">
+            <TaskItem :task="item" :key="item.id" @remove="remove" />
+          </div>
           <VDivider v-if="index < displayDataList.length - 1" class="my-2" />
         </div>
       </VInfiniteScroll>
     </VCard>
+
+    <!-- 批量删除确认对话框 -->
+    <VDialog v-model="showDeleteConfirm" max-width="500px" location="center">
+      <VCard>
+        <VCardTitle class="text-error">
+          <VIcon icon="mdi-alert-circle-outline" class="me-2"></VIcon>
+          {{ t('collect.deleteConfirm') }}
+        </VCardTitle>
+        <VDivider />
+        <VCardText>
+          <div class="mb-4">
+            <p class="mb-2">{{ t('collect.selectedTasks') }}: {{ selectedItems.length }}</p>
+            <div class="selected-tasks-list max-h-48 overflow-y-auto">
+              <div v-for="id in selectedItems.slice(0, 10)" :key="id"
+                class="task-item-ellipsis d-flex items-center gap-2">
+                <span class="flex-1 min-w-0 text-ellipsis overflow-hidden">
+                  {{displayDataList.find((item: any) => item.id === id)?.cn_title || `ID:
+                  ${id}`}}{{displayDataList.find((item: any) => item.id === id)?.year ? ` (${displayDataList.find((item:
+                    any) => item.id === id)?.year})` : ''}}
+                </span>
+                <VIcon icon="mdi-close-circle"
+                  class="text-error cursor-pointer hover:opacity-70 transition-opacity flex-shrink-0"
+                  @click.stop="removeSelectedItem(id)" title="从选中列表中移除"></VIcon>
+              </div>
+              <div v-if="selectedItems.length > 10" class="text-grey">
+                ...等{{ selectedItems.length }}个任务
+              </div>
+            </div>
+          </div>
+          <VCheckbox v-model="deleteOptions.remove_seed" :label="t('collect.removeSeed')" color="error" />
+          <VCheckbox v-model="deleteOptions.delete_file" :label="t('collect.deleteFile')" color="error" />
+        </VCardText>
+        <VCardActions>
+          <VBtn @click="showDeleteConfirm = false">{{ t('collect.cancel') }}</VBtn>
+          <VBtn color="error" @click="confirmDelete">{{ t('collect.delete') }}</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </div>
 </template>
 <style scoped>
@@ -768,6 +953,12 @@ onMounted(() => {
   padding-inline: 12px;
 }
 
+.batch-operations {
+  display: flex;
+  align-items: center;
+  margin-inline: auto;
+}
+
 .resource-list-container {
   padding: 8px;
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
@@ -778,6 +969,62 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+
+.resource-item-container {
+  position: relative;
+  inline-size: 100%;
+}
+
+.selection-checkbox {
+  position: absolute;
+  z-index: 10;
+  inset-block-start: 5px;
+  inset-inline-start: 5px;
+}
+
+.task-content {
+  box-sizing: border-box;
+  flex: 1;
+  inline-size: 100%;
+}
+
+.task-content .torrent-item {
+  box-sizing: border-box;
+  inline-size: 100%;
+}
+
+.selected-tasks-list {
+  padding: 8px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+  border-radius: 8px;
+  background-color: rgba(var(--v-theme-surface-variant), 0.05);
+  max-block-size: 200px;
+  overflow-y: auto;
+  scrollbar-color: rgba(var(--v-theme-primary), 0.3) transparent;
+  scrollbar-width: thin;
+}
+
+.selected-tasks-list::-webkit-scrollbar {
+  inline-size: 6px;
+}
+
+.selected-tasks-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.selected-tasks-list::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: rgba(var(--v-theme-primary), 0.3);
+}
+
+.task-item-ellipsis {
+  overflow: hidden;
+  padding-block: 2px;
+  padding-inline: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .no-results {
@@ -791,7 +1038,22 @@ onMounted(() => {
 .filter-buttons-grid {
   display: grid;
   gap: 4px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.batch-operations-mobile {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border-radius: 8px;
+  background-color: rgba(var(--v-theme-surface-variant), 0.08);
+  gap: 8px;
+  margin-block-start: 8px;
+}
+
+.batch-operations-mobile .d-flex {
+  align-items: center;
+  justify-content: space-between;
 }
 
 .filter-btn-mobile {

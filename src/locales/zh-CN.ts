@@ -1,4 +1,4 @@
-import { collectFromHash } from "@fullcalendar/core/internal";
+import { collectFromHash } from '@fullcalendar/core/internal'
 
 export default {
   common: {
@@ -1032,7 +1032,7 @@ export default {
       detail_page: '详情地址',
       is_https: '是否Https',
       cookie_required: '是否需要Cookie',
-      template: '模版'
+      template: '模版',
     },
     hints: {
       name: '站点名称，根据站点域名自动生成',
@@ -1045,7 +1045,7 @@ export default {
       detail_page: '详情地址，如：https://examples.com/detail.php',
       is_https: '如果站点是https协议就开启',
       cookie_required: '站点接口是否需要 cookie,有些站点如：馒头是通过 apikey 访问接口',
-      template: '配置站点分类、来源、分辨率、视频编码、音频编码、地区、制作组、标签等字典与系统标准字典的映射关系'
+      template: '配置站点分类、来源、分辨率、视频编码、音频编码、地区、制作组、标签等字典与系统标准字典的映射关系',
     },
     actions: {
       add: '新增站点模板',
@@ -1056,7 +1056,7 @@ export default {
       addFailed: '新增站点模板失败',
       updateSuccess: '更新成功',
       updateFailed: '更新失败',
-    }
+    },
   },
   site: {
     noSites: '没有站点',
@@ -1277,7 +1277,7 @@ export default {
       raiseException: '异常抛出',
       raiseExceptionHint: '下载工具发生异常时的抛出异常信息方便调试',
       apiDebug: '日志调试',
-      apiDebugHint:'打印采集器相关的 API 请求日志，接口请求日志体积较大只有必要的时候才需要打开',
+      apiDebugHint: '打印采集器相关的 API 请求日志，接口请求日志体积较大只有必要的时候才需要打开',
       saveFailed: '保存失败',
       tencentCookie: '腾讯视频Cookie',
       tencentCookieHint: '设置腾讯视频Cookie，用于获取视频播放地址',
@@ -1296,19 +1296,26 @@ export default {
       iqiyiCookieTips: '访问https://www.iqiyi.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面的输入框中',
       iqiyiCookieTipsTitle: '获取方式：',
       youkuCookie: '优酷Cookie',
-  youkuCookieHint: '设置优酷Cookie，用于获取视频播放地址',
-  youkuCookieTips: '访问https://www.youku.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面的输入框中',
-  youkuCookieTipsTitle: '获取方式：',
-  bilibiliCookie: '哔哩哔哩Cookie',
-  bilibiliCookieHint: '设置哔哩哔哩Cookie，用于获取视频播放地址',
-  bilibiliCookieTips: '访问https://www.bilibili.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面的输入框中',
-  bilibiliCookieTipsTitle: '获取方式：',
-      tvFileFormatHint: '设置电视剧文件格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      movieFileFormatHint: '设置电影文件格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      tvTitleFormatHint: '设置电视剧标题格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      movieTitleFormatHint: '设置电影标题格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      tvFolderFormatHint: '设置电视剧文件夹格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      movieFolderFormatHint: '设置电影文件夹格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      youkuCookieHint: '设置优酷Cookie，用于获取视频播放地址',
+      youkuCookieTips: '访问https://www.youku.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面的输入框中',
+      youkuCookieTipsTitle: '获取方式：',
+      bilibiliCookie: '哔哩哔哩Cookie',
+      bilibiliCookieHint: '设置哔哩哔哩Cookie，用于获取视频播放地址',
+      bilibiliCookieTips:
+        '访问https://www.bilibili.com/ 1、打开控制台 2、复制请求头中完整的Cookie 3、粘贴到上面的输入框中',
+      bilibiliCookieTipsTitle: '获取方式：',
+      tvFileFormatHint:
+        '设置电视剧文件格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      movieFileFormatHint:
+        '设置电影文件格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      tvTitleFormatHint:
+        '设置电视剧标题格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      movieTitleFormatHint:
+        '设置电影标题格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      tvFolderFormatHint:
+        '设置电视剧文件夹格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      movieFolderFormatHint:
+        '设置电影文件夹格式，使用Jinja2语法，支持变量：cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
       tvFileFormat: '电视剧文件格式',
       movieFileFormat: '电影文件格式',
       tvTitleFormat: '电视剧标题格式',
@@ -2417,13 +2424,13 @@ export default {
     createFolder: '创建文件夹',
     fileName: '文件名',
     fileSize: '文件大小',
-  fileSizeRange: {
-    tiny: '超小文件 (< 500MB)',
-    small: '小文件 (500MB-2GB)',
-    medium: '中等文件 (2GB-10GB)',
-    large: '大文件 (10GB-30GB)',
-    xlarge: '超大文件 (> 30GB)'
-  },
+    fileSizeRange: {
+      tiny: '超小文件 (< 500MB)',
+      small: '小文件 (500MB-2GB)',
+      medium: '中等文件 (2GB-10GB)',
+      large: '大文件 (10GB-30GB)',
+      xlarge: '超大文件 (> 30GB)',
+    },
     fileType: '文件类型',
     lastModified: '修改时间',
     actions: '操作',
@@ -2990,5 +2997,43 @@ export default {
     customBackgroundImageURL: '自定义背景图片URL（可选）',
     customBackgroundImageHint: '支持网络图片URL，留空则使用渐变背景',
     pluginCount: '{count} 个插件',
+  },
+  collect: {
+    siteNotInclude: '排除站点',
+    siteInclude: '包含站点',
+    selectAll: '全选',
+    clear: '清除',
+    clearFilters: '清除筛选',
+    confirm: '确定',
+    resources: '个资源',
+    noResults: '没有找到匹配的资源',
+    sortDefault: '默认',
+    sortSite: '站点',
+    sortSize: '大小',
+    sortSeeder: '做种数',
+    sortPublishTime: '发布时间',
+    filterSite: '站点',
+    filterSeason: '季',
+    filterFreeState: '促销状态',
+    filterVideoCode: '视频编码',
+    keyword: '关键字',
+    status: '状态',
+    searchHint: '输入关键字搜索标题',
+    filterEdition: '质量',
+    filterResolution: '分辨率',
+    filterReleaseGroup: '制作组',
+    noMatchingResults: '没有数据',
+    allFilters: '综合筛选',
+    clearAll: '清除全部',
+    batchDelete: '批量删除',
+    deleteSelected: '删除选中项',
+    deleteConfirm: '确定要删除选中项吗？',
+    selectedTasks: '选中项',
+    deleteFile: '删除文件',
+    removeSeed: '移除做种',
+    delete: '删除',
+    cancel: '取消',
+    showSelectionControls: '批量操作',
+    hideSelectionControls: '取消批量',
   },
 }

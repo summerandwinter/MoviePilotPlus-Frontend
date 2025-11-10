@@ -1021,7 +1021,7 @@ export default {
     title: 'Sites',
     status: {
       enabled: 'Enabled',
-      disabled: 'Disabled'
+      disabled: 'Disabled',
     },
     fields: {
       name: 'Site Name',
@@ -1034,7 +1034,7 @@ export default {
       detail_page: 'Detail Page',
       is_https: 'HTTPS',
       cookie_required: 'Cookie Required',
-      template: 'Template'
+      template: 'Template',
     },
     hints: {
       name: 'Site name (auto-generated from domain)',
@@ -1047,18 +1047,18 @@ export default {
       detail_page: 'Torrent detail page URL, e.g.: https://examples.com/torrent/{id}',
       is_https: 'Enable for HTTPS sites',
       cookie_required: 'Requires cookie authentication (e.g.: M-Team uses API keys)',
-      template: 'Configure mappings between site-specific categories/encodings/regions and system standards'
+      template: 'Configure mappings between site-specific categories/encodings/regions and system standards',
     },
     actions: {
       add: 'Add Site Template',
-      edit: 'Edit Site Template'
+      edit: 'Edit Site Template',
     },
     messages: {
       addSuccess: 'Site template added successfully',
       addFailed: 'Failed to add site template',
       updateSuccess: 'Update successful',
-      updateFailed: 'Update failed'
-    }
+      updateFailed: 'Update failed',
+    },
   },
   site: {
     noSites: 'No Sites',
@@ -1269,7 +1269,8 @@ export default {
       downloadTaskMaxWorkers: 'Download Queue',
       downloadTaskMaxWorkersHint: 'Maximum concurrent download tasks',
       downloaderSleepTime: 'Download Cooldown Time',
-      downloaderSleepTimeHint: 'The interval in seconds between the completion of one download task and the start of the next one by the download tool',
+      downloaderSleepTimeHint:
+        'The interval in seconds between the completion of one download task and the start of the next one by the download tool',
       ptgenUrl: 'PTGen URL',
       ptgenUrlHint: 'URL for generating metadata descriptions',
       secondPtgenUrl: 'Fallback PTGen',
@@ -1283,7 +1284,8 @@ export default {
       saveFailed: 'Save Failed',
       tencentCookie: 'Tencent Video Cookie',
       tencentCookieHint: 'Cookie for video playback authentication',
-      tencentCookieTips: 'Steps to obtain cookie:\n1. Visit https://film.qq.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
+      tencentCookieTips:
+        'Steps to obtain cookie:\n1. Visit https://film.qq.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
       tencentCookieTipsTitle: 'How to get:',
       mgTvTicket: 'Mango TV TV Ticket',
       mgTvTicketHint: 'Set Mango TV TV Ticket for video playback authentication',
@@ -1295,22 +1297,31 @@ export default {
       mgAppTicketTipsTitle: 'How to get:',
       iqiyiCookie: 'IQIYI Cookie',
       iqiyiCookieHint: 'Set IQIYI Cookie for video playback authentication',
-      iqiyiCookieTips: 'Steps to obtain cookie:\n1. Visit https://www.iqiyi.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
+      iqiyiCookieTips:
+        'Steps to obtain cookie:\n1. Visit https://www.iqiyi.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
       iqiyiCookieTipsTitle: 'How to get:',
       youkuCookie: 'Youku Cookie',
-  youkuCookieHint: 'Set Youku Cookie for video playback authentication',
-  youkuCookieTips: 'Steps to obtain cookie:\n1. Visit https://www.youku.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
-  youkuCookieTipsTitle: 'How to get:',
-  bilibiliCookie: 'Bilibili Cookie',
-  bilibiliCookieHint: 'Set Bilibili Cookie for video playback authentication',
-  bilibiliCookieTips: 'Steps to obtain cookie:\n1. Visit https://www.bilibili.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
-  bilibiliCookieTipsTitle: 'How to get:',
-      tvFileFormatHint: 'Set the file format for TV shows, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      movieFileFormatHint: 'Set the file format for movies, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      tvTitleFormatHint: 'Set the title format for TV shows, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      movieTitleFormatHint: 'Set the title format for movies, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      tvFolderFormatHint: 'Set the folder format for TV shows, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
-      movieFolderFormatHint: 'Set the folder format for movies, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      youkuCookieHint: 'Set Youku Cookie for video playback authentication',
+      youkuCookieTips:
+        'Steps to obtain cookie:\n1. Visit https://www.youku.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
+      youkuCookieTipsTitle: 'How to get:',
+      bilibiliCookie: 'Bilibili Cookie',
+      bilibiliCookieHint: 'Set Bilibili Cookie for video playback authentication',
+      bilibiliCookieTips:
+        'Steps to obtain cookie:\n1. Visit https://www.bilibili.com/\n2. Open developer tools\n3. Copy complete Cookie from request headers\n4. Paste into this field',
+      bilibiliCookieTipsTitle: 'How to get:',
+      tvFileFormatHint:
+        'Set the file format for TV shows, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      movieFileFormatHint:
+        'Set the file format for movies, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      tvTitleFormatHint:
+        'Set the title format for TV shows, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      movieTitleFormatHint:
+        'Set the title format for movies, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      tvFolderFormatHint:
+        'Set the folder format for TV shows, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
+      movieFolderFormatHint:
+        'Set the folder format for movies, Using Jinja2 syntax, supports variables: cn_title, en_title, version, year, resolution, source, video_codec, audio_codec, bit_depth, frame_rate, audio_tracks, team, site, season, episode, subtitle_language, audio_language, hdr_format, audio_channel',
       tvFileFormat: 'TV File Format',
       movieFileFormat: 'Movie File Format',
       tvTitleFormat: 'TV Title Format',
@@ -1331,7 +1342,7 @@ export default {
       panda: 'Panda HD',
       imgbox: 'Imgbox',
       siteSchema: 'Site Template',
-      siteSchemaDesc: 'Site template configuration'
+      siteSchemaDesc: 'Site template configuration',
     },
     system: {
       custom: 'Custom',
@@ -2441,13 +2452,13 @@ export default {
     createFolder: 'Create Folder',
     fileName: 'File Name',
     fileSize: 'File Size',
-  fileSizeRange: {
-    tiny: 'Tiny File (< 500MB)',
-    small: 'Small File (500MB-2GB)',
-    medium: 'Medium File (2GB-10GB)',
-    large: 'Large File (10GB-30GB)',
-    xlarge: 'Extra Large File (> 30GB)'
-  },
+    fileSizeRange: {
+      tiny: 'Tiny File (< 500MB)',
+      small: 'Small File (500MB-2GB)',
+      medium: 'Medium File (2GB-10GB)',
+      large: 'Large File (10GB-30GB)',
+      xlarge: 'Extra Large File (> 30GB)',
+    },
     fileType: 'File Type',
     lastModified: 'Last Modified',
     actions: 'Actions',
@@ -3019,5 +3030,43 @@ export default {
     customBackgroundImageURL: 'Custom Background Image URL (Optional)',
     customBackgroundImageHint: 'Supports web image URLs, leave blank for gradient background',
     pluginCount: '{count} Plugins',
+  },
+  collect: {
+    siteNotInclude: 'Exclude sites',
+    siteInclude: 'Include sites',
+    selectAll: 'Select All',
+    clear: 'Clear',
+    clearFilters: 'Clear Filters',
+    confirm: 'Confirm',
+    resources: 'resources',
+    noResults: 'No results found',
+    sortDefault: 'Default',
+    sortSite: 'Site',
+    sortSize: 'Size',
+    sortSeeder: 'Seeder',
+    sortPublishTime: 'Publish Time',
+    filterSite: 'Site',
+    filterSeason: 'Season',
+    filterFreeState: 'Free State',
+    filterVideoCode: 'Video Code',
+    keyword: 'Keyword',
+    status: 'Status',
+    searchHint: 'Enter keywords to search titles',
+    filterEdition: 'Edition',
+    filterResolution: 'Resolution',
+    filterReleaseGroup: 'Release Group',
+    noMatchingResults: 'No matching data',
+    allFilters: 'All Filters',
+    clearAll: 'Clear All',
+    batchDelete: 'Batch Delete',
+    deleteSelected: 'Delete Selected',
+    deleteConfirm: 'Are you sure you want to delete the selected items?',
+    selectedTasks: 'Selected Tasks',
+    deleteFile: 'Delete File',
+    removeSeed: 'Remove Seed',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    showSelectionControls: 'Show Selection',
+    hideSelectionControls: 'Hide Selection',
   },
 }
