@@ -217,6 +217,10 @@ async function getPtgen(url: string) {
     addForm.value.season = ptgen.value.season || 1
     // 处理可能为 null 的情况，确保赋值给 addForm.value.overview 的是 string 类型
     addForm.value.overview = ptgen.value.description || mediaDetail.value.overview || ''
+    addForm.value.year = ptgen.value.year || mediaDetail.value.year || ''
+    if (addForm.value.year) {
+      mediaDetail.value.year = addForm.value.year
+    }
     isLoading.value = false
     update_subtitle()
   } catch (error) {
