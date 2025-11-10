@@ -215,7 +215,7 @@ function startPolling() {
 
       pollingStatus.value = response.data.message
 
-      if (response.data.status === 0) {
+      if (response.data.code === 0) {
         // 登录成功
         stopPolling() // 立即关闭轮询
         loginDialogVisible.value = false
