@@ -28,6 +28,12 @@ const globalSettingsStore = useGlobalSettingsStore()
 const globalSettings = globalSettingsStore.globalSettings
 const showCollectOperation = ref(false)
 const operationType = ref('')
+// 删除任务确认对话框
+const showDeleteConfirm = ref(false)
+const deleteOptions = ref({
+  delete_file: true,
+  remove_seed: true
+})
 // 所有站点
 // 资源浏览弹窗
 const resourceDialog = ref(false)
@@ -129,6 +135,33 @@ function showCollectOperationDialog(operation: string) {
   console.log('showCollectOperationDialog')
   operationType.value = operation
   showCollectOperation.value = true
+}
+
+// 显示删除确认对话框
+function showDeleteConfirmDialog() {
+  showDeleteConfirm.value = true
+}
+
+// 确认删除任务
+async function confirmDelete() {
+  try {
+    if (!task.value?.id)
+      return
+
+    await api.delete(`collect/${task.value.id}`, {
+      params: deleteOptions.value
+    })
+
+    // 通知父组件刷新
+    emit('remove', task.value.id)
+    $toast.success(`删除成功`)
+
+    // 关闭对话框
+    showDeleteConfirm.value = false
+  } catch (error) {
+    console.error(error)
+    showDeleteConfirm.value = false
+  }
 }
 function getTags() {
   if (!props.task?.tags)
@@ -443,7 +476,7 @@ onUnmounted(() => {
                   <VListItemTitle>转种</VListItemTitle>
                 </VListItem>
 
-                <VListItem variant="plain" @click="deleteCollect(task?.id)" class="bg-error-container">
+                <VListItem variant="plain" @click="showDeleteConfirmDialog()" class="bg-error-container">
                   <template #prepend>
                     <VIcon icon="mdi-delete" color="error" />
                   </template>
@@ -463,6 +496,30 @@ onUnmounted(() => {
   <VideoDescInfoDialog v-if="showDescInfo" v-model="showDescInfo" :collect="task" @close="showDescInfo = false" />
   <CollectOperationDialog v-if="showCollectOperation" v-model="showCollectOperation" :collect_id="task?.id"
     :operation="operationType" @close="showCollectOperation = false" />
+
+  <!-- 删除确认对话框 -->
+  <VDialog v-model="showDeleteConfirm" max-width="500px">
+    <VCard>
+      <VCardTitle class="text-h5">确认删除任务</VCardTitle>
+      <VCardText>
+        <p>确定要删除此采集任务吗？</p>
+        <VContainer class="mt-4">
+          <VRow>
+            <VCol cols="12">
+              <VCheckbox v-model="deleteOptions.remove_seed" label="删除做种任务" color="primary"></VCheckbox>
+            </VCol>
+            <VCol cols="12">
+              <VCheckbox v-model="deleteOptions.delete_file" label="删除文件" color="primary"></VCheckbox>
+            </VCol>
+          </VRow>
+        </VContainer>
+      </VCardText>
+      <VCardActions class="justify-end">
+        <VBtn @click="showDeleteConfirm = false">取消</VBtn>
+        <VBtn color="error" @click="confirmDelete">确认删除</VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
   <!-- 站点资源弹窗 -->
   <SiteSearchDialog v-if="resourceDialog" v-model="resourceDialog" :site="getSelectedSite()" :keyword="task?.cn_title"
     @close="onSiteResourceDone" />
