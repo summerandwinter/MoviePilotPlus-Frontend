@@ -3068,5 +3068,12 @@ export default {
     cancel: 'Cancel',
     showSelectionControls: 'Show Selection',
     hideSelectionControls: 'Hide Selection',
+    teamConfig: 'Team Config',
+    teamConfigDesc: 'Configure media production teams, support drag-and-drop sorting',
+    noTeamConfig: 'No team configuration',
+    teamName: 'Team Name',
+    copyright: 'Copyright',
+    defaultTeam: 'Default',
+    order: 'Order',
   },
 }

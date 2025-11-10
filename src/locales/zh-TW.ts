@@ -3031,5 +3031,12 @@ export default {
     cancel: '取消',
     showSelectionControls: '顯示選擇框',
     hideSelectionControls: '隱藏選擇框',
+    teamConfig: '製作組配置',
+    teamConfigDesc: '配置媒體製作組，支援拖放排序',
+    noTeamConfig: '無製作組配置',
+    teamName: '製作組名稱',
+    copyright: '版權',
+    defaultTeam: '默認',
+    order: '排序',
   },
 }

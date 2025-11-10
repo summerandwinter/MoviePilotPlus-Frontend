@@ -3035,5 +3035,12 @@ export default {
     cancel: '取消',
     showSelectionControls: '批量操作',
     hideSelectionControls: '取消批量',
+    teamConfig: '制作组配置',
+    teamConfigDesc: '配置媒体制作组信息，支持拖拽排序',
+    noTeamConfig: '暂无制作组配置',
+    teamName: '制作组名称',
+    copyright: '版权信息',
+    defaultTeam: '默认',
+    order: '排序',
   },
 }
