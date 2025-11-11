@@ -989,7 +989,7 @@ onDeactivated(() => {
             <draggable v-model="teamConfigs" item-key="id" handle=".drag-handle" @end="() => { }"
               class="draggable-list">
               <template #item="{ element, index }">
-                <VCard class="mb-2" :color="element.default ? 'info' : ''">
+                <VCard class="mb-2">
                   <VCardText class="p-3">
                     <div class="flex items-center gap-4 mb-3">
                       <VIcon class="drag-handle cursor-move" color="grey">mdi-drag-vertical</VIcon>
