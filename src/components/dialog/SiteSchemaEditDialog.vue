@@ -554,11 +554,7 @@ onMounted(async () => {
                         :label="String((tagOptions as Record<string, string>)[key])" type="number" :hint="String(key)"
                         persistent-hint />
                     </VCol>
-                    <!-- 确保显示HDR10_PLUS标签 -->
-                    <VCol :key="'tag-HDR10_PLUS'" cols="12" sm="6" md="4" lg="3">
-                      <VTextField v-model="templateData.tags['HDR10_PLUS']" label="HDR10+" type="number"
-                        hint="HDR10_PLUS" persistent-hint />
-                    </VCol>
+
                   </VRow>
                 </VCardText>
               </VCard>
