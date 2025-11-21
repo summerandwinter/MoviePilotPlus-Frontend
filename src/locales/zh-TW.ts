@@ -63,6 +63,7 @@ export default {
     serviceUnavailable: '服務不可用',
     status: '狀態',
     preset: '預設',
+    declare: '聲明',
   },
   mediaType: {
     movie: '電影',

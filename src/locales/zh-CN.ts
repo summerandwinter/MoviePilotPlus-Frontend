@@ -65,6 +65,7 @@ export default {
     serviceUnavailable: '服务不可用',
     status: '状态',
     preset: '预设',
+    declare: '声明',
   },
   mediaType: {
     movie: '电影',

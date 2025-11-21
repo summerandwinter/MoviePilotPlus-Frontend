@@ -63,6 +63,7 @@ export default {
     serviceUnavailable: 'Service Unavailable',
     status: 'Status',
     preset: 'Preset',
+    declare: 'Declaration',
   },
   mediaType: {
     movie: 'Movie',

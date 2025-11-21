@@ -391,6 +391,7 @@ function addTeamConfig() {
     id: Date.now().toString(), // 使用时间戳作为唯一ID
     team: '',
     copyright: '',
+    declare: '',
     default: false,
     order: teamConfigs.value.length + 1
   }
@@ -437,6 +438,7 @@ type TeamConfig = {
   id: string // 添加唯一ID用于稳定的key
   team: string
   copyright: string
+  declare: string
   default: boolean
   order: number
 }
@@ -504,6 +506,7 @@ async function saveTeamConfigs() {
     const configsToSave = teamConfigs.value.map((item, index) => ({
       team: item.team,
       copyright: item.copyright,
+      declare: item.declare,
       default: item.default,
       order: index + 1
     }))
@@ -1005,6 +1008,8 @@ onDeactivated(() => {
                         full-width />
                       <VTextField v-model="element.copyright" :label="t('collect.copyright')" dense outlined
                         hide-details full-width />
+                      <VTextField v-model="element.declare" :label="t('common.declare')" dense outlined hide-details
+                        full-width />
                       <VBtn color="error" icon @click="removeTeamConfig(element)" :disabled="teamConfigs.length <= 1"
                         class="self-center">
                         <VIcon>mdi-delete</VIcon>
