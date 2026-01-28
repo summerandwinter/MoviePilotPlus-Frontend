@@ -3,15 +3,13 @@
   "javascript.updateImportsOnFileMove.enabled": "always",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.eol": "\n",
-  "[javascript]": {
-    "editor.formatOnSave": false
-  },
+  "[javascript]": {},
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   },
   // SCSS
   "[scss]": {
-    "editor.defaultFormatter": "stylelint.vscode-stylelint"
+    "editor.defaultFormatter": "vscode.css-language-features"
   },
   // JSON
   "[json]": {
@@ -22,7 +20,6 @@
   },
   // Vue
   "[vue]": {
-    "editor.formatOnSave": true,
     "editor.defaultFormatter": "Vue.volar"
   },
   // Extension: Volar
@@ -33,8 +30,7 @@
     "source.fixAll.stylelint": "explicit"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "eslint.alwaysShowStatus": true,
   "eslint.format.enable": true,

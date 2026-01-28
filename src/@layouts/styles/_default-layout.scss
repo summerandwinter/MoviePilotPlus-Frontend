@@ -8,10 +8,11 @@ html {
   background: rgb(var(--v-theme-background));
   min-block-size: 100vh;
   min-block-size: 100dvh;
-  overflow-y: hidden;
 }
 
 body {
+  // Chrome 144+ 兼容性：覆盖 Vuetify 的内联 overflow: hidden 样式
+  overflow: visible !important;
   background: rgb(var(--v-theme-background));
   overscroll-behavior-y: contain;
 
@@ -36,7 +37,9 @@ body,
 .layout-page-content {
   @include mixins.boxed-content(true);
 
-  overflow: hidden;
+  // Chrome 144+ 兼容性：使用 clip 替代 hidden，避免滚动锁定问题
+  // overflow: hidden 在新版 Chrome 中可能意外阻止垂直滚动
+  overflow: clip;
   flex-grow: 1;
 
   // TODO: Use grid gutter variable here;
@@ -51,7 +54,7 @@ body,
     // flex: 1;flex
     display: flex;
 
-    & > div:first-child {
+    &>div:first-child {
       position: relative;
       flex: auto;
       inline-size: calc(100vw - variables.$layout-vertical-nav-width - 1rem);
@@ -59,8 +62,8 @@ body,
   }
 }
 
-@media screen and (width <= 1280px){
-  .page-content-container > div:first-child  {
+@media screen and (width <=1280px) {
+  .page-content-container>div:first-child {
     inline-size: calc(100vw - 1rem) !important;
   }
 }

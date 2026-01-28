@@ -142,7 +142,7 @@ export default defineComponent({
 
 .layout-wrapper.layout-nav-type-vertical {
   // TODO(v2): Check why we need height in vertical nav & min-height in horizontal nav
-  block-size: 100%;
+  min-block-size: 100%;
 
   .layout-content-wrapper {
     display: flex;
@@ -160,9 +160,7 @@ export default defineComponent({
     inset-block-start: 0;
 
     .navbar-content-container {
-      block-size: calc(
-        env(safe-area-inset-top) + variables.$layout-vertical-nav-navbar-height + var(--navbar-tab-height)
-      );
+      block-size: calc(env(safe-area-inset-top) + variables.$layout-vertical-nav-navbar-height + var(--navbar-tab-height));
     }
 
     @at-root {
@@ -224,7 +222,8 @@ export default defineComponent({
 
     .layout-page-content {
       // display: flex;
-      overflow: hidden;
+      // 使用 clip 替代 hidden，避免 Chrome 144+ 滚动锁定问题
+      overflow: clip auto;
 
       .page-content-container {
         inline-size: 100%;
