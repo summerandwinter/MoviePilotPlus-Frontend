@@ -861,7 +861,6 @@ onMounted(() => {
 }
 
 .search-header-mobile {
-  position: sticky;
   z-index: 10;
   backdrop-filter: blur(10px);
   inset-block-start: 0;

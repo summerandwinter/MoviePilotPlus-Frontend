@@ -392,16 +392,9 @@ onMounted(() => {
           </VChip>
           <div class="filter-bar">
             <!-- 排序选择 -->
-            <VSelect
-              v-model="sortField"
-              :items="Object.entries(sortTitles).map(([key, title]) => ({ title, value: key }))"
-              item-title="title"
-              item-value="value"
-              density="compact"
-              hide-details
-              class="sort-select"
-              variant="plain"
-            >
+            <VSelect v-model="sortField"
+              :items="Object.entries(sortTitles).map(([key, title]) => ({ title, value: key }))" item-title="title"
+              item-value="value" density="compact" hide-details class="sort-select" variant="plain">
               <template #prepend-inner>
                 <!-- 添加排序点击事件 -->
                 <VIcon @mousedown.stop.prevent="handleSortIconClick">
@@ -412,17 +405,9 @@ onMounted(() => {
             <div class="filter-divider"></div>
 
             <!-- 筛选按钮 -->
-            <VBtn
-              v-for="(title, key) in filterTitles"
-              v-show="filterOptions[key].length > 0"
-              :key="key"
-              variant="tonal"
-              size="small"
-              :color="filterForm[key].length > 0 ? 'primary' : undefined"
-              :prepend-icon="getFilterIcon(key)"
-              class="filter-btn"
-              rounded="pill"
-            >
+            <VBtn v-for="(title, key) in filterTitles" v-show="filterOptions[key].length > 0" :key="key" variant="tonal"
+              size="small" :color="filterForm[key].length > 0 ? 'primary' : undefined"
+              :prepend-icon="getFilterIcon(key)" class="filter-btn" rounded="pill">
               {{ title }}
               <VChip v-if="filterForm[key].length > 0" size="small" color="primary" class="ms-1" variant="elevated">
                 {{ filterForm[key].length }}
@@ -434,26 +419,14 @@ onMounted(() => {
                       <VBtn variant="text" size="small" color="primary" @click="selectAll(key)">
                         {{ t('torrent.selectAll') }}
                       </VBtn>
-                      <VBtn
-                        v-if="filterForm[key].length > 0"
-                        variant="text"
-                        size="small"
-                        color="error"
-                        @click="clearFilter(key)"
-                      >
+                      <VBtn v-if="filterForm[key].length > 0" variant="text" size="small" color="error"
+                        @click="clearFilter(key)">
                         {{ t('torrent.clear') }}
                       </VBtn>
                     </div>
                     <VChipGroup v-model="filterForm[key]" column multiple class="filter-options">
-                      <VChip
-                        v-for="option in filterOptions[key]"
-                        :key="option"
-                        :value="option"
-                        filter
-                        variant="elevated"
-                        class="ma-1 filter-chip"
-                        size="small"
-                      >
+                      <VChip v-for="option in filterOptions[key]" :key="option" :value="option" filter
+                        variant="elevated" class="ma-1 filter-chip" size="small">
                         {{ option }}
                       </VChip>
                     </VChipGroup>
@@ -463,15 +436,8 @@ onMounted(() => {
             </VBtn>
 
             <!-- 全部筛选按钮 -->
-            <VBtn
-              variant="tonal"
-              size="small"
-              color="primary"
-              class="filter-btn me-2"
-              prepend-icon="mdi-filter-variant"
-              rounded="pill"
-              @click="toggleAllFilterMenu"
-            >
+            <VBtn variant="tonal" size="small" color="primary" class="filter-btn me-2" prepend-icon="mdi-filter-variant"
+              rounded="pill" @click="toggleAllFilterMenu">
               {{ t('torrent.allFilters') }}
               <VChip v-if="getFilterCount > 0" size="small" color="primary" class="ms-1" variant="elevated">
                 {{ getFilterCount }}
@@ -479,15 +445,8 @@ onMounted(() => {
             </VBtn>
 
             <!-- 清除全部筛选按钮 -->
-            <VBtn
-              v-if="getFilterCount > 0"
-              variant="text"
-              size="small"
-              color="error"
-              @click="clearAllFilters"
-              class="filter-btn"
-              prepend-icon="mdi-close-circle-outline"
-            >
+            <VBtn v-if="getFilterCount > 0" variant="text" size="small" color="error" @click="clearAllFilters"
+              class="filter-btn" prepend-icon="mdi-close-circle-outline">
               {{ t('torrent.clearFilters') }}
             </VBtn>
           </div>
@@ -497,16 +456,8 @@ onMounted(() => {
         <div v-if="getFilterCount > 0" class="selected-filters">
           <div class="d-flex flex-wrap align-center">
             <template v-for="(values, key) in getSelectedFilters" :key="key">
-              <VChip
-                v-for="(value, index) in values"
-                :key="`${key}-${index}`"
-                color="primary"
-                size="small"
-                closable
-                variant="elevated"
-                class="me-1 mb-1 mt-1 filter-tag"
-                @click:close="removeFilter(key, value)"
-              >
+              <VChip v-for="(value, index) in values" :key="`${key}-${index}`" color="primary" size="small" closable
+                variant="elevated" class="me-1 mb-1 mt-1 filter-tag" @click:close="removeFilter(key, value)">
                 <VIcon size="small" :icon="getFilterIcon(key)" class="me-1"></VIcon>
                 <strong>{{ filterTitles[key] }}:</strong> {{ value }}
               </VChip>
@@ -522,27 +473,15 @@ onMounted(() => {
       <div class="view-header">
         <div class="d-flex align-center flex-wrap pa-2">
           <div class="d-flex align-center w-100">
-            <VChip
-              color="primary"
-              variant="elevated"
-              size="small"
-              class="search-count me-auto"
-              prepend-icon="mdi-magnify"
-            >
+            <VChip color="primary" variant="elevated" size="small" class="search-count me-auto"
+              prepend-icon="mdi-magnify">
               {{ props.items?.length || 0 }} {{ t('torrent.resources') }}
             </VChip>
 
             <!-- 排序选择 -->
-            <VSelect
-              v-model="sortField"
-              :items="Object.entries(sortTitles).map(([key, title]) => ({ title, value: key }))"
-              item-title="title"
-              item-value="value"
-              density="compact"
-              hide-details
-              class="mobile-sort-select"
-              variant="plain"
-            >
+            <VSelect v-model="sortField"
+              :items="Object.entries(sortTitles).map(([key, title]) => ({ title, value: key }))" item-title="title"
+              item-value="value" density="compact" hide-details class="mobile-sort-select" variant="plain">
               <template #prepend-inner>
                 <!-- 添加排序点击事件 -->
                 <VIcon @mousedown.stop.prevent="handleSortIconClick">
@@ -560,36 +499,18 @@ onMounted(() => {
               <span class="filter-label">
                 {{ t('torrent.allFilters') }}
               </span>
-              <VBadge
-                v-if="getFilterCount > 0"
-                :content="getFilterCount"
-                color="primary"
-                location="top end"
-                offset-x="-10"
-                offset-y="-10"
-              ></VBadge>
+              <VBadge v-if="getFilterCount > 0" :content="getFilterCount" color="primary" location="top end"
+                offset-x="-10" offset-y="-10"></VBadge>
             </VBtn>
 
-            <VBtn
-              v-for="(title, key) in filterTitles"
-              v-show="filterOptions[key].length > 0"
-              variant="text"
-              color="primary"
-              class="filter-btn-mobile"
-              @click="toggleFilterMenu(key)"
-            >
+            <VBtn v-for="(title, key) in filterTitles" v-show="filterOptions[key].length > 0" variant="text"
+              color="primary" class="filter-btn-mobile" @click="toggleFilterMenu(key)">
               <VIcon :icon="getFilterIcon(key)" class="filter-icon me-1"></VIcon>
               <span class="filter-label">
                 {{ title }}
               </span>
-              <VBadge
-                v-if="filterForm[key].length > 0"
-                :content="filterForm[key].length"
-                color="primary"
-                location="top end"
-                offset-x="-10"
-                offset-y="-10"
-              ></VBadge>
+              <VBadge v-if="filterForm[key].length > 0" :content="filterForm[key].length" color="primary"
+                location="top end" offset-x="-10" offset-y="-10"></VBadge>
             </VBtn>
           </div>
         </div>
@@ -597,40 +518,24 @@ onMounted(() => {
     </VCard>
 
     <!-- 全部筛选弹窗 -->
-    <VDialog
-      v-model="allFilterMenuOpen"
-      max-width="50rem"
-      location="center"
-      scrollable
-      :fullscreen="!display.mdAndUp.value"
-    >
+    <VDialog v-model="allFilterMenuOpen" max-width="50rem" location="center" scrollable
+      :fullscreen="!display.mdAndUp.value">
       <VCard>
         <VDialogCloseBtn @click="allFilterMenuOpen = false" />
         <VCardTitle class="py-3 d-flex align-center">
           <VIcon icon="mdi-filter-variant" class="me-2"></VIcon>
           <span>{{ t('torrent.allFilters') }}</span>
           <VSpacer />
-          <VBtn
-            v-if="getFilterCount > 0"
-            class="me-10"
-            variant="text"
-            size="small"
-            color="error"
-            @click="clearAllFilters"
-          >
+          <VBtn v-if="getFilterCount > 0" class="me-10" variant="text" size="small" color="error"
+            @click="clearAllFilters">
             {{ t('torrent.clearAll') }}
           </VBtn>
         </VCardTitle>
         <VDivider />
         <VCardText>
           <div class="all-filters-grid">
-            <VCard
-              v-for="(title, key) in filterTitles"
-              variant="tonal"
-              :key="key"
-              class="filter-section"
-              v-show="filterOptions[key].length > 0"
-            >
+            <VCard v-for="(title, key) in filterTitles" variant="tonal" :key="key" class="filter-section"
+              v-show="filterOptions[key].length > 0">
               <VCardItem class="py-2">
                 <template #prepend>
                   <VIcon :icon="getFilterIcon(key)" class="me-2"></VIcon>
@@ -640,28 +545,16 @@ onMounted(() => {
                   <VBtn variant="text" size="small" color="primary" @click="selectAll(key)">
                     {{ t('torrent.selectAll') }}
                   </VBtn>
-                  <VBtn
-                    v-if="filterForm[key].length > 0"
-                    variant="text"
-                    size="small"
-                    color="error"
-                    @click="clearFilter(key)"
-                  >
+                  <VBtn v-if="filterForm[key].length > 0" variant="text" size="small" color="error"
+                    @click="clearFilter(key)">
                     {{ t('torrent.clear') }}
                   </VBtn>
                 </template>
               </VCardItem>
               <VCardText>
                 <VChipGroup v-model="filterForm[key]" column multiple class="filter-options">
-                  <VChip
-                    v-for="option in filterOptions[key]"
-                    :key="option"
-                    :value="option"
-                    filter
-                    variant="elevated"
-                    class="ma-1 filter-chip"
-                    size="small"
-                  >
+                  <VChip v-for="option in filterOptions[key]" :key="option" :value="option" filter variant="elevated"
+                    class="ma-1 filter-chip" size="small">
                     {{ option }}
                   </VChip>
                 </VChipGroup>
@@ -679,13 +572,8 @@ onMounted(() => {
           <VIcon :icon="getFilterIcon(currentFilter)" class="me-2"></VIcon>
           <span>{{ currentFilterTitle }}</span>
           <VSpacer />
-          <VBtn
-            v-if="filterForm[currentFilter].length > 0"
-            variant="text"
-            size="small"
-            color="error"
-            @click="clearFilter(currentFilter)"
-          >
+          <VBtn v-if="filterForm[currentFilter].length > 0" variant="text" size="small" color="error"
+            @click="clearFilter(currentFilter)">
             {{ t('torrent.clear') }}
           </VBtn>
           <VBtn variant="text" size="small" color="primary" @click="selectAll(currentFilter)">
@@ -695,15 +583,8 @@ onMounted(() => {
         <VDivider />
         <VCardText>
           <VChipGroup v-model="filterForm[currentFilter]" column multiple class="filter-options">
-            <VChip
-              v-for="option in currentFilterOptions"
-              :key="option"
-              :value="option"
-              filter
-              variant="elevated"
-              class="ma-1 filter-chip"
-              size="small"
-            >
+            <VChip v-for="option in currentFilterOptions" :key="option" :value="option" filter variant="elevated"
+              class="ma-1 filter-chip" size="small">
               {{ option }}
             </VChip>
           </VChipGroup>
@@ -725,14 +606,8 @@ onMounted(() => {
         <div class="text-h6 text-grey mt-4">{{ t('torrent.noResults') }}</div>
       </div>
       <!-- 资源列表 -->
-      <VInfiniteScroll
-        v-else
-        mode="intersect"
-        side="end"
-        :items="displayDataList"
-        class="resource-list overflow-visible"
-        @load="loadMore"
-      >
+      <VInfiniteScroll v-else mode="intersect" side="end" :items="displayDataList"
+        class="resource-list overflow-visible" @load="loadMore">
         <template #loading />
         <template #empty />
         <div v-for="(item, index) in displayDataList" :key="`${item.torrent_info?.enclosure || ''}-${index}`">
@@ -758,7 +633,6 @@ onMounted(() => {
 }
 
 .search-header-mobile {
-  position: sticky;
   z-index: 10;
   backdrop-filter: blur(10px);
   inset-block-start: 0;
